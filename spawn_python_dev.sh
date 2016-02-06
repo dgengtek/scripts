@@ -12,7 +12,7 @@ then
 fi
 
 
-cd /mnt/hdd/bigX/a_Programmieren/Python/workspace/
+cd /mnt/hdd/bigX/a_Programmieren/Python/workspace || exit
 
 
 run pycharm

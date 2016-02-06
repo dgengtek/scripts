@@ -12,19 +12,19 @@ then
 fi
 
 
-cd /mnt/hdd/bigX/a_Programmieren
+cd /mnt/hdd/bigX/a_Programmieren || exit
 
 OLDIFS=$IFS
 IFS=$(echo -en "\n\b")
 PS3='select development environment to work in...'
 select selection in $(ls -1)
 do
-	if [ -n $selection ]
+	if [ -n "$selection" ]
 	then	
-		cd $selection
+		cd "$selection" || exit
 		if [ -d workspace ] 
 		then
-			cd workspace
+			cd workspace || exit
 		else
 			echo "no workspace dir"
 		fi

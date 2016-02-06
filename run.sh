@@ -5,10 +5,10 @@ then
 	exit 1
 fi
 
-cmd="$@"
-cmdstring=$(echo $cmd | cut -f1 -d ' ')
+cmd=("$@")
+cmdstring=$(echo "$cmd" | cut -f1 -d ' ')
 
 logfile="/dev/null"
 
-($cmd &> $logfile) &
+("${cmd[@]}" &> $logfile) &
 cmd_pid=$!

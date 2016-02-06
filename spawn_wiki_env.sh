@@ -12,17 +12,17 @@ then
 fi
 
 
-cd /mnt/hdd/bigX/e-books/IT
+cd /mnt/hdd/bigX/e-books/IT || exit
 #set seperator to newlinebreaks for strings in ls-1
 OLDIFS=$IFS
 IFS=$(echo -en "\n\b")
 PS3='select ebooks to work with...'
 select selection in $(ls -1)
 do
-	if [ -n $selection ]
+	if [ -n "$selection" ]
 	then	
 	#need to traverse through a next selection and open ebooks too
-		cd $selection
+		cd "$selection" || exit
 		break
 	else
 		echo "invalid selection"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-cd ~/vimwiki
+cd ~/vimwiki || exit
 
 
 OLDIFS=$IFS
@@ -10,15 +10,15 @@ IFS=$(echo -en "\n\b")
 PS3='select vimwiki diary to open: '
 select selection in $(ls -1)
 do
-	if [ -n $selection ]
+	if [ -n "$selection" ]
 	then	
-		cd $selection
+		cd "$selection" || exit
 		if [ ! -d diary ] 
 		then
 			echo "no diary dir"
 			mkdir diary
 		fi
-		cd diary
+		cd diary || exit
 		break
 	else
 		echo "invalid selection"

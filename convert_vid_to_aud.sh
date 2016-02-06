@@ -27,16 +27,16 @@ for file in $(ls -1)
 do
 	outputfile=${file%.*}
 	output="$outputDir/$outputfile.mp3"
-	if [ -f "$file" ] && ! [ -e $output ] 
+	if [ -f "$file" ] && ! [ -e "$output" ] 
 	then
 		extension=${file##*.}
 
-		if [ $extension = mp4 ] || [ $extension = mkv ]	\
-		  || [ $extension = flv ]	
+		if [ "$extension" = mp4 ] || [ "$extension" = mkv ]	\
+		  || [ "$extension" = flv ]	
 
 		then
 		  echo "converting - $file to mp3"
-			ffmpeg -i "$file" -acodec mp3 -vn $output
+			ffmpeg -i "$file" -acodec mp3 -vn "$output"
 		fi
 	else
 		echo "SKIPPING - $outputfile already exists or not a file"
