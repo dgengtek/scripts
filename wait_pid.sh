@@ -1,9 +1,18 @@
 #!/bin/bash
 
 
+function usage {
+echo "$0 pid {pid}"
+exit 1
+}
+
 
 args=("$@")
-echo "List of supplied PID's: $@"
+if [ -z $args ];then 
+  usage
+fi
+
+echo "List of supplied PID's: $args"
 
 function progress {
   case "$1" in

@@ -54,17 +54,16 @@ syncthis ".xscreensaver"
 archiveDirectory
 
 prefix="hdd_sidekick/scripting"
-dest=$prefix
 # bash scripts
 #syncthis "bin/bash/"
-backupCmd "$dest/bash" "/home/gd/bin/bash"
+backupCmd "$prefix/bash" "/home/gd/bin/bash"
 
 # fcron scripts
 #syncthis "bin/fcrontab/"
-backupCmd "$dest/fcrontab" "/home/gd/bin/fcrontab"
+backupCmd "$prefix/fcrontab" "/home/gd/bin/fcrontab"
 
 # vim scripts
 #syncthis "bin/vimscripts/"
-backupCmd "$dest/vimscripts" "/home/gd/bin/vimscripts"
+backupCmd "$prefix/vimscripts" "/home/gd/bin/vimscripts"
 
 printMessage "Done Arch config files backup"

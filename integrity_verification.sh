@@ -7,9 +7,9 @@ sha512sum
 )
 function usage {
 echo "$0 cmd file digest"
-echo -e "cmd\tcmd used for digest"
-echo -e "file\tcmd used on file"
-echo -e "digest\tdigest used for comparison"
+echo -e "cmd\n\tcmd used for digest"
+echo -e "file\n\tcmd used on file"
+echo -e "digest\n\tdigest used for comparison"
 echo -e "cmds available:"
 for ((i= 0; i < ${#cmds[@]}; i++)); do
   echo -e "\t${cmds[$i]}"
@@ -37,16 +37,9 @@ if [[ $validCmd == 0 ]]; then
 fi
 
 
-filesum=$($cmd < "$file")
-
-echo "Sum $file: $filesum"
-echo "Sum expected: $expectedSUM"
-
+filesum=($($cmd "$file"))
 if [ "$filesum" == "$expectedSUM" ]; then
-  echo "==> checksum is correct"
   exit 0
-else
-  echo "==> checksum is false"
-  exit 1
 fi
+exit 1
 

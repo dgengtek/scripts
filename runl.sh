@@ -1,11 +1,11 @@
 #!/bin/bash
 #run with output logging
-if [ -z "$1" ]
-then
+
+if [ -z "$1" ]; then
 	echo "no arguments to start a command in background"
 	exit 1
 fi
-
+log_path="/tmp/log"
 cmd=("$@")
 cmdstring=$(echo "${cmd[@]}" | cut -f1 -d ' ')
 logfile="run_${cmdstring}_log"
@@ -24,11 +24,14 @@ function checklogfile {
 
 }
 
+if ! [ -e $log_path ];then
+  mkdir -p $log_path
+fi
 
 checklogfile
 logfile=$logfn
 echo -e "Saving output to $logfile"
 
-("${cmd[@]}" &> "$logfile") &
+(eval "${cmd[@]}" &> "$log_path/$logfile") &
 cmd_pid=$!
 echo -e "PID - $cmd_pid \nrunning in background..."

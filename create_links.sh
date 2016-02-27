@@ -8,13 +8,12 @@
 target=$1
 destination=$2
 
-function usage
-{
-	echo "$0 target destination"
-	echo "target: location to create links from"
-	echo "destination: destination to create new links of targets"
-	echo "arguments must be directories"
-	exit 1
+function usage {
+echo -en "$0 target destination\n\n"
+echo -e "target\n\tlocation to create links from"
+echo -e "destination\n\tdestination to create new links of targets"
+echo -e "arguments must be directories"
+exit 1
 }
 
 if [ -z "$target" ]
@@ -27,7 +26,6 @@ then
 	echo "empty destination"
 	usage
 fi
-
 
 if ! [ -d "$target" ]
 then 
@@ -60,10 +58,12 @@ declare -i j=0
 for lnname in $linkList
 do
 	LINK=${lnname%.*}
-	if [ -e "$LINK" ] && ! [ -d "$LINK" ]
-	then
+	if [ -e "$LINK" ]; then
 		rm "$LINK"
 		let i++
+	fi
+	if [ -d "$target/$lnname" ]; then
+	  continue
 	fi
 	let j++
 	#echo "creating link of $LINK in $PWD"
@@ -85,4 +85,3 @@ done
 
 IFS=$OLDIFS
 echo "Removed $i links, created $j links."
-exit 0
