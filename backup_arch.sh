@@ -66,4 +66,4 @@ backupCmd "$prefix/fcrontab" "/home/gd/bin/fcrontab"
 #syncthis "bin/vimscripts/"
 backupCmd "$prefix/vimscripts" "/home/gd/bin/vimscripts"
 
-printMessage "Done Arch config files backup"
+printMessage "Arch config files backup done"

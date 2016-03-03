@@ -12,9 +12,9 @@ if [ -z $args ];then
   usage
 fi
 
-echo "List of supplied PID's: $args"
+echo "List of supplied PID's: ${args[@]}"
 
-function progress {
+progress_output() {
   case "$1" in
     "0")
       echo -ne "\rsleeping |"
@@ -36,21 +36,32 @@ function progress {
   esac
   sleep 1
 }
-
-
-for ((i=0; i < $#; i++)) 
-{
-	echo "waiting for PID: ${args[$i]}"
-	declare -i cycle=0
-	while [ -e "/proc/${args[$i]}" ]
-	do
-	  if [[ $cycle == 4 ]];then
-	    let cycle=0
-	  fi
-	  progress $cycle
-	  let cycle++
-	done
-	echo -e "\ndone waiting for PID: ${args[$i]}"
-
+progress() {
+  declare -i cycle=0
+  while :; do
+    if [[ $cycle == 4 ]];then
+      let cycle=0
+    fi
+    progress_output $cycle
+    let cycle++
+  done
 }
+check_pid_exists() {
+  while [ -e /proc/$1 ]; do
+    sleep 1
+  done
+}
+pids=()
+for ((i=0; i < $#; i++)); do
+	check_pid_exists ${args[$i]} &
+	pids+=($!)
+done
+
+
+progress &
+rc=$!
+
+wait ${pids[@]}
+kill $rc
+
 echo "wait complete"

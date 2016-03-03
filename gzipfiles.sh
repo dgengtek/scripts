@@ -11,19 +11,17 @@ gzDir="gz"
 rawFilename=""
 file=""
 
-function sigINT {
-  echo -en "\n\ncatched SIGINT\n"
+sigINT() {
+  echo -en "\n\nSIGINT\n"
   echo "cleanup...rm $gzDir/$rawFilename.gz"
   rm "$gzDir/$file.gz"
   exit 1
 }
-trap sigINT INT
+trap sigINT SIGINT SIGTERM 
 
-function scriptinfo
-{
-	echo -e "\nUsage of $0"
-	echo "$0 arg1"
-	echo "arg1: filextension to select"
+scriptinfo() {
+	echo "usage: $0 fileextension"
+	echo "filextension to select from files to gzip"
 	exit 1
 
 }

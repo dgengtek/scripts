@@ -1,0 +1,13 @@
+* use a main function in more extensive scripts
+* remove global scope vars 
+* use local scope vars inside functions by declaring them
+  local
+* change function naming from
+  function name { ... }
+  to 
+  name() { ... }
+
+* change backup_all to use arrays of paths to
+  backup instead of calling a function every time
+* add to backup a restoration call, with defined 
+  restore paths in their own respective scripts

@@ -19,4 +19,4 @@ run pycharm
 run hamster
 
 #start tmux and configure windows and panes
-(eval "urxvt -e tmux source /home/gd/bin/bash/tmux.python_dev.sh") &
+run urxvt -e tmux source /home/gd/bin/bash/tmux.python_dev.sh

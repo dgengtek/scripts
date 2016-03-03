@@ -1,17 +1,29 @@
 #!/bin/bash
+# TODO: implement function invocation with array parameters
+# instead of recalling function with new paths.. use an array
+# of paths which should be syncd and loop over the input
+# while running rsync in background with run script
+# TODO: refactor to python
+catch_interrupt() {
+  >&2  echo "Signal received: stopping backup" 
+  exit 1
+}
 
 #add backup local bash script binaries
-optlist=":av"
+optlist=":avp"
 
-function usage {
-  echo "$0 [-ave] backuppath"
+usage() {
+  echo "$0 [option] backuppath"
+  echo "option:"
   echo "-a  archive and compress files"
   echo "-v  verbose output"
+  echo "-p  progress"
   exit 1
 }
 
 declare -i enableArchiving=0
 declare -i enableVerbose=0
+declare -i enable_progress=0
 while getopts $optlist opt; do
   case $opt in
     a)
@@ -19,6 +31,9 @@ while getopts $optlist opt; do
       ;;
     v)
       let enableVerbose=1
+      ;;
+    p)
+      let enable_progress=1
       ;;
     *)
       usage
@@ -32,6 +47,7 @@ then
   echo "no backuppath supplied"
   usage
 fi
+trap catch_interrupt SIGINT SIGTERM
 
 copy="rsync"
 #add option to backup old files to folder
@@ -52,7 +68,7 @@ options="$options --suffix=$suffix"
 
 synccmd="$copy $options"
 
-function updateVars {
+updateVars() {
 
   destpath="$root/$1"
   backuppath="${destpath%/}/../old_bak"
@@ -62,6 +78,10 @@ function updateVars {
     options+="v"
   else
     options+="q"
+  fi
+
+  if [[ $enable_progress == 1 ]]; then
+    options+=" --progress"
   fi
   options="$options --backup-dir=$backuppath"
   options="$options --suffix=$suffix" 
@@ -82,7 +102,7 @@ function updateVars {
 
 }
 
-function archiveDirectory {
+archiveDirectory() {
   if [[ $enableArchiving == 0 ]]; then
     return 
   fi
@@ -97,7 +117,7 @@ function archiveDirectory {
  "$destpath/.." "$archivename" && rm -rf "$destpath"
 }
 
-function syncthis {
+syncthis() {
   if [[ $enableVerbose == 1 ]]; then
     echo "Backup: $PWD/$1 to $destpath"
   fi
@@ -112,7 +132,7 @@ function syncthis {
 
 # $1 is backup path
 # $2 is location of files to be backed up
-function backupCmd {
+backupCmd() {
  updateVars "$1"
  cd "$2" || exit
  syncthis ./
@@ -121,7 +141,7 @@ function backupCmd {
   
 }
 
-function printMessage {
+printMessage() {
 if [[ $enableVerbose == 1 ]]; then
   echo -en "\n####################################
 ####################################\n"

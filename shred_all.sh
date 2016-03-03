@@ -19,3 +19,4 @@ done
 echo -e "\nremoving $path\n"
 rm -R "$path"
 IFS=$OLDIFS
+exit 0

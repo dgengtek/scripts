@@ -18,5 +18,5 @@ cd /mnt/hdd/bigX/a_Programmieren/android/workspace || exit
 run android-studio
 
 #start tmux and configure windows and panes
-(eval "urxvt -e tmux source /home/gd/bin/bash/tmux_dev_env.sh") &
-(eval "urxvt -e tmux source /home/gd/bin/bash/tmux_timer.sh") &
+run urxvt -e tmux source /home/gd/bin/bash/tmux_dev_env.sh
+run urxvt -e tmux source /home/gd/bin/bash/tmux_timer.sh

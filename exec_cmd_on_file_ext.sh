@@ -34,7 +34,7 @@ for file in $(ls -1)
 do
 	extension=${file##*.}
 	if [ "$extension" = "$fileext" ];then
-		eval "${cmd[@]}" "$file"
+	  $("${cmd[@]}" "$file")
 	fi
 done
 IFS=$OLDIFS

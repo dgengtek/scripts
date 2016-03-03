@@ -10,5 +10,5 @@ cmdstring=$(echo "$cmd" | cut -f1 -d ' ')
 
 logfile="/dev/null"
 
-(eval "${cmd[@]}" &> $logfile) &
+$("${cmd[@]}" &> $logfile) &
 cmd_pid=$!

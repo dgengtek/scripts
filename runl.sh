@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO: add option to set log filename and log path
 #run with output logging
 
 if [ -z "$1" ]; then
@@ -12,7 +13,7 @@ logfile="run_${cmdstring}_log"
 logfn="empty"
 
 
-function checklogfile {
+checklogfile() {
 	declare -i zaehler=0
 	logfn=${logfile}
 	while [ -e "$logfn" ]
@@ -32,6 +33,6 @@ checklogfile
 logfile=$logfn
 echo -e "Saving output to $logfile"
 
-(eval "${cmd[@]}" &> "$log_path/$logfile") &
+$("${cmd[@]}" &> "$log_path/$logfile") &
 cmd_pid=$!
 echo -e "PID - $cmd_pid \nrunning in background..."
