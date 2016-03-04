@@ -1,39 +1,23 @@
 #!/bin/bash
 #todo: cleanup
 
-source /home/gd/bin/bash/lib/libbackup_base.sh "$@"
-#add backup local bash script binaries
+bak() {
+  source /home/gd/bin/bash/lib/libbackup_base.sh
+  args=("$@")
 
-# updateVars "gd/STUDIUM"
-# syncthis "/mnt/hdd/bigX/gd/STUDIUM"
-backupCmd "gd/STUDIUM" "/mnt/hdd/bigX/gd/STUDIUM"
+  local prefix="gd"
+  main "$prefix/STUDIUM" "/mnt/hdd/bigX/gd/STUDIUM"
+  main "$prefix/documents" "/mnt/hdd/bigX/gd/Documents"
+  main "$prefix/music" "/mnt/hdd/bigX/gd/Music"
+  main "$prefix/pictures" "/mnt/hdd/bigX/gd/pictures"
+  main "$prefix/recordings" "/mnt/hdd/bigX/gd/recordings"
+  main "$prefix/priv" "/mnt/hdd/bigX/gd/priv"
 
-#updateVars "gd/documents"
-#syncthis .
-backupCmd "gd/documents" "/mnt/hdd/bigX/gd/Documents"
+  prefix="hdd_sidekick"
+  main "$prefix/e-books" "/mnt/hdd/bigX/e-books"
+  main "$prefix/programming" "/mnt/hdd/bigX/a_Programmieren"
 
-# updateVars "hdd_sidekick/e-books"
-# syncthis "/mnt/hdd/bigX/e-books"
-backupCmd "hdd_sidekick/e-books" "/mnt/hdd/bigX/e-books"
+  print_message "Done personal files backup"
+}
 
-# updateVars "hdd_sidekick/programming"
-# syncthis "/mnt/hdd/bigX/a_Programmieren"
-backupCmd "hdd_sidekick/programming" "/mnt/hdd/bigX/a_Programmieren"
-
-# updateVars "gd/music"
-# syncthis "/mnt/hdd/bigX/gd/Music"
-backupCmd "gd/music" "/mnt/hdd/bigX/gd/Music"
-
-# updateVars "gd/pictures"
-# syncthis "/mnt/hdd/bigX/gd/pictures"
-backupCmd "gd/pictures" "/mnt/hdd/bigX/gd/pictures"
-
-# updateVars "gd/recordings"
-# syncthis "/mnt/hdd/bigX/gd/recordings"
-backupCmd "gd/recordings" "/mnt/hdd/bigX/gd/recordings"
-
-# updateVars "gd/priv"
-# syncthis "/mnt/hdd/bigX/gd/priv"
-backupCmd "gd/priv" "/mnt/hdd/bigX/gd/priv"
-
-printMessage "Done personal files backup"
+bak "$@"

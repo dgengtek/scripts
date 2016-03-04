@@ -1,69 +1,42 @@
 #!/bin/bash
 
-source /home/gd/bin/bash/lib/libbackup_base.sh "$@"
-# needs to be imported by backup_base.sh
-#add backup local bash script binaries
+bak() {
+  source /home/gd/bin/bash/lib/libbackup_base.sh
+  # set args in lib
+  args=("$@")
+
+  #backup all config files and wiki
+  cd ~ || exit
+
+  local -r p="Arch_bak/home"
+
+  declare -ar files=(
+  ".bash_aliases"
+  ".bash_profile"
+  ".bashrc"
+  ".zshrc"
+  ".zshrc.zni"
+  ".vim"
+  ".vimrc"
+  "vimwiki"
+  ".config/awesome"
+  ".config/ranger"
+  ".rtorrent.rc"
+  ".fehbg"
+  ".tmux.conf"
+  ".xinitrc"
+  ".Xresources"
+  ".xscreensaver"
+  )
+  main "$p" "${files[@]}" 
 
 
-#backup all config files and wiki
+  prefix="hdd_sidekick/scripting"
+  main "$prefix/bash" "/home/gd/bin/bash"
+  main "$prefix/fcrontab" "/home/gd/bin/fcrontab"
+  main "$prefix/vimscripts" "/home/gd/bin/vimscripts"
 
-cd ~ || exit
-dest="Arch_bak/home"
+  print_message "Arch config files backup done"
+}
 
-updateVars "$dest"
-#.bash_aliases
-syncthis ".bash_aliases"
-#.bash_profile
-syncthis ".bash_profile"
-#.bashrc
-syncthis ".bashrc"
-
-#.zshrc
-syncthis ".zshrc"
-#.zshrc.zni
-syncthis ".zshrc.zni"
-
-#/home/gd/.vim
-syncthis ".vim"
-#.vimrc
-syncthis ".vimrc"
-#/home/gd/vimwiki
-syncthis "vimwiki"
-
-#.config/awesome
-syncthis ".config/awesome"
-#.config/ranger
-syncthis ".config/ranger"
-
-#.rtorrentrc
-syncthis ".rtorrent.rc"
-#.fehbg
-syncthis ".fehbg"
-
-#.tmux.conf
-syncthis ".tmux.conf"
-
-#.xinitrc
-syncthis ".xinitrc"
-#.Xresources
-syncthis ".Xresources"
-#.xscreensaver
-syncthis ".xscreensaver"
-
-# archive all into tarball
-archiveDirectory
-
-prefix="hdd_sidekick/scripting"
-# bash scripts
-#syncthis "bin/bash/"
-backupCmd "$prefix/bash" "/home/gd/bin/bash"
-
-# fcron scripts
-#syncthis "bin/fcrontab/"
-backupCmd "$prefix/fcrontab" "/home/gd/bin/fcrontab"
-
-# vim scripts
-#syncthis "bin/vimscripts/"
-backupCmd "$prefix/vimscripts" "/home/gd/bin/vimscripts"
-
-printMessage "Arch config files backup done"
+bak "$@"

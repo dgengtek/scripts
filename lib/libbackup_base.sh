@@ -1,153 +1,219 @@
 #!/bin/bash
-# TODO: implement function invocation with array parameters
-# instead of recalling function with new paths.. use an array
-# of paths which should be syncd and loop over the input
-# while running rsync in background with run script
+# use this lib inside other scripts, by sourcing it beforehand
+
+# Steps to run script:
+# 1.  Source this script before using any of its functions
+# 2.  Make sure to initialize global array 'args' with input args supplied
+#     to the script 
+# 3.  Run backup with main function
+#     main(backup_suffix, [target]...)
+#     target(s) for backup
+# 4.  Targets shall be supplied to main function as array or string.
+#     Relative supplied targets will be copied with 
+#     its exact relative pathname.
+#     To copy only contents of a folder, supply target with absolute pathname
+
+
+
+
 # TODO: refactor to python
+
 catch_interrupt() {
   >&2  echo "Signal received: stopping backup" 
   exit 1
 }
+trap catch_interrupt SIGINT SIGTERM
 
-#add backup local bash script binaries
-optlist=":avp"
 
+# passed in raw arguments
+# will be set in other scripts to pass in 
+# options + destination path
+declare -a args=()
+
+main() {
+
+  local -ir length=$((${#args[@]}-1))
+
+  # get last item
+  # backup path supplied to script
+  local -r root=${args[$length]%/}
+
+  # array without last element
+  # are the passed in options
+  # exclusive
+  local -a input_options=${args[@]:0:$length}
+
+
+  # get the first argument passed to main
+  local -r root_suffix="${1%/}"
+  shift 1
+  # pass in 
+  execute "${input_options[@]}" "$@"
+}
+
+execute() {
+
+  optlist=":avpd"
+  local -i enable_archiving=0
+  local -i enable_verbose=0
+  local -i enable_progress=0
+  local -i enable_debug=0
+
+  while getopts $optlist opt; do
+    case $opt in
+      a)
+	let enable_archiving=1
+	;;
+      v)
+	let enable_verbose=1
+	;;
+      p)
+	let enable_progress=1
+	;;
+      d)
+	let enable_debug=1
+	;;
+      *)
+	usage
+	;;
+    esac
+  done
+  # remove parsed options from args
+  shift $((OPTIND - 1))
+  if [[ $# < 1 ]]; then
+    usage
+  fi
+  # cmd for copying
+  local -r copy="rsync"
+
+  # declare paths
+  # backup root path path/backup
+  # dont use last slash
+  local destpath="${root}/${root_suffix}"
+  local backuppath="${destpath}/../old_bak"
+
+  # declare rsync options
+  local -r suffix="_bak"
+  local -r ferror="sync.errors"
+
+  # relative syncing to copy relative supplied paths
+  local options="-aAzubR"
+
+  local copy_cmd=""
+
+  # check, update environment
+  check_env
+
+  # dont separate on space, only newline and backspace
+  OLDIFS=$IFS
+  IFS=$(echo -en "\n\b")
+  # loop over supplied targets
+  # except last arg
+  for target in "$@"; do
+    if is_absolute_path "$target" && 
+      pushd "$target"; then
+      run_sync ./*
+      popd
+    else
+      run_sync $target
+    fi
+    archive_dir
+  done
+  IFS=$OLDIFS
+}
 usage() {
-  echo "$0 [option] backuppath"
-  echo "option:"
-  echo "-a  archive and compress files"
-  echo "-v  verbose output"
-  echo "-p  progress"
+  echo_err "$0 [option]... target... backuppath"
+  echo_err "option:"
+  echo_err "-a  archive and compress files"
+  echo_err "-v  verbose output"
+  echo_err "-p  progress"
   exit 1
 }
 
-declare -i enableArchiving=0
-declare -i enableVerbose=0
-declare -i enable_progress=0
-while getopts $optlist opt; do
-  case $opt in
-    a)
-      let enableArchiving=1
-      ;;
-    v)
-      let enableVerbose=1
-      ;;
-    p)
-      let enable_progress=1
-      ;;
-    *)
-      usage
-      ;;
-  esac
-done
-shift $((OPTIND - 1))
-
-if [ -z "$1" ]
-then
-  echo "no backuppath supplied"
-  usage
-fi
-trap catch_interrupt SIGINT SIGTERM
-
-copy="rsync"
-#add option to backup old files to folder
-
-# backup root path path/backup
-# dont use last slash
-root="${1%/}"
-
-destpath="$root/noname"
-backuppath="$destpath/../old_bak"
-
-suffix="_bak"
-ferror="sync.errors"
-
-options="-azubR"
-options="$options --backup-dir=$backuppath"
-options="$options --suffix=$suffix" 
-
-synccmd="$copy $options"
-
-updateVars() {
-
-  destpath="$root/$1"
-  backuppath="${destpath%/}/../old_bak"
-
-  options="-aAzubR"
-  if [[ $enableVerbose == 1 ]]; then
+check_env() {
+  if [[ $enable_verbose == 1 ]]; then
     options+="v"
   else
     options+="q"
   fi
-
   if [[ $enable_progress == 1 ]]; then
     options+=" --progress"
   fi
-  options="$options --backup-dir=$backuppath"
-  options="$options --suffix=$suffix" 
 
-  synccmd="$copy $options"
-
-  if [[ "$destpath" != /* ]]; then
+  if ! is_absolute_path "$destpath"; then
     destpath="${PWD}/${destpath}"
+    backuppath="${destpath}/../old_bak"
   fi
-  if ! [ -d "$destpath" ]
-  then
-	  mkdir -p "$destpath"
-  elif [ -e "$destpath/../$ferror" ]
-  then
-	  rm "$destpath/../$ferror"
+  if ! [ -f "$destpath" ]; then
+    mkdir -p "$destpath"
+  elif [ -e "$destpath/../$ferror" ]; then
+    rm "$destpath/../$ferror"
   fi
 
+  options+=" --backup-dir=$backuppath"
+  options+=" --suffix=$suffix" 
 
+  copy_cmd="$copy $options"
 }
 
-archiveDirectory() {
-  if [[ $enableArchiving == 0 ]]; then
+
+archive_dir() {
+  if [[ $enable_archiving == 0 ]]; then
     return 
   fi
   archivename="${destpath%/}"
   archivename="${archivename##*/}"
   taroptions="-cz"
-  if [[ $enableVerbose == 1 ]]; then
+  if [[ $enable_verbose == 1 ]]; then
     taroptions+="v"
   fi
   taroptions+="f"
-  tar "$taroptions" "$destpath/../${archivename}_$(date +%d%m%y).tar.gz" -C\
- "$destpath/.." "$archivename" && rm -rf "$destpath"
+  tar "$taroptions" "$destpath/../${archivename}_$(date +%d%m%y).tar.gz" -C \
+"$destpath/.." "$archivename" && rm -rf "$destpath"
 }
 
-syncthis() {
-  if [[ $enableVerbose == 1 ]]; then
-    echo "Backup: $PWD/$1 to $destpath"
+run_sync() {
+  if [[ $enable_verbose == 1 ]]; then
+    echo "Backup: $1 to $destpath"
   fi
-  $synccmd "$1" "$destpath"
+  local -r cmd_string="$copy_cmd $1 $destpath"
+
+  if [[ $enable_debug == 1 ]]; then
+    echo "$cmd_string"
+  else
+    eval "$cmd_string"
+  fi
 
   if [[ $? != 0 ]]; then
     echo "Error $copy returned $? for $(pwd)" >> "$destpath/../$ferror"
     return 1
   fi
-  return 0	
 }
 
-# $1 is backup path
-# $2 is location of files to be backed up
-backupCmd() {
- updateVars "$1"
- cd "$2" || exit
- syncthis ./
- archiveDirectory
- cd ~ || exit
-  
+echo_err() {
+  >&2 echo "$@"
 }
 
-printMessage() {
-if [[ $enableVerbose == 1 ]]; then
-  echo -en "\n####################################
-####################################\n"
-  echo -n "$1"
-  echo -en "\n####################################
-####################################\n"
-fi
-exit 0
+is_absolute_path() {
+  if [[ "$1" == /* ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+print_message() {
+  if [[ $enable_verbose == 1 ]]; then
+    echo -en "\n####################################
+    ####################################\n"
+    echo -n "$1"
+    echo -en "\n####################################
+    ####################################\n"
+  fi
+}
+pushd() {
+  command pushd "$@" &> /dev/null
+}
+popd() {
+  command popd &> /dev/null
 }
