@@ -2,7 +2,7 @@
 # source this for colors
 BLACK="\033[0;30m" 
 DARK_GRAY="\033[1;30m"
-RED='\033[0;31m'
+RED="\033[0;31m"
 LIGHT_RED="\033[1;31m"
 GREEN="\033[0;32m"   
 LIGHT_GREEN="\033[1;32m"
@@ -16,4 +16,4 @@ CYAN="\033[0;36"
 LIGHT_CYAN="\033[1;36"
 LIGHT_GRAY="\033[0;37"     
 WHITE="\033[1;37"
-NC='\033[0m' # No Color]]'
+NC="\033[0m" # No Color]]'

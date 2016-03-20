@@ -53,7 +53,7 @@ main() {
 
 execute() {
 
-  optlist=":avpd"
+  local optlist=":avpd"
   local -i enable_archiving=0
   local -i enable_verbose=0
   local -i enable_progress=0
