@@ -13,5 +13,4 @@ fi
 
 label=$1
 iso=$2
-genisoimage -V "$label" -J -r "$iso" | \
-    wodim -v dev=/dev/sr0 -waiti -
+wodim -v dev=/dev/sr0 $iso
