@@ -9,36 +9,18 @@ target=$1
 destination=$2
 
 function usage {
-echo -en "$0 target destination\n\n"
-echo -e "target\n\tlocation to create links from"
-echo -e "destination\n\tdestination to create new links of targets"
-echo -e "arguments must be directories"
+echo "usage: ${0##*/} target destination"
+echo -e "  target,\tlocation to create links from"
+echo -e "  destination,\tdestination to create new links of targets"
 exit 1
 }
 
-if [ -z "$target" ]
-then
-	echo "empty target"
+if [ -z "$target" ] ||
+  [ -z "$destination" ] ||
+  ! [ -d "$target" ] || 
+  ! [ -d "$destination" ]; then
 	usage
 fi
-if [ -z "$destination" ]
-then
-	echo "empty destination"
-	usage
-fi
-
-if ! [ -d "$target" ]
-then 
-	echo "target is no folder: $target"
-	usage
-fi
-if ! [ -d "$destination" ]
-then 
-	echo "destination is no folder: $destination"
-	usage
-fi
-
-
 
 # switch to target,get link list,switch back to destination
 cd "$target" || exit

@@ -1,8 +1,8 @@
 #!/bin/bash
 if [ -z "$1" ]
 then
-	echo "no arguments to start a command in background"
-	exit 1
+  echo "no arguments to start a command in background" >&2
+  exit 1
 fi
 
 cmd=("$@")
