@@ -1,9 +1,9 @@
 #!/bin/env python3
 
 def main():
-  pass
+    pass
 def usage():
-  pass
+    pass
 
 if __name__ == "__main__":
-  main()
+    main()

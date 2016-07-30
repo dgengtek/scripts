@@ -1,13 +1,13 @@
 #!/bin/env python3
 import unittest
 import __init__
-import tools.setup_env as setup
+import tools.pystow as pystow
 class TestMethods(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_parse_home(self):
-        f = setup.parse_home
+        f = pystow.parse_home
         import os
         home = "~/test/path/to/destination"
         path = os.getenv("HOME")
@@ -18,15 +18,15 @@ class TestMethods(unittest.TestCase):
     def test_package_filtering(self):
         pkgs=["test",".git","one","two","hello"]
         exclude=[".git","hello"]
-        actual = list(setup.filter_packages(pkgs, exclude))
+        actual = list(pystow.filter_packages(pkgs, exclude))
         expected = ["test","one","two"]
         self.assertListEqual(actual, expected)
 
     def test_empty_packages(self):
         with self.assertRaises(RuntimeError):
-            list(setup.filter_packages())
+            list(pystow.filter_packages())
         with self.assertRaises(RuntimeError):
-            list(setup.filter_packages(pkgs=[]))
+            list(pystow.filter_packages(pkgs=[]))
 
     def test_building_args(self):
         pass
@@ -47,7 +47,7 @@ class TestMethods(unittest.TestCase):
                 ]
         self.assertEqual(len(paths),len(expected))
         for i,p in enumerate(paths):
-            actual = setup.build_path(p, check_valid=False)
+            actual = pystow.build_path(p, check_valid=False)
             expect = expected[i]
             msg = "Parsing of {} failed, got {}".format(p,expect)
             self.assertEqual(actual, expect, msg)
@@ -60,7 +60,7 @@ class TestMethods(unittest.TestCase):
                 "invalidpath/",
                 ]
         for p in paths:
-            self.assertRaises(NotADirectoryError, setup.build_path, p)
+            self.assertRaises(NotADirectoryError, pystow.build_path, p)
 
 
 if __name__ == "__main__":

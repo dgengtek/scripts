@@ -25,8 +25,6 @@ if len(args) is 1:
 else:
     usage()
 
-    
-
 raw_options=options.replace(":","")
 
         
@@ -59,5 +57,3 @@ hash_base64=binascii.b2a_base64(hash_and_salt)
 
 dovecot="{SSHA512}"+hash_base64.decode("utf-8")
 print(dovecot)
-
-

@@ -4,51 +4,97 @@ Requires stow_dir_setup.sh to run
 used to parse configuration for deployment of directory structure
 
 """
-import configparser
+from configparser import ConfigParser
 import os
 import sys
+
+# TODO improve logging
 import logging
+
+# TODO use glob(from pathlib with Path("path/to/dir").glob("ew*"), and pathlib
+# for linux and nt
+
+import pathlib
+
+from argparse import ArgumentParser
 from functools import reduce
 _keys = [
   "path", 
   "pkgs",
   "exclude"
   ]
+_configuration_filenames = [
+        "pystow.cfg",
+        ]
 _logger = logging.getLogger(sys.argv[0])
 _logger.setLevel(logging.INFO)
 _ch = logging.StreamHandler()
 _formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 _ch.setFormatter(_formatter)
 _logger.addHandler(_ch)
+# default config filename
+_config_filename = "setup.ini"
 
 def main():
     # keys for stow setup in sections
+    parser = ConfigParser()
 
-    parser = configparser.ConfigParser()
+    global _config_file
     main.config=""
-    try:
-        if sys.argv[1] in ["-h","help","--help"]:
-            usage()
-        main.config = sys.argv[1]
-    except IndexError:
-        main.config="setup.ini"
+
+    input_args = parse_argv(sys.argv[1:])
+    main.config = input_args.get("file",_config_filename)
+    if not main.config:
+        main.config = _config_filename
     if not os.path.isfile(main.config):
         print("No configuration file found")
         usage()
     if not parser.read(main.config):
         printexit("Configuration: {} not found.".format(config))
-    main.config=os.path.abspath(main.config)
+    main.config = os.path.abspath(main.config)
 
     sections = parser.sections()
-
     cmd = get_cmd_path("stow_dir_setup.sh")
 
     for section in sections:
         values = get_values(parser[section],_keys)
         path = build_path(values.get("path"))
         values.update({"path":path})
-        args = build_args(values)
+        args = build_args(values, **input_args)
         run(cmd, args)
+
+def usage():
+    hilfe="usage:  "+sys.argv[0]+" ini"
+    cmd = get_cmd_path("stow_dir_setup.sh")
+    os.execv(cmd,["-h"])
+    print(hilfe)
+    sys.exit(1)
+
+def parse_argv(argv):
+    argparser = get_argparser()
+    namespace = argparser.parse_args(argv)
+
+    # get dictionary of values
+    return vars(namespace)
+
+def get_argparser():
+    summary="""
+    Pystow
+
+    """
+    argparser = ArgumentParser(description=summary)
+
+    argparser.add_argument("-v","--verbose",action="store_true",
+            help="")
+    argparser.add_argument("-d","--destination",
+            help="")
+    argparser.add_argument("-f","--file",
+            help="Configuration file")
+    argparser.add_argument("-s","--simulate",action="store_true", 
+            help="Simulate")
+    argparser.add_argument("-t","--target", 
+            help="Target")
+    return argparser
 
 def get_cmd_path(cmd):
     # if on local path return 
@@ -118,9 +164,6 @@ def parse_real(path):
         return
     return os.path.realpath(path)
 
-def parse_glob(path):
-    pass
-
 def filter_packages(pkgs=[], exclude=[]):
     if len(pkgs) is 0:
         raise RuntimeError("No packages supplied")
@@ -129,7 +172,7 @@ def filter_packages(pkgs=[], exclude=[]):
             yield p
 
 
-def build_args(values, filter_pkgs=filter_packages):
+def build_args(values, filter_pkgs=filter_packages, **kwargs):
     path = values.get("path")
 
     source = os.getcwd()
@@ -139,6 +182,9 @@ def build_args(values, filter_pkgs=filter_packages):
     # $1 ...
     args.append("-d " + source)
     args.append("-t " + path)
+    for key, value in kwargs.items():
+        if key == "simulate":
+            args.append("-s")
     pkgs = values.get("pkgs", "")
     if not pkgs or pkgs.startswith("*"):
       pkgs = os.listdir(source)
@@ -146,7 +192,10 @@ def build_args(values, filter_pkgs=filter_packages):
       pkgs = pkgs.split(",")
 
     excluded_packages = values.get("exclude", "")
-    excluded_packages = excluded_packages.split(",")
+    if excluded_packages:
+        excluded_packages = excluded_packages.split(",")
+    else:
+        excluded_packages = list()
     excluded_packages.append(".git")
     pkgs = filter_pkgs(pkgs, excluded_packages)
 
@@ -161,14 +210,6 @@ def run(cmd, args):
     if pid == 0:
         os.execv(cmd,args)
 
-
-
-def usage():
-    hilfe="usage:  "+sys.argv[0]+" ini"
-    cmd = get_cmd_path("stow_dir_setup.sh")
-    os.execv(cmd,"-h")
-    print(hilfe)
-    sys.exit(1)
 
 if __name__ == "__main__":
     main()

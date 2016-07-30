@@ -67,6 +67,7 @@ main() {
   # qemu
   #local virtualization=" --hvm"
   # xen
+  # default option of virtinstall
   #local virtualization=" --paravirt"
   #local virtualization=" --virt-type qemu"
 
@@ -102,7 +103,10 @@ main() {
   # get additional options
   shift 2
   options="$@"
-  virt-install -n $name --memory $memory \
+  virt-install \
+    --connect qemu:///system \
+    -n $name \
+    --memory $memory \
     --vcpus $cpus --cpu host \
     --import --os-variant $os \
     $options \

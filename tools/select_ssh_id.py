@@ -30,7 +30,7 @@ def main():
         except KeyboardInterrupt:
             print()
             sys.exit(2)
-        if is_in_bounds(choice, ids):
+        if is_in_bounds(choice-1, ids):
             add_ssh_key(main.ssh_path+"/"+ids[choice-1])
         else:
             print("Invalid choice")
@@ -50,7 +50,7 @@ def get_ids(items, matcher):
 
 def is_in_bounds(choice, l):
     length = len(l)
-    if choice <= length and choice > 0:
+    if choice < length and choice >= 0:
         return True
     else:
         return False

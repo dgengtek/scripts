@@ -55,14 +55,14 @@ def usage():
 
 
 def double_selection(optionlist,unique):
-  selected_once=False
-  for o in optionlist:
-    o=o.replace("-","")
-    if o in unique:
-      if selected_once:
-	return True
-      selected_once=True
-  return False
+    selected_once=False
+    for o in optionlist:
+        o=o.replace("-","")
+        if o in unique:
+            if selected_once:
+                return True
+            selected_once=True
+    return False
 
 def set_variable(mapping, option):
   var=mapping[option]
@@ -95,32 +95,32 @@ mapped_options= {
 option_keys=[o for o,v in opts]
 
 for uniques in unique_list:
-  if double_selection(option_keys, uniques):
-    usage()
+    if double_selection(option_keys, uniques):
+        usage()
 
 keys=mapped_options.keys()
 for opt,value in opts:
-  opt=opt.replace("-","").strip()
-  if "h" in opt:
-    usage()
+    opt=opt.replace("-","").strip()
+    if "h" in opt:
+        usage()
 
-  for key in keys:
-    if opt in key and key in unique_list:
-      mapped_options[key][opt]=True
-      reversed_key=key.replace(opt,"")
-      mapped_options[key][reversed_key]= not \
-	  mapped_options[key][reversed_key]
-    elif "b" in opt: 
-      mapped_options[opt]=value 
+    for key in keys:
+        if opt in key and key in unique_list:
+            mapped_options[key][opt]=True
+            reversed_key=key.replace(opt,"")
+            mapped_options[key][reversed_key]= not \
+                mapped_options[key][reversed_key]
+        elif "b" in opt: 
+            mapped_options[opt]=value 
 
 bits=int(mapped_options.get("b",48))
 mac=random.randint(2**(bits-1),(2**bits)-1)
 
 def generate_bit_operation(mask):
-  mask=2**mask
-  def gen_func(func, nr):
-    return func(nr, mask)
-  return gen_func
+    mask=2**mask
+    def gen_func(func, nr):
+        return func(nr, mask)
+    return gen_func
 
 # define bit operations
 bit_set_function=lambda x,y: x|y
@@ -129,22 +129,22 @@ bit_unset_function=lambda x,y: x&~y
 bit_operation=generate_bit_operation(bits-8)
 # bit nr 1 of first octet
 if mapped_options["um"]["m"]:
-  mac=bit_operation(bit_set_function, mac)
+    mac=bit_operation(bit_set_function, mac)
 else:
-  mac=bit_operation(bit_unset_function, mac)
+    mac=bit_operation(bit_unset_function, mac)
 # bit nr 2 of first octet
 bit_operation=generate_bit_operation(bits-7)
 if mapped_options["gl"]["l"]:
-  mac=bit_operation(bit_set_function, mac)
+    mac=bit_operation(bit_set_function, mac)
 else:
-  mac=bit_operation(bit_unset_function, mac)
+    mac=bit_operation(bit_unset_function, mac)
 
 separator=mapped_options["s"]
 mac=hex(mac)[2:]
 result=""
 for i,c in enumerate(mac):
-  result+=c
-  if not (i+1)%2 and \
-      (i+1) < len(mac):
-    result+=separator
+    result+=c
+    if not (i+1)%2 and \
+        (i+1) < len(mac):
+        result+=separator
 print(result)

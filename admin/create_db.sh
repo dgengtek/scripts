@@ -1,6 +1,6 @@
 #!/bin/env bash
 usage() {
-  echo "usage:  $0 db"
+  echo "usage:  $0 db owner"
   exit 1
 
 }
@@ -9,17 +9,21 @@ main () {
     usage
   fi
   local -r db="$1"
-  local -r user_admin="${db}_admin"
+  local -r owner="$2"
+  local user_admin="$owner"
+  if [[ -z $owner ]]; then
+    user_admin="${db}_admin"
+  fi
   local -r grants_schema="CREATE, USAGE"
 
 
   local sql_file=$(mktemp -u)
   tee $sql_file << EOF 
-CREATE DATABASE $db;
+CREATE USER $user_admin with password '$user_admin';
+CREATE DATABASE $db WITH OWNER $user_admin;
 BEGIN;
 
 REVOKE ALL ON DATABASE $db FROM public;
-CREATE USER $user_admin with password '$user_admin';
 
 COMMIT;
 
