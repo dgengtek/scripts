@@ -21,10 +21,10 @@ trap cleanup INT
 
 OLDIFS=$IFS
 IFS=$(echo -en "\n\b")
-
-for file in $(ls -1); do
+for file in $(find .); do
   outputfile=${file%.*}
   output="$outputDir/$outputfile.mp3"
+  echo $outputfile
   if [ -f "$file" ] && ! [ -e "$output" ]; then
     extension=${file##*.}
     if [ "$extension" = mp4 ] \
@@ -32,9 +32,9 @@ for file in $(ls -1); do
       || [ "$extension" = flv ]; then
     echo "converting - $file to mp3"
     ffmpeg -i "$file" -acodec mp3 -vn "$output"
+    fi
+  else
+    echo "SKIPPING - $outputfile already exists or not a file"
   fi
-else
-  echo "SKIPPING - $outputfile already exists or not a file"
-fi
 done
 IFS=$OLDIFS
