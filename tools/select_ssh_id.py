@@ -7,6 +7,8 @@ import subprocess
 # TODO check ssh path exists
 # TODO add logging
 # TODO add unit tests
+# TODO replace with interactive bash shell after id has been added
+# TODO use DOCOPTS
 
 
 def main():
@@ -64,6 +66,7 @@ def create_interactive_menu(ids):
 
 def add_ssh_key(key):
     print("Add key from location: ",key)
+    # && bash -i
     os.execl("/usr/bin/ssh-add","ssh-add", key)
 
 

@@ -39,7 +39,7 @@ progress_output() {
 progress() {
   declare -i cycle=0
   while :; do
-    if [[ $cycle == 4 ]];then
+    if (($cycle%4 == 0 ));then
       let cycle=0
     fi
     progress_output $cycle
@@ -64,4 +64,4 @@ rc=$!
 wait ${pids[@]}
 kill $rc
 
-echo "wait complete"
+echo -e "\nwait complete"

@@ -3,22 +3,28 @@
 # or config file
 # TODO use fifos to synchronize ordered output or write to temporary files and
 # merge when finished to output
+# TODO add final result output
+# TODO optional disable backup of replaced files
+# TODO add option for archive destination path, relative to destination
 usage() {
   cat >&2 << EOF
-usage: $0 [options] DESTINATION [BACKUPSRC ...] -- [rsync options]
+usage: $0 [options] DESTINATION [BACKUPSRC...] [-] -- [rsync options]
 
 options:
-  --archive, -a		            archive and compress files
-  --verbose, -v		            verbose output
-  --suffix dir, -p dir              suffix path onto destination
-  --change dir, -C dir              change to directory before running
-  --batch-count count, -b count     number of backup batches run in background
-  --content, -c                     copy only content to destination
+  -                                 read config from stdin(ini format)
+  --archive, -a		            Archive and compress files(tar,gzip)
+  --verbose, -v		            Verbose output
+  --suffix dir, -p dir              Suffix path onto destination, disables
+                                    relative path names options of rsync -R.
+  --change dir, -C dir              Change to directory before running.
+  --batch-count count, -b count     Number of backup batches to run in
+                                    background.[default: 1]
+  --content, -c                     Copy only content to destination(equivalent 
+                                    to using backslash suffix on src)
 EOF
-  error_exit 1 ""
 }
 log() {
-  logger -s -t ${0##*/} "$@"
+  echo -n "$@" | logger -s -t ${0##*/}
 }
 error_exit() {
   error_code=$1
@@ -34,58 +40,42 @@ catch_interrupt() {
 }
 
 # TODO allow debugging via argument?
-# best way to only allow logging for debug before its even set?
+# research best way to only allow logging for debug before it has been set
 main() {
   trap catch_interrupt SIGINT SIGTERM
 
   local -i enable_archiving=0
+  local -i enable_backup=0
   local -i enable_verbose=0
   local -i enable_debug=0
-  local -i enable_copy_content=0
   local destination_suffix=""
-  setup
-
-  # cmd for copying
-  local -r copy="rsync"
 
   # target to change to before running
   local target=""
+  # cmd for copying
+  local -r copy="rsync"
+  # relative syncing to copy relative supplied paths
+  local options="-aAzu"
+  # final command string
+  local copy_cmd=""
   # backup directory of old files
-  local backup_dir=""
-  local batch_count=4
+  local batch_count=1
 
   # declare rsync options
   local -r suffix="_bak"
-
-  # relative syncing to copy relative supplied paths
-  local options="-aAzubR"
-  # leftover options for rsync after --
-  local rsync_input_options=""
-
-  # final build command
-  local copy_cmd=""
-
-  local -a args
+  local args=
   local return_code=
-  log "input \$@: $@" 2>&$fddebug
-  while [[ -n $1 ]]; do
-    log "parse \$1: $1" 2>&$fddebug
-    parse_options "$@"
-    return_code=$?
 
-    if (($return_code == 1)) ; then
-      args+=("$1")
-    elif (($return_code == 2)) ; then
-      # got option with argument
-      shift
-    elif (($return_code == 3)) ; then
-      # got --
-      shift
-      rsync_input_options=$@
-      break
-    fi
-    shift
-  done
+
+  # TODO improve setup
+  # run setup to possibly set debugging before parsing
+
+  setup
+  check_globals_existing
+
+  log "input \$@: $@" 2>&$fddebug
+  parse_options "$@"
+
   # set input args
   set -- ${args[@]}
   unset -v args
@@ -97,17 +87,21 @@ main() {
   if [[ $# < 2 ]]; then
     log "Not enough arguments supplied."
     usage
+    error_exit 1 ""
   fi
   # clean path
-  destination_suffix=${destination_suffix%/}
-  destination="${1%/}/$destination_suffix"
+  destination=$(realpath -m "${1}/$destination_suffix")
   shift
 
   # check, update environment
-  update_environment
+  update_options
   pushd "$target"
   start_backup "$@"
   popd
+}
+check_globals_existing() {
+  [[ -z ${args+z} ]] && error_exit 1 "Args variable not set"
+  [[ -z ${options+z} ]] && error_exit 1 "Args variable not set"
 }
 start_backup() {
   # dont separate on space, only newline and backspace
@@ -124,16 +118,11 @@ start_backup() {
       wait || error_exit 50 "Failed waiting for background backup processes"
     fi
   done
+  wait || error_exit 50 "Failed waiting for background backup processes"
   IFS=$OLDIFS
 }
 start_worker() {
-    if is_absolute_path "$1" \
-      && pushd "$1"; then
-      run_sync ./* 
-      popd
-    else
-      run_sync "$1"
-    fi
+    run_sync "$1"
     archive_dir >&$fdverbose
 }
 setup() {
@@ -151,16 +140,20 @@ setup() {
   fi
 }
 parse_options() {
+  # exit if no options left
+  [[ -z $1 ]] && return 0
+  log "parse \$1: $1" 2>&$fddebug
+
   local return_code=0
   case $1 in
       -a|--archive)
 	enable_archiving=1
 	;;
+      -b|--backup)
+	enable_backup=1
+	;;
       -v|--verbose)
 	enable_verbose=1
-	;;
-      -c|--content)
-	enable_copy_content=1
 	;;
       -s|--suffix)
         destination_suffix=$2
@@ -176,7 +169,11 @@ parse_options() {
         ;;
       -*)
         usage
+        error_exit 5 "$1 is not allowed."
 	;;
+      -)
+        error_exit 5 "$1 is not implemented"
+        ;;
       --)
         return_code=3
         ;;
@@ -184,40 +181,59 @@ parse_options() {
         return_code=1
 	;;
   esac
-  return $return_code
+  if (($return_code == 1)) ; then
+    args+=("$1")
+  elif (($return_code == 2)) ; then
+    # got option with argument
+    shift
+  elif (($return_code == 3)) ; then
+    # got --, use all arguments left for rsync to process
+    shift
+    options="$options $@"
+    return
+  fi
+  shift
+  parse_options "$@"
 }
 
-update_environment() {
-  if ! ((enable_verbose)); then
-    options+="q"
+update_options() {
+  if ! (($enable_verbose)); then
+    options+=" -q"
   else
-    options+="v"
+    options+=" -v"
+  fi
+  if [[ -z $destination_suffix ]]; then
+    # enable relative path names from sources
+    options+=" -R"
   fi
 
   if ! is_absolute_path "$destination"; then
-    destination="${PWD}/${destination}"
-    backup_dir="${destination}/../old_bak"
+    destination=$(realpath -m "${PWD}/${destination}")
   fi
 
   ! [ -f "$destination" ] \
     && ! (($enable_debug)) \
     && mkdir -pv "$destination" >&$fdverbose
 
-  options+=" --backup-dir=$backup_dir"
-  options+=" --suffix=$suffix" 
-
+  if (($enable_backup)); then
+    options+=" -b"
+    # set backup dir to used destination suffix
+    local -r backup_destination=$(basename "$destination")
+    local -r backup_dir=$(realpath -m "${destination}/../bak/$backup_destination")
+    options+=" --backup-dir=$backup_dir"
+    options+=" --suffix=$suffix" 
+  fi
   copy_cmd="$copy $options"
 }
 
 
 archive_dir() {
-  if ! ((enable_archiving)); then
+  if ! (($enable_archiving)); then
     return 
   fi
-  archivename="${destination%/}"
-  archivename="${archivename##*/}"
+  archivename=$(basename "$destination")
   taroptions="-cz"
-  if ((enable_verbose)); then
+  if (($enable_verbose)); then
     taroptions+="v"
   fi
   taroptions+="f"
@@ -227,11 +243,8 @@ archive_dir() {
 
 run_sync() {
   local return_code=0
-  local src=${1%/}
-  if ((enable_copy_content)); then
-    src="${src}/"
-  fi
-  if ((enable_verbose == 1)); then
+  local -r src=$1
+  if (($enable_verbose == 1)); then
     log "Backup: $src to $destination"
   fi
   local -r cmd_string="$copy_cmd $src $destination"
@@ -248,6 +261,7 @@ run_sync() {
     log "Error, $copy returned $? for $PWD" 
     return $return_code
   fi
+  # TODO allow message to be piped to display message only when script finishes
   print_message "Backup finished from $@ to $destination"
 }
 

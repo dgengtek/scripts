@@ -1,22 +1,17 @@
 #!/bin/env bash
 usage() {
   cat << EOF
-usage:  ${0##*/} [options] [length]
+Usage:  ${0##*/} [options] [length]
   
-  generate password
+generate password
 
 options:
-  -a        
-      alphanumeric
-  -g  
-      (used by default)      
-      all printable characters, excluding space
-
+  -a            alphanumeric
+  -g            (default)all printable characters, excluding space
 EOF
-  exit 1
 }
 main() {
-  local -r optslist="agh"
+  local -r optlist=":ag"
   local charset="graph"
   while getopts $optlist opt; do
     case $opt in
@@ -26,20 +21,14 @@ main() {
       g)
         charset="graph"
 	;;
-      h)
-        echo "$usage"
+      *)
+        usage
         exit 1
 	;;
     esac
   done
-
-  length=$1
-  if [ -z "$length" ];then
-    length=8
-  fi
-
+  length=${1:-8}
   tr -cd [:"$charset":] < /dev/urandom | head -c "$length" | xargs -0
 }
 
 main "$@"
-
