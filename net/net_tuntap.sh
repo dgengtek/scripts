@@ -1,10 +1,13 @@
 #!/bin/bash
+# use qemu bridge helper
+# http://wiki.qemu.org/Features/HelperNetworking
 function usage {
-  echo << EOF
-usage: $0 [-r] [-h] [-b bridge] [-u user] tapdev
-  tapdev:		      tap device  name used for virtual network
-  -b			      bridge name used for virtual network
-  -u			      user used to create tap device
+  cat << EOF
+Usage:  ${0##*/} [Options] tapdev
+
+Options:
+  tapdev		      tap device  name used for virtual network
+  -b bridge		      bridge name used for virtual network
   -r			      remove tap device
   -h			      help
 EOF
@@ -13,8 +16,7 @@ EOF
 if (( $# < 2)) || [[ $(id -u) != 0 ]];then
   usage
 fi
-usr="$USER"
-bridge_name="br$(gen_alpha 4)"
+bridge_name="br$(gen_alpha.sh 4)"
 tap_dev_name=""
 
 function tap_dev_exists {
@@ -37,7 +39,7 @@ function tap_dev_up {
 }
 function create_tap_dev {
   if ! tap_dev_exists &&
-	ip tuntap add "$tap_dev_name" mode tap user "$usr";then 
+	ip tuntap add "$tap_dev_name" mode tap ;then 
     create_tap_dev_file
   fi
   ip link set dev "$tap_dev_name" master "$bridge_name" 
@@ -83,9 +85,6 @@ while getopts $optlist opt; do
   case $opt in
     b)
       bridge_name=$OPTARG
-      ;;
-    u)
-      usr=$OPTARG
       ;;
     r)
       let remove_tap=1
