@@ -3,9 +3,10 @@ from pathlib import Path
 import subprocess
 
 def main():
-    main.path_to_nodelist=Path(".config/wol.cfg")
+    main.path = Path(".config/wol.cfg")
+    main.path = main.path.home().joinpath(main.path)
     # iterate wake on lan list, wollist
-    menu = generate_menulist(main.path_to_nodelist.absolute())
+    menu = generate_menulist(main.path)
     if display_menu(menu):
         hostname, hwadress = menu[main.user_choice]
         subprocess.run(["wol", hwadress])
