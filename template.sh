@@ -1,11 +1,10 @@
 #!/bin/env bash
 usage() {
   cat << EOF
-usage:	${0##*/} option1 option2 target destination
+Usage:	${0##*/} [OPTIONS] target destination
   
-  options:
-    -h			  help
-
+OPTIONS:
+  -h			  help
   option1		  description
 EOF
   exit 1
@@ -13,7 +12,7 @@ EOF
 main() {
   echo "Script template"
 
-  local -r optlist=":abcdefgh"
+  local -r optlist="abcdefgh"
   while getopts $optlist opt; do
     case $opt in
       a)
@@ -29,4 +28,3 @@ main() {
 }
 
 main "$@"
-

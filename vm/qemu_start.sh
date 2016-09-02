@@ -100,8 +100,8 @@ main() {
     devices=${bridges[@]}
     function=connect_bridges
   elif ((connect_tapdevs== 1)); then
-    devices=${bridges[@]}
-    function=connect_bridges
+    devices=${tapdevs[@]}
+    function=connect_tapdevs
   fi
   connect_netdevs $function $devices
 
