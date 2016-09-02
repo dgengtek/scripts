@@ -61,10 +61,6 @@ main() {
   shift $((OPTIND -1))
   local bridge_id="$1"
 
-
-  local -r bridge_file_path="/tmp/virtual_network_$bridge_id"
-  local -r bridge_name_file="$bridge_file_path/$bridge_id"
-
   if ((flag_remove_bridge == 1));then 
     remove_bridge $bridge_id
   else
@@ -88,14 +84,6 @@ is_flagged() {
   fi
 }
 
-create_bridge_file_id() {
-  if [ -z "$bridge_id" ];then
-    bridge_id="br$(gen_alpha.sh 2)"
-  fi
-  mkdir -p "$bridge_file_path"
-  touch "$bridge_name_file"
-}
-
 remove_bridge() {
   if [ -z "$1" ];then
     >&2 echo "no bridge supplied to remove"
@@ -103,51 +91,27 @@ remove_bridge() {
   fi
   bridge_id="$1"
 
-  if ! bridge_is_empty ||
-    ((force_remove == 1));then
-    tap_device_list=$(cat $bridge_name_file)
-    for device in $tap_device_list;do
-      net_tuntap.sh -r -b $bridge_id $device
-    done
-  else
-    logger --stderr --no-act "bridge has devices attached to it"
-    return 1
-  fi
-
-  if (bridge_exists $bridge_id &&
-	ip link set dev $bridge_id down &&
-	ip link delete dev $bridge_id type bridge &&
-	[ -e $bridge_name_file ]);then 
-    rm $bridge_name_file
-    rmdir $bridge_file_path
-  fi
-}
-
-
-
-# bridge doesnt have any left over tap connections
-bridge_is_empty() {
-  local devices
-  devices="$(cat $bridge_name_file)"
-  [[ $devices == "" ]]
+  bridge_exists $bridge_id \
+    && ip link set dev $bridge_id down \
+    && ip link delete dev $bridge_id type bridge 
 }
 
 bridge_is_up() {
   local path_to_bridge="/sys/class/net/$bridge_id/operstate"
-  [ -e $path_to_bridge ] && 
-    [ $(cat $path_to_bridge) != "down" ]
+  [ -e $path_to_bridge ] \
+    && [ $(cat $path_to_bridge) != "down" ]
 }
 
 bridge_exists() {
   local bridge_id=$1
-  [ ! -z $bridge_id ] && \
-  [ -e /sys/devices/virtual/net/"$bridge_id" ]
+  [ ! -z $bridge_id ] \
+    && [ -e /sys/devices/virtual/net/"$bridge_id" ]
 }
 
 create_bridge() {
   local bridge_id=$1
-  (! bridge_exists "$bridge_id" && \
-    ip link add name "$bridge_id" type bridge || exit 1)
+  (! bridge_exists "$bridge_id" \
+    && ip link add name "$bridge_id" type bridge || exit 1)
   if ((flag_internal_network == 1)); then
     create_internal_networking
   else
@@ -184,7 +148,6 @@ start_bridge() {
   if ! bridge_exists $bridge_id;then
     create_bridge $bridge_id
   fi
-  create_bridge_file_id $bridge_id
   if ! bridge_is_up;then
     ip link set dev "$bridge_id" up
   fi
