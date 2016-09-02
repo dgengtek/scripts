@@ -1,12 +1,12 @@
 #!/usr/bin/bash
 # download links from a file
-source /home/gd/lib/libcolors.sh
+source ~/lib/libcolors.sh
 
 filename="$1"
 
 if [ -z "$filename" ]
 then
-	echo -e "${RED}no filename supplied${NC}"
+	echo -e "${COLORS_RED}no filename supplied${COLORS_NONE}"
 	echo "$0 filename"
 	exit 1
 fi
@@ -16,13 +16,13 @@ failedList="failed_${filename}"
 while read -r line
 do
     	name="$line";
-    	echo -e "\n${BLUE}Name read from file - $name${NC}";
+    	echo -e "\n${COLORS_BLUE}Name read from file - $name${COLORS_NONE}";
 	curl -O -J -L "$name";
 	if [[ $? == 0 ]];then
-	  echo -e "${GREEN}Successfull download.${NC}"
+	  echo -e "${COLORS_GREEN}Successfull download.${COLORS_NONE}"
 	  sed -i '1d' "$filename";
 	else
-	  echo -e "${RED}Failed download of ${line}${NC}" >> "$failedList"
+	  echo -e "${COLORS_RED}Failed download of ${line}${COLORS_NONE}" >> "$failedList"
 	fi
 done < "$filename"
 rm "$filename"
