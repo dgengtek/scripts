@@ -1,19 +1,27 @@
 #!/bin/bash
 usage() {
   cat << EOF
-usage:  ${0##*/} [OPTIONS] [-- STOWOPTIONS]
+Usage:  ${0##*/} [Options] [-- STOWOPTIONS]
 
-  OPTIONS:
-    -d directory      directory to link from
-    -t target	      target directory to link to
-    {-p pkg}	      package to stow, can be used repeatedly
-    (-r | -m)	      -r, remove conflicting destination files |
-		      -m, move all conflicting destination files to a backup folder 
-		      (default home directory)
-    -i		      prompt before applying actions
-    -f		      dont prompt before overwriting
-    -v		      verbose actions(mv,rm)
-    -s		      simulate program execution
+Options:
+    -d directory      
+	directory to link from
+    -t target	      
+	target directory to link to
+    {-p pkg}	      
+	package to stow, can be used repeatedly
+    (-r | -m)	      
+	-r, remove conflicting destination files |
+	-m, move all conflicting destination files to a backup folder 
+	(default: home directory)
+    -i		      
+	prompt before applying actions
+    -f		      
+	dont prompt before overwriting
+    -v		      
+	verbose actions(mv,rm)
+    -s		      
+	simulate program execution
 EOF
   exit 1
 }
