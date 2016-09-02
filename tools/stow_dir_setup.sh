@@ -1,6 +1,6 @@
 #!/bin/bash
 usage() {
-  echo << EOF
+  cat << EOF
 usage:  ${0##*/} [OPTIONS] [-- STOWOPTIONS]
 
   OPTIONS:

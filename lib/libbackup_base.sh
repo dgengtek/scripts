@@ -12,9 +12,17 @@
 #     Relative supplied targets will be copied with 
 #     its exact relative pathname.
 #     To copy only contents of a folder, supply target with absolute pathname
+usage() {
+  cat << EOF
+usage: $0 [option] target backuppath"
 
-
-
+  option:
+    -a		archive and compress files
+    -v		verbose output
+    -p		progress
+EOF
+  exit 1
+}
 
 # TODO: refactor to python
 
@@ -120,17 +128,6 @@ execute() {
     archive_dir
   done
   IFS=$OLDIFS
-}
-usage() {
-  echo << EOF
-usage: $0 [option] target backuppath"
-
-  option:
-    -a		archive and compress files
-    -v		verbose output
-    -p		progress
-EOF
-  exit 1
 }
 
 check_env() {

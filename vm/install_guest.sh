@@ -2,7 +2,7 @@
 # TODO: create new images with install by pxe or urls
 
 usage() {
-  echo << EOF
+  cat << EOF
 ${0##*/} [options] domainname diskpath [virt-install options]
 
   options:

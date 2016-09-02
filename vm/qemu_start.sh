@@ -1,15 +1,15 @@
 #!/bin/bash
 usage() {
-  echo << EOF
-usage: ${0##*/} [options] img [addoptions]
+  cat << EOF
+Usage: ${0##*/} [options] img [addoptions]
 
-  options:
-    -s		  create a snapshot and discard
-    -x		  use cpu arch x86_64
-    -m mem		  memory
-    -w port		  create monitor on port, default is 7100
-    -p 'sport:dport'    open ports from host,sport -> guest,dport
-    addoptions	  add additional options to qemu
+options:
+  -s			  create a snapshot and discard
+  -x			  use cpu arch x86_64
+  -m mem		  memory
+  -w port		  create monitor on port, default is 7100
+  -p 'sport:dport'	  open ports from host,sport -> guest,dport
+  addoptions		  add additional options to qemu
 EOF
   exit 1
 }

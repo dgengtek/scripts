@@ -1,6 +1,5 @@
 #!/bin/bash
-
-function loop_cmd {
+loop_cmd() {
 while : ; do
   /usr/bin/clear
   eval "$@"

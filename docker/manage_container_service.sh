@@ -1,6 +1,6 @@
 #!/bin/bash
 usage() {
-  echo << EOF
+  cat << EOF
 usage:  ${0##*/} mode config
 
   mode			  (start | stop | restart | reload | remove)

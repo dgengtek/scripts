@@ -1,6 +1,5 @@
 #!/bin/bash
-
-function top_temperature {
+top_temperature() {
 while : ; do
   /usr/bin/clear
   /usr/bin/sensors
