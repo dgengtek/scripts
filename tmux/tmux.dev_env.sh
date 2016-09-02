@@ -1,5 +1,3 @@
-#!/bin/bash
-
 new-session -s devEnv -n vimMAIN vim
 split-window -h vim
 select-pane -t 0

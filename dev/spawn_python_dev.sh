@@ -7,12 +7,12 @@ winName="win"
 #create session,tabs and change to directory
 if tmux has-session -t $sessionName
 then
-	echo "session already exists"
-	exit 1
+  echo "session already exists"
+  exit 1
 fi
 
 
-cd /mnt/hdd/bigX/a_Programmieren/Python/workspace || exit
+cd /mnt/hdd/bigX/programming/Python/workspace || exit
 
 
 run pycharm

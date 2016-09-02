@@ -6,8 +6,7 @@ OLDIFS=$IFS
 IFS=$(echo -en "\n\b")
 
 PS3='select vimwiki diary to open: '
-select selection in $(ls -1)
-do
+select selection in $(ls -1); do
   if [ -n "$selection" ]; then	
     cd "$selection" || exit 1
     if [ ! -d diary ]; then

@@ -1,4 +1,5 @@
 #!/bin/bash
+# deprecated
 #sync with remote host
 copy="rsync"
 

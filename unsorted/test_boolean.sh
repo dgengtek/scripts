@@ -1,4 +1,5 @@
 #!/bin/bash
+# useless
 if [ -z $1 ] ||
     [ -z $2 ]; then
   echo "usage: $0 expr1 expr2"

@@ -1,4 +1,6 @@
 #!/bin/bash
+# deprecated
+# clone git repo
 optlist=":fe"
 
 usage() {

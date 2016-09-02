@@ -60,7 +60,7 @@ fi
 hda="$1"
 shift 1
 
-local options="-enable-kvm -cpu host"
+local options="-enable-kvm -cpu host -vga qxl" 
 
 options+=" $@"
 
