@@ -6,4 +6,7 @@ images=(
 "centos"
 "java:alpine"
 )
-docker
+for i in ${images[@]}; do
+  echo "pull image $i"
+  docker pull $i
+done

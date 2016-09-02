@@ -1,11 +1,13 @@
 #!/bin/bash
 usage() {
-  echo -e "Usage\n\t${0##*/} mode config"
-  echo -e "\tmode,\t(start | stop | restart | reload | remove)"
-  echo -e "\tconfig,\tconfiguration file for the container"
+  echo << EOF
+usage:  ${0##*/} mode config
+
+  mode			  (start | stop | restart | reload | remove)
+  config		  configuration file for the container
+EOF
   exit 1
 }
-echo_err() { logger "$@"; echo "$@" >&2; }
 main() {
   mode=$1
   config=$2
@@ -56,28 +58,28 @@ _container_running() {
     echo "Container $container_name is running"
     return 0
   else
-    echo_err "Container $container_name is not running"
+    logger -s "Container $container_name is not running"
     return 1
   fi
 }
 _start() {
   echo "Starting container $container_name."
   if ! exec $docker_bin start -a "$container_name";then
-    echo_err "Container start failed"
+    logger -s "Container start failed"
   fi
 }
 _stop() {
   echo "Stopping container $container_name."
   if ! $docker_bin stop "$container_name"; then
-    echo_err "Container did not stop successfully."
+    logger -s "Container did not stop successfully."
     _kill
   fi
 }
 _kill() {
   if $docker_bin kill "$container_name"; then
-    echo_err "Sending kill to container $container_name was successfull"
+    logger -s "Sending kill to container $container_name was successfull"
   else
-    echo_err "Sending kill to container $container_name was not killed"
+    logger -s "Sending kill to container $container_name was not killed"
   fi
 }
 _reload() {
