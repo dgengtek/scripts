@@ -1,4 +1,5 @@
 #!/bin/bash
+# deprecated, use pipe results into xargs instead
 # execute command on a specific extension
 
 fileext=$1

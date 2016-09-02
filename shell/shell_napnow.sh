@@ -1,5 +1,7 @@
 #!/bin/bash
 host=$(hostname)
-mailto="admin@geng.noip.me"
-echo -e "Done by: $(id)\n$(date)" | mail -s "Suspending $host" "$mailto"
+mailto="admin"
+msg="Done by: $(id)\n$(date)"
+logger -s -t "$0" "$msg"
+echo -e "$msg" | mail -s "Suspending $host" "$mailto"
 systemctl suspend -i

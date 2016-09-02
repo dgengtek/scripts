@@ -1,4 +1,6 @@
 #!/bin/bash
+# wrapper around stow to handle conflicts
+# TODO add proper exit codes as global constants
 usage() {
   cat << EOF
 Usage:  ${0##*/} [Options] [-- STOWOPTIONS]
@@ -26,15 +28,16 @@ EOF
   exit 1
 }
 logger() {
-  command logger -s --no-act "$@"
+  command logger -s -t "${0##*/}" --no-act "$@"
 }
 check_input() {
   local -ir conflict=$((mv_destination_files == 1 \
     && remove_destination_files == 1))
   if ((conflict == 1)); then
     usage
-  elif ((mv_destination_files ==1 )); then
+  elif ((mv_destination_files == 1)); then
     if ! mkdir -p "$mv_dest"; then
+      logger "Dir creation of $mv_dest failed."
       exit 2
     fi
     cmd=mv
@@ -139,9 +142,6 @@ resolve_conflicts() {
 
   local cmd=$1
   shift 1
-  if ! [ -d "$mv_dest" ]; then
-    return
-  fi
 
   local options=""
   if ((enable_verbose == 1));  then
@@ -160,36 +160,30 @@ resolve_conflicts() {
   for f in "$@"; do
     target="$path/$f"
     if [ -e "$target" ]; then
-      $cmd $target $mv_dest
+      parse_cmd $cmd $target $mv_dest
     fi
   done
 }
-parse_cmd_options() {
-  if [ -z "$cmd_options" ] || [ -z "$targets" ]; then
-    echo "missing variables to parse cmd options"
-  fi
+parse_cmd() {
+  local -a cmd_options
+  local targets
+  local -r cmd=$1
+  shift 1
+
   for opt in $@; do
-    if [ $opt == "--" ]; then
+    if [[ $opt == "--" ]]; then
       shift
       break
     fi
-    options+=("$opt")
+    cmd_options+=("$opt")
     shift
   done
-  for t in $@; do
-    target+="$t "
-  done
+  $cmd $@
 }
 mv() {
-  local -a cmd_options
-  local targets
-  parse_cmd_options $@
   command mv ${cmd_options[@]} "$1" "$2"
 }
 rm() {
-  local -a cmd_options
-  local targets
-  parse_cmd_options $@
   command rm ${cmd_options[@]} "$1"
 }
 

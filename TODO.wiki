@@ -1,11 +1,6 @@
-* use a main function in more extensive scripts
-* remove global scope vars 
+* add the useful and simple short script functions to dotfiles .bash as util
+  functions
 * echo error messages to stderr filestream
 * use local scope vars inside functions by declaring them
   local
-* change function naming from
-  function name { ... }
-  to 
-  name() { ... }
-* add to backup a restoration call, with defined 
-  restore paths in their own respective scripts
+* use logger with a specific tag(script name)

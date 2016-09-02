@@ -2,7 +2,7 @@
 # use this lib inside other scripts, by sourcing it beforehand
 
 # Steps to run script:
-# 1.  Source this script before using any of its functions
+# 1.  Source this script
 # 2.  Make sure to initialize global array 'args' with input args supplied
 #     to the script 
 # 3.  Run backup with main function
@@ -12,6 +12,7 @@
 #     Relative supplied targets will be copied with 
 #     its exact relative pathname.
 #     To copy only contents of a folder, supply target with absolute pathname
+# TODO use logger,
 usage() {
   cat << EOF
 usage: $0 [option] target backuppath"
@@ -36,6 +37,9 @@ trap catch_interrupt SIGINT SIGTERM
 # passed in raw arguments
 # will be set in other scripts to pass in 
 # options + destination path
+# TODO replace with functions call to set
+# or add option to pass to main and separate with -- (double dash)
+# or use 
 declare -a args=()
 
 main() {
@@ -44,6 +48,7 @@ main() {
 
   # get last item
   # backup path supplied to script
+  # TODO add option to pass in instead
   local -r root=${args[$length]%/}
 
   # array without last element
@@ -131,12 +136,12 @@ execute() {
 }
 
 check_env() {
-  if [[ $enable_verbose == 1 ]]; then
+  if ((enable_verbose == 1)); then
     options+="v"
   else
     options+="q"
   fi
-  if [[ $enable_progress == 1 ]]; then
+  if ((enable_progress == 1)); then
     options+=" --progress"
   fi
 
@@ -158,13 +163,13 @@ check_env() {
 
 
 archive_dir() {
-  if [[ $enable_archiving == 0 ]]; then
+  if ((enable_archiving == 0)); then
     return 
   fi
   archivename="${destpath%/}"
   archivename="${archivename##*/}"
   taroptions="-cz"
-  if [[ $enable_verbose == 1 ]]; then
+  if ((enable_verbose == 1)); then
     taroptions+="v"
   fi
   taroptions+="f"
@@ -173,12 +178,12 @@ archive_dir() {
 }
 
 run_sync() {
-  if [[ $enable_verbose == 1 ]]; then
+  if ((enable_verbose == 1)); then
     echo "Backup: $1 to $destpath"
   fi
   local -r cmd_string="$copy_cmd $1 $destpath"
 
-  if [[ $enable_debug == 1 ]]; then
+  if ((enable_debug == 1)); then
     echo "$cmd_string"
   else
     eval "$cmd_string"
@@ -191,20 +196,13 @@ run_sync() {
 }
 
 is_absolute_path() {
-  if [[ "$1" == /* ]]; then
-    return 0
-  else
-    return 1
-  fi
+  [[ "$1" == /* ]]
 }
 
 print_message() {
   if [[ $enable_verbose == 1 ]]; then
-    echo -e "\n####################################
-    ####################################"
-    echo "$1"
-    echo "####################################
-    ####################################"
+    printf '=%.0s' {1..10}
+    echo "> $1"
   fi
 }
 pushd() {

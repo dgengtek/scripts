@@ -30,6 +30,9 @@ main() {
   local -a run_cmd_args=${run_cmd_args[@]}
   local -a entrypoint_args=${entrypoint_args[@]}
   echo $$ > /run/"$(basename $2).pid"
+
+  local -r SYSLOG_TAG="${0##*/}@$container_name"
+
   run_mode "$1"
 }
 _setup() {
@@ -46,6 +49,9 @@ _setup() {
   fi 
 
 }
+logger() {
+  command logger -s -t "$SYSLOG_TAG" "$@"
+}
 _container_exists() {
   if docker inspect -f {{.State.Running}} "$container_name" > /dev/null; then
     return 0
@@ -58,28 +64,28 @@ _container_running() {
     echo "Container $container_name is running"
     return 0
   else
-    logger -s "Container $container_name is not running"
+    logger "Container $container_name is not running"
     return 1
   fi
 }
 _start() {
   echo "Starting container $container_name."
   if ! exec $docker_bin start -a "$container_name";then
-    logger -s "Container start failed"
+    logger "Container start failed"
   fi
 }
 _stop() {
   echo "Stopping container $container_name."
   if ! $docker_bin stop "$container_name"; then
-    logger -s "Container did not stop successfully."
+    logger "Container did not stop successfully."
     _kill
   fi
 }
 _kill() {
   if $docker_bin kill "$container_name"; then
-    logger -s "Sending kill to container $container_name was successfull"
+    logger "Sending kill to container $container_name was successfull"
   else
-    logger -s "Sending kill to container $container_name was not killed"
+    logger "Sending kill to container $container_name was not killed"
   fi
 }
 _reload() {

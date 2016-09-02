@@ -1,4 +1,5 @@
 #!/bin/bash
+# deprecated, use command basename
 #change extension name of files
 
 oldext=$1

@@ -25,7 +25,7 @@ main() {
   local pool_name="images"
   local os="centos7.0"
 
-  optlist=":oc:n:hs:p:"
+  optlist="oc:n:hs:p:"
   local -i use_backing_store=0
   local -i use_host_arch=0
   while getopts $optlist opt; do
