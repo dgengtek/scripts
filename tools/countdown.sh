@@ -93,6 +93,6 @@ fi
 output="$output, finished\n"
 echo -en "$output"
 notify-send "Timer finished" "$msgsend"
-run mplayer $BEEP
+run.sh mplayer $BEEP
 update_session
 popd

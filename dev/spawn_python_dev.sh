@@ -5,8 +5,7 @@ sessionName="python_dev"
 winName="win"
 
 #create session,tabs and change to directory
-if tmux has-session -t $sessionName
-then
+if tmux has-session -t $sessionName; then
   echo "session already exists"
   exit 1
 fi
@@ -14,9 +13,8 @@ fi
 
 cd /mnt/hdd/bigX/programming/Python/workspace || exit
 
-
-run pycharm
-run hamster
+run.sh pycharm
+run.sh hamster
 
 #start tmux and configure windows and panes
-run urxvt -e tmux source /home/gd/bin/bash/tmux.python_dev.sh
+run.sh urxvt -e tmux source ~/tmux/tmux_python_dev.sh

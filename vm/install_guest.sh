@@ -2,14 +2,17 @@
 # TODO: create new images with install by pxe or urls
 
 usage() {
-  echo -e "\n${0##*/} [options] domainname diskpath [virt-install options]..."
-  echo -e "\noptions:"
-  echo -e "  -h,\t\tuse host arch"
-  echo -e "  -o os,\tuse specified os"
-  echo -e "  -n network,\tattach to network"
-  echo -e "  -c cpus,\tnr or cpus, less than host"
-  echo -e "  -p pool,\tuse pool name"
-  echo -e "  -s size,\tcreate size in GiB"
+  echo << EOF
+${0##*/} [options] domainname diskpath [virt-install options]
+
+  options:
+      -h		use host arch
+      -o os		use specified os
+      -n network	attach to network
+      -c cpus		nr or cpus, less than host
+      -p pool		use pool name
+      -s size		create size in GiB
+EOF
   exit 1
 }
 

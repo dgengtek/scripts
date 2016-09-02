@@ -1,14 +1,17 @@
 #!/bin/bash
 usage() {
-  echo -e "Usage: ${0##*/} [options] img [addoptions]...\n"
-  echo -e "  options"
-  echo -e "  -s,\tcreate a snapshot and discard"
-  echo -e "  -x,\tuse cpu arch x86_64"
-  echo -e "  -m mem,\tmemory"
-  echo -e "  -w port,\tcreate monitor on port, default is 7100"
-  echo -e "  -p 'sport:dport',\topen ports from host,sport -> guest,dport"
-  echo -e "  addoptions,\tadd additional options to qemu"
-  
+  echo << EOF
+usage: ${0##*/} [options] img [addoptions]
+
+  options:
+    -s		  create a snapshot and discard
+    -x		  use cpu arch x86_64
+    -m mem		  memory
+    -w port		  create monitor on port, default is 7100
+    -p 'sport:dport'    open ports from host,sport -> guest,dport
+    addoptions	  add additional options to qemu
+EOF
+  exit 1
 }
 main() {
 local optlist=":shxm:w:p:"

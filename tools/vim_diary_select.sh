@@ -22,5 +22,5 @@ select selection in $(ls -1); do
 done
 IFS=$OLDIFS
 
-run urxvt -e vim -S \
+run.sh urxvt -e vim -S \
 ~/bin/vimscripts/generate_diary_links.vim diary.wiki

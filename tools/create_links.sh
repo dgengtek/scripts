@@ -2,24 +2,21 @@
 # TODO: new input to select only targets with specific
 # suffix to be linked(Optional)
 
-
-#script to link new scripts,programs with format name.whatever.* to name.whatever
+# strip suffix and create links on destination
 
 target=$1
 destination=$2
 
 function usage {
-echo "usage: ${0##*/} target destination"
-echo -e "  target,\tlocation to create links from"
-echo -e "  destination,\tdestination to create new links of targets"
-exit 1
+  echo "usage: ${0##*/} target destination"
+  echo -e "  target,\tlocation to create links from"
+  echo -e "  destination,\tdestination to create new links of targets"
+  exit 1
 }
 
-if [ -z "$target" ] ||
-  [ -z "$destination" ] ||
-  ! [ -d "$target" ] || 
-  ! [ -d "$destination" ]; then
-	usage
+if ! ([ -d "$target" ] || 
+  [ -d "$destination" ]); then
+  usage
 fi
 
 # switch to target,get link list,switch back to destination
@@ -39,18 +36,18 @@ declare -i i=0
 declare -i j=0
 for lnname in $linkList
 do
-	LINK=${lnname%.*}
-	if [ -e "$LINK" ]; then
-		rm "$LINK"
-		let i++
-	fi
-	if [ -d "$target/$lnname" ]; then
-	  continue
-	fi
-	let j++
-	#echo "creating link of $LINK in $PWD"
-	ln -s "$target/$lnname" "$LINK"
-	
+  LINK=${lnname%.*}
+  if [ -e "$LINK" ]; then
+    rm "$LINK"
+    let i++
+  fi
+  if [ -d "$target/$lnname" ]; then
+    continue
+  fi
+  let j++
+  #echo "creating link of $LINK in $PWD"
+  ln -s "$target/$lnname" "$LINK"
+
 done
 
 # find broken links

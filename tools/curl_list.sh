@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 # download links from a file
-source /home/gd/bin/bash/lib/libcolors.sh
+source /home/gd/lib/libcolors.sh
 
 filename="$1"
 
@@ -16,7 +16,7 @@ failedList="failed_${filename}"
 while read -r line
 do
     	name="$line";
-    	echo -e "${BLUE}Name read from file - $name${NC}";
+    	echo -e "\n${BLUE}Name read from file - $name${NC}";
 	curl -O -J -L "$name";
 	if [[ $? == 0 ]];then
 	  echo -e "${GREEN}Successfull download.${NC}"

@@ -1,9 +1,10 @@
 #!/bin/bash
 # start a session for ssh-agent inside a new shell
-session_file=~/bin/python/select_ssh_id.py
-
-if ! [ -e $session_file ]; then
+#lib=$(type select_ssh_id.py | cut -f 3 -d " ")
+lib="select_ssh_id.py"
+if ! hash $lib; then
+  echo "lib not found"
   exit 1
-
 fi
-python $session_file && bash -i
+echo $lib
+$lib && bash -i

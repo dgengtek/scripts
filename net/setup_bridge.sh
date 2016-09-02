@@ -12,15 +12,17 @@ declare -i force_remove=0
 network=""
 
 function usage {
->&2  echo "usage: $0 [-h] (-i | -b netaddr | -h netaddr) [-r] [-f] [bridge]"
->&2  echo "only one flag can be active at a time"
->&2  echo "-b bridged network"
->&2  echo "-i internal network only"
->&2  echo "-h host only network (default)"
->&2  echo "-r remove named bridge"
->&2  echo "-f force remove named bridge"
->&2  echo "bridge  name of the bridge"
-exit 1
+  echo << EOF
+  usage: ${0##*/} (-i | -b netaddr | -h netaddr) [-r [-f]] [bridge]
+    only one flag can be active at a time
+    -b			    bridged network
+    -i			    internal network only
+    -h			    host only network (default)
+    -r			    remove named bridge
+    -f			    force remove named bridge
+    bridge		    name of the bridge
+EOF
+  exit 1
 }
 function is_flagged {
   if ((flagged == 1)); then
@@ -56,8 +58,8 @@ function remove_bridge {
   fi
 
   if (! [ -z $bridge_id ] && bridge_exists &&
-	sudo ip link set dev $bridge_id down &&
-	sudo ip link delete dev $bridge_id type bridge &&
+	ip link set dev $bridge_id down &&
+	ip link delete dev $bridge_id type bridge &&
 	[ -e $bridge_name_file ]);then 
     rm $bridge_name_file
     rmdir $bridge_file_path
@@ -93,9 +95,9 @@ function bridge_exists {
 
 function create_bridge {
   if ! bridge_exists "$bridge_id" &&
-      sudo ip link add name "$bridge_id" type bridge;then 
+      ip link add name "$bridge_id" type bridge;then 
   if ! [ -z $network ] && ! ((internal_only == 1));then
-      sudo ip addr add "$network" dev "$bridge_id"
+      ip addr add "$network" dev "$bridge_id"
     fi
     return 0
   fi
@@ -108,7 +110,7 @@ function start_bridge {
   fi
   create_bridge_file_id $bridge_id
   if ! bridge_up;then
-    sudo ip link set dev "$bridge_id" up
+    ip link set dev "$bridge_id" up
     return $?
   else
     return 1

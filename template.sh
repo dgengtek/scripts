@@ -1,8 +1,14 @@
 #!/bin/bash
 usage() {
-  echo -e "usage:\n\t${0##*/} \
-   option1 option2 target destination"
-  echo -e "\toption1,\tdescription"
+  echo << EOF
+usage:	${0##*/} option1 option2 target destination
+  
+  options:
+    -h			  help
+
+  option1		  description
+EOF
+  exit 1
 }
 main() {
   echo "Script template"

@@ -2,7 +2,7 @@
 #shred all files recursively inside directory
 path=$1
 
-if [ -z "$path" ] || ! [ -d "$path" ]; then
+if ! [ -d "$path" ]; then
   echo "no path supplied or is not a directory"
   exit 1;
 fi
@@ -16,7 +16,7 @@ do
 done
 #cd -
 
-echo -e "\nremoving $path\n"
+echo -e "\nremoving $path"
 rm -R "$path"
 IFS=$OLDIFS
 exit 0

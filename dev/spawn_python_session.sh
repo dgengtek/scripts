@@ -12,17 +12,17 @@ if tmux has-session -t $session_name ||
 exit 1
 fi
 
-run pycharm
-run hamster
-run firefox
+run.sh pycharm
+run.sh hamster
+run.sh firefox
 
 
 #start tmux and configure windows and panes
 cd ~ || exit
-run urxvt -e tmux new-session -s $session_fs ranger 
-run urxvt -e tmux new-session -s $session_countdown 
+run.sh urxvt -e tmux new-session -s $session_fs ranger 
+run.sh urxvt -e tmux new-session -s $session_countdown 
 tmux new-window -t $session_countdown vimwiki
 
 cd /mnt/hdd/bigX/programming/Python/workspace || exit
-run urxvt -e tmux new-session -s $session_name ranger 
+run.sh urxvt -e tmux new-session -s $session_name ranger 
 tmux new-window -t $session_name -n py python

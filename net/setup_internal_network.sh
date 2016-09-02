@@ -1,14 +1,17 @@
 #!/bin/bash
 function usage {
->&2  echo "usage: $0 [-g] [-s] [-h] [-b bridge] [-n 'networkaddr/hostbits'] [-m macaddr]
-[-t tapdev] image [options for qemu]"
->&2  echo "-g enable standard graphics"
->&2  echo "-s create temporary snapshots"
->&2  echo "-n set network address of virtual network"
->&2  echo "-m set mac address of virtual guest"
->&2  echo "-b bridge name used for virtual network"
->&2  echo "-t name of tap device the virtual machine should use"
->&2  echo "-h usage"
+echo << EOF
+usage: ${0##*/} [OPTIONS] image [options for qemu]
+
+  OPTIONS:
+  -g			    enable standard graphics
+  -s			    create temporary snapshots
+  -n CISR		    set network address/bits of virtual network
+  -m macaddr		    set mac address of virtual guest
+  -b bridge		    bridge name used for virtual network
+  -t tapdev		    name of tap device the virtual machine should use
+  -h			    usage
+EOF
   exit 1
 }
 if (( $# < 3));then

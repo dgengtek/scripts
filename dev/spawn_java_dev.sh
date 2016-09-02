@@ -5,18 +5,15 @@ sessionName="java_dev"
 winName="win"
 
 #create session,tabs and change to directory
-if tmux has-session -t $sessionName
-then
-	echo "session already exists"
-	exit 1
+if tmux has-session -t $sessionName; then
+  echo "session already exists"
+  exit 1
 fi
 
+cd /mnt/hdd/bigX/programming/JAVA/workspace || exit
 
-cd /mnt/hdd/bigX/a_Programmieren/JAVA/workspace || exit
-
-
-run idea
-run hamster
+run.sh idea
+run.sh hamster
 
 #start tmux and configure windows and panes
-run urxvt -e tmux source /home/gd/bin/bash/tmux.java_dev.sh
+run.sh urxvt -e tmux source ~/tmux/tmux.java_dev.sh

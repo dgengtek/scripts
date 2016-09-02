@@ -1,15 +1,16 @@
 #!/bin/bash
 function usage {
->&2  echo "usage: $0 [-r] [-h] [-b bridge] [-u user] tapdev"
->&2  echo "-b bridge name used for virtual network"
->&2  echo "tap device  name used for virtual network"
->&2  echo "-u user used to create tap device"
->&2  echo "-r remove tap device"
->&2  echo "-h help"
-
+  echo << EOF
+usage: $0 [-r] [-h] [-b bridge] [-u user] tapdev
+  tapdev:		      tap device  name used for virtual network
+  -b			      bridge name used for virtual network
+  -u			      user used to create tap device
+  -r			      remove tap device
+  -h			      help
+EOF
   exit 1
 }
-if (( $# < 2));then
+if (( $# < 2)) || [[ $(id -u) != 0 ]];then
   usage
 fi
 usr="$USER"
@@ -36,11 +37,11 @@ function tap_dev_up {
 }
 function create_tap_dev {
   if ! tap_dev_exists &&
-	sudo ip tuntap add "$tap_dev_name" mode tap user "$usr";then 
+	ip tuntap add "$tap_dev_name" mode tap user "$usr";then 
     create_tap_dev_file
   fi
-  sudo ip link set dev "$tap_dev_name" master "$bridge_name" 
-  sudo ip link set dev "$tap_dev_name" up
+  ip link set dev "$tap_dev_name" master "$bridge_name" 
+  ip link set dev "$tap_dev_name" up
 }
 function create_tap_dev_file {
   remove_tap_dev_file
@@ -64,7 +65,7 @@ function remove_tap_dev {
   if ! tap_dev_exists;then
     return $?
   fi
-  if sudo ip tuntap del "$tap_dev_name" mode tap &&
+  if ip tuntap del "$tap_dev_name" mode tap &&
       remove_tap_dev_file;then
     sh ./setup_bridge.sh -r $bridge_name
     return 0

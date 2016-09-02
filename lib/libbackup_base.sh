@@ -122,11 +122,14 @@ execute() {
   IFS=$OLDIFS
 }
 usage() {
-  echo_err "$0 [option]... target... backuppath"
-  echo_err "option:"
-  echo_err "-a  archive and compress files"
-  echo_err "-v  verbose output"
-  echo_err "-p  progress"
+  echo << EOF
+usage: $0 [option] target backuppath"
+
+  option:
+    -a		archive and compress files
+    -v		verbose output
+    -p		progress
+EOF
   exit 1
 }
 
@@ -190,10 +193,6 @@ run_sync() {
   fi
 }
 
-echo_err() {
-  >&2 echo "$@"
-}
-
 is_absolute_path() {
   if [[ "$1" == /* ]]; then
     return 0
@@ -204,11 +203,11 @@ is_absolute_path() {
 
 print_message() {
   if [[ $enable_verbose == 1 ]]; then
-    echo -en "\n####################################
-    ####################################\n"
-    echo -n "$1"
-    echo -en "\n####################################
-    ####################################\n"
+    echo -e "\n####################################
+    ####################################"
+    echo "$1"
+    echo "####################################
+    ####################################"
   fi
 }
 pushd() {
