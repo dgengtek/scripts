@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# deprecated, use python with tool
 usage() {
   cat << EOF
 Usage:	${0##*/} [OPTIONS] command

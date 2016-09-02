@@ -3,15 +3,15 @@
 
 usage() {
   cat << EOF
-${0##*/} [options] domainname diskpath [virt-install options]
+Usage: ${0##*/} [options] domainname diskpath [virt-install options]
 
-  options:
-      -h		use host arch
-      -o os		use specified os
-      -n network	attach to network
-      -c cpus		nr or cpus, less than host
-      -p pool		use pool name
-      -s size		create size in GiB
+options:
+  -h		use host arch
+  -o os		use specified os
+  -n network	attach to network
+  -c cpus	nr or cpus, less than host
+  -p pool       use pool name
+  -s size       create size in GiB
 EOF
   exit 1
 }
