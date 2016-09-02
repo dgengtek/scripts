@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # create user for specific db with usage rights to schema of db
 usage() {
   echo "usage:  $0 db user pw"

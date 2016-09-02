@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 #shred all files recursively inside directory
 path=$1
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # need to change scriptinfo and use select for option
 # catch INT TERM with trap and cleanup code
 

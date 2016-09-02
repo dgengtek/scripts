@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 main() {
   OLDIFS=$IFS
   IFS=$(echo -en "\n\b")

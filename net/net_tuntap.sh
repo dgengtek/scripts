@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # use qemu bridge helper
 # http://wiki.qemu.org/Features/HelperNetworking
 function usage {

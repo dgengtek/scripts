@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 if [ -z "$1" ];then
   echo "no iso given as argument"
   exit 1

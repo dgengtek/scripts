@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # deprecated
 # clone git repo
 optlist=":fe"

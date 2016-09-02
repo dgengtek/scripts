@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 usage() {
   cat << EOF
 Usage: ${0##*/} [mode] [options] [bridge]

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 COLORS_BLACK="\033[0;30m" 
 COLORS_DARK_GRAY="\033[1;30m"
 COLORS_RED="\033[0;31m"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # set fontsize of urxvt
 fontsize_set() {
   local -r file="system_fontsize"

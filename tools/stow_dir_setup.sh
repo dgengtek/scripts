@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # wrapper around stow to handle conflicts
 # TODO add proper exit codes as global constants
 usage() {

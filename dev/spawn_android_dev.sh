@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 #start development Environment
 sessionName="android_dev"

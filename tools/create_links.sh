@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # deprecated, found alternative application -> use gnu stow
 # TODO: new input to select only targets with specific
 # suffix to be linked(Optional)

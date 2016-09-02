@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 usage() {
   cat << EOF
 usage:  ${0##*/} mode config

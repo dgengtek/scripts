@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 #deprecated
 #sync with localhost
 copy="rsync"

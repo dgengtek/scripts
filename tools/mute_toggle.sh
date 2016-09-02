@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 if hash pacmd 2>/dev/null; then
   answer=""
   if pacmd list-sinks 0|grep -q "muted: yes"; then

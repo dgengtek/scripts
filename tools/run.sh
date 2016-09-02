@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 usage() {
     echo "no arguments to start a command in background" >&2
     exit 1

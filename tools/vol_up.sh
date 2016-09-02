@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 amixer -D hw:0 -s -q << EOF
 set Master 10%+ 

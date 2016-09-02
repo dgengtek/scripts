@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # TODO: create new images with install by pxe or urls
 
 usage() {

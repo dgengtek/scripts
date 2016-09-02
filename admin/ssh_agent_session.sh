@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # start a session for ssh-agent inside a new shell
 #lib=$(type select_ssh_id.py | cut -f 3 -d " ")
 lib="select_ssh_id.py"

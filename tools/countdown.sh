@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # todo: add supplied seconds to session database in file
 usage() {
   cat << EOF

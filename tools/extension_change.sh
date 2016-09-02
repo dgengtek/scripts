@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # deprecated, use command basename
 #change extension name of files
 

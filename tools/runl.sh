@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # TODO: add option to set log filename and log path
 #	duplicate script of run, move all logic to run
 #run with output logging

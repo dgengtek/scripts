@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 # use this lib inside other scripts, by sourcing it beforehand
 
 # Steps to run script:

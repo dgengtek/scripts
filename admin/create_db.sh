@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 usage() {
   echo "usage:  $0 db"
   exit 1

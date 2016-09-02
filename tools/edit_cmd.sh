@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 usage() {
   echo -e "usage:\n\t${0##*/} \
    cmd"

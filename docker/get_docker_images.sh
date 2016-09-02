@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 main() {
   local -ar images
   images=(
