@@ -1,4 +1,5 @@
 #!/bin/env python3
+# outdated use python pystow app
 """
 Requires stow_dir_setup.sh to run
 used to parse configuration for deployment of directory structure

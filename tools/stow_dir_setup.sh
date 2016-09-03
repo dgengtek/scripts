@@ -1,4 +1,5 @@
 #!/bin/env bash
+# outdated use python pystow app
 # wrapper around stow to handle conflicts
 # TODO add proper exit codes as global constants
 usage() {
