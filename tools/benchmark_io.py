@@ -87,11 +87,10 @@ def parse_args():
 def filter_selected_modes(selection):
     selected_modes = list()
     global modes
-    for m in modes:
-        mode = modes.get(m)
+    for mode, aliases in modes.items():
         for s in selection:
-            if s in mode:
-                selected_modes.append(m)
+            if s in aliases:
+                selected_modes.append(mode)
                 break
     selected_modes.sort(reverse=True)
     return selected_modes
@@ -198,7 +197,6 @@ def prepare_string(string):
         string = string.decode("utf-8")
         args = string.split(",")
     except Exception:
-        # rethrow
         raise 
     return args
 
