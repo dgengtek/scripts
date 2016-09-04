@@ -77,24 +77,21 @@ main() {
   setup
   check_globals_existing
 
-
   run "$@"
-
 }
 run() {
-  parse "$@"
-  pushd "$target"
-  start_backup "$@"
-  popd
-
-}
-parse() {
+  # reset args
+  args=
   log "input \$@: $@" 2>&$fddebug
   parse_options "$@"
+  if (($? == 9)); then
+    parse_config
+    exit 0
+  fi
 
   # set input args
   set -- ${args[@]}
-  #unset -v args
+  unset -v args
   log "after parsing \$@: $@" 2>&$fddebug
   # reset changed verbosity
   setup
@@ -110,13 +107,16 @@ parse() {
   # check, update environment
   update_options
 
+  pushd "$target"
+  start_backup "$@"
+  popd
 
 }
 parse_config() {
+  log "Parsing config." >&$fddebug
   while read -r line; do
-    run "$line"
+    run $line
   done < "$config"
-  exit 0
 }
 check_globals_existing() {
   [[ -z ${args+z} ]] && error_exit 1 "Args variable not set"
@@ -165,12 +165,21 @@ parse_options() {
 
   local do_shift=0
   case $1 in
+      -)
+        if ! (($singleton)); then
+          singleton=1
+          return 9
+        fi
+        error_exit 5 "stdin is not allowed inside config."
+        ;;
       -c|--config)
         if ! (($singleton)); then
           singleton=1
           config=$2
-          parse_config
+          log "Parsing config file $config for options instead." >&$fddebug
+          return 9
         fi
+        error_exit 5 "Recursive config option is not allowed inside config."
         ;;
       -a|--archive)
 	enable_archiving=1
@@ -193,16 +202,13 @@ parse_options() {
         target=$2
         do_shift=2
         ;;
+      --)
+        do_shift=3
+        ;;
       -*)
         usage
         error_exit 5 "$1 is not allowed."
 	;;
-      -)
-        error_exit 5 "$1 is not implemented"
-        ;;
-      --)
-        do_shift=3
-        ;;
       *)
         do_shift=1
 	;;
