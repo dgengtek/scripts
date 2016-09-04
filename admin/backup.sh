@@ -1,10 +1,7 @@
 #!/bin/env bash
-# TODO use stdin to read in configuration through readline, user input 
-# or config file
 # TODO use fifos to synchronize ordered output or write to temporary files and
 # merge when finished to output
-# TODO add final result output
-# TODO optional disable backup of replaced files
+# TODO add pretty result output
 # TODO add option for archive destination path, relative to destination
 usage() {
   cat >&2 << EOF
@@ -73,7 +70,6 @@ main() {
 
   # TODO improve setup
   # run setup to possibly set debugging before parsing
-
   setup
   check_globals_existing
 
@@ -294,6 +290,7 @@ run_sync() {
     return $return_code
   fi
   # TODO allow message to be piped to display message only when script finishes
+  # for a pretty final result
   print_message "Backup finished from $@ to $destination"
 }
 
