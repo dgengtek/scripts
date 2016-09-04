@@ -8,19 +8,18 @@
 # TODO add option for archive destination path, relative to destination
 usage() {
   cat >&2 << EOF
-usage: $0 [options] DESTINATION [BACKUPSRC...] [-] -- [rsync options]
+Usage: $0 [options] [<destination> <source>... [-- <rsync options>...]] 
 
 options:
-  -                                 read config from stdin(ini format)
-  --archive, -a		            Archive and compress files(tar,gzip)
-  --verbose, -v		            Verbose output
-  --suffix dir, -p dir              Suffix path onto destination, disables
-                                    relative path names options of rsync -R.
-  --change dir, -C dir              Change to directory before running.
-  --batch-count count, -b count     Number of backup batches to run in
-                                    background.[default: 1]
-  --content, -c                     Copy only content to destination(equivalent 
-                                    to using backslash suffix on src)
+  -c, --config <file>   config file used to parse options if no arguments
+                          supplied [default: stdin]
+  -a, --archive         Archive and compress files(tar,gzip)
+  -v, --verbose         Verbose output
+  -p, --suffix <dir>    Suffix path onto destination, disables
+                          relative path names options of rsync -R.
+  -C, --change <dir>    Change to directory before running.
+  -b, --batch <count>   Number of backup batches to run in
+                          background.[default: 1]
 EOF
 }
 log() {
@@ -40,14 +39,19 @@ catch_interrupt() {
 }
 
 # TODO allow debugging via argument?
-# research best way to only allow logging for debug before it has been set
+# research to only allow logging for debug before it has been set
 main() {
   trap catch_interrupt SIGINT SIGTERM
 
+
+  local config=/dev/stdin
+  # restrict config to be read once
+  local -i singleton=0
   local -i enable_archiving=0
   local -i enable_backup=0
   local -i enable_verbose=0
   local -i enable_debug=0
+  local destination=
   local destination_suffix=""
 
   # target to change to before running
@@ -73,31 +77,46 @@ main() {
   setup
   check_globals_existing
 
+
+  run "$@"
+
+}
+run() {
+  parse "$@"
+  pushd "$target"
+  start_backup "$@"
+  popd
+
+}
+parse() {
   log "input \$@: $@" 2>&$fddebug
   parse_options "$@"
 
   # set input args
   set -- ${args[@]}
-  unset -v args
+  #unset -v args
   log "after parsing \$@: $@" 2>&$fddebug
   # reset changed verbosity
   setup
 
-  # remove parsed options from args
-  if [[ $# < 2 ]]; then
-    log "Not enough arguments supplied."
+  if [[ $# < 2 ]] && ! [[ -s $config ]]; then
     usage
-    error_exit 1 ""
+    error_exit 1 "No arguments."
   fi
-  # clean path
+
   destination=$(realpath -m "${1}/$destination_suffix")
   shift
-
+  # parse config
   # check, update environment
   update_options
-  pushd "$target"
-  start_backup "$@"
-  popd
+
+
+}
+parse_config() {
+  while read -r line; do
+    run "$line"
+  done < "$config"
+  exit 0
 }
 check_globals_existing() {
   [[ -z ${args+z} ]] && error_exit 1 "Args variable not set"
@@ -144,8 +163,15 @@ parse_options() {
   [[ -z $1 ]] && return 0
   log "parse \$1: $1" 2>&$fddebug
 
-  local return_code=0
+  local do_shift=0
   case $1 in
+      -c|--config)
+        if ! (($singleton)); then
+          singleton=1
+          config=$2
+          parse_config
+        fi
+        ;;
       -a|--archive)
 	enable_archiving=1
 	;;
@@ -157,15 +183,15 @@ parse_options() {
 	;;
       -s|--suffix)
         destination_suffix=$2
-        return_code=2
+        do_shift=2
 	;;
       -b|--batch-count)
         batch_count=$2
-        return_code=2
+        do_shift=2
 	;;
       -C|--change)
         target=$2
-        return_code=2
+        do_shift=2
         ;;
       -*)
         usage
@@ -175,18 +201,18 @@ parse_options() {
         error_exit 5 "$1 is not implemented"
         ;;
       --)
-        return_code=3
+        do_shift=3
         ;;
       *)
-        return_code=1
+        do_shift=1
 	;;
   esac
-  if (($return_code == 1)) ; then
+  if (($do_shift == 1)) ; then
     args+=("$1")
-  elif (($return_code == 2)) ; then
+  elif (($do_shift == 2)) ; then
     # got option with argument
     shift
-  elif (($return_code == 3)) ; then
+  elif (($do_shift == 3)) ; then
     # got --, use all arguments left for rsync to process
     shift
     options="$options $@"
