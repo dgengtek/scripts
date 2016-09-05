@@ -27,6 +27,7 @@ main() {
 	;;
     esac
   done
+  shift $(($OPTIND - 1))
   length=${1:-8}
   tr -cd [:"$charset":] < /dev/urandom | head -c "$length" | xargs -0
 }
