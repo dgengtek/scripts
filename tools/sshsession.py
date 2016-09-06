@@ -4,7 +4,6 @@ Usage:
     sshsession.py [options] [SSHKEY...]
 
 options:
-    -i, --no-interactive  Disable interactive mode.
     -h, --help  Show this screen and exit.
 """
 import os
@@ -13,12 +12,9 @@ import re
 import subprocess
 from pathlib import Path
 from docopt import docopt
-# TODO add arguments to pass ssh_path and a list of keys to add
 # TODO check ssh path exists
 # TODO add logging
 # TODO add unit tests
-# TODO replace with interactive bash shell after id has been added
-# TODO use DOCOPTS
 
 def main():
     # parse docopt
@@ -28,10 +24,11 @@ def main():
     main.ssh_path = Path(home, ".ssh")
 
     success = False
-    if opt.get("--no-interactive"):
-        success = run_non_interactive(main.ssh_path, opt.get("SSHKEY", []))
-    else:
+    ssh_keys = opt.get("SSHKEY", [])
+    if len(ssh_keys) is 0:
         success = run_interactive(main.ssh_path)
+    else:
+        success = run_non_interactive(main.ssh_path, ssh_keys)
     if success:
         os.execl("/usr/bin/bash","bash", "-i")
     else:
@@ -117,7 +114,7 @@ def add_ssh_key(key):
 
 def remove_suffix(string, suffix):
     if not string.endswith(suffix):
-        return False
+        return string
     position = string.find(suffix)
     return string[:position]
 
