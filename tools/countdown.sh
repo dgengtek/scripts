@@ -10,40 +10,37 @@ main() {
   local -r config_path="$HOME/.countdown"
   local session_name="$2"
 
-  if [ -z "$1" ];then
+  local time_seconds=
+  local time_minutes=
+  local time_hours=
+
+  if [[ -z $1 ]];then
     usage
     print_available_sessions
     exit 1;
   fi
-  if [ -z "$session_name" ];then
+  if [[ -z $session_name ]];then
     session_name="session"
   else
     session_name=${2}.session
   fi
-  local -r session_path=$config_path/$session_name
+  local -r session_path="$config_path/$session_name"
 
   pushd ~
-  if ! [ -e "$session_path" ];then
+  if ! [[ -e $session_path ]];then
     mkdir -p "$config_path" || exit 1
     pushd "$config_path" || exit 1
     touch "$session_name"
-    trap trap_SIG SIGHUP SIGKILL SIGINT
+    trap cleanup SIGHUP SIGKILL SIGINT
     popd
   fi
-  local -ir countdown_raw="$1"
-  countdown_loop "$countdown_raw"
-
-  declare -ir time_minutes=$((countdown_raw/60))
-  local output="\r--> Countdown of "
-  local msg=""
-  if [[ $time_minutes -lt 1 ]];then
-    msg="$countdown_raw seconds"
-  else
-    msg="$time_minutes minutes"
-  fi
-  output="$output $msg, finished\n"
+  local -ir time_raw="$1"
+  countdown_loop "$time_raw"
+  update_time "$time_raw"
+  local output="\rCountdown session '$session_name' finished - "
+  output+="${time_hours}h${time_minutes}m${time_seconds}s\n"
   echo -en "$output"
-  notify-send "Timer finished" "$msg"
+  notify-send "Countdown" "$output"
   run.sh mplayer $BEEP
   update_session
   popd
@@ -63,14 +60,34 @@ update_session() {
 }
 countdown_loop() {
   local -i counter=$1
-
+  local timer=""
   while [[ $counter -gt 0 ]]; do
+    display_time "$counter"
     let --counter
-    # clear line
-    echo -ne "\r                                     "
-    echo -ne "\rCountdown: $counter"
     sleep 1
   done
+}
+display_time() {
+  local -r input=$1
+  update_time "$input"
+  if [[ $time_hours == 0 ]]; then
+    time_hours="00"
+  fi
+  if [[ $time_minutes == 0 ]]; then
+    time_minutes="00"
+  fi
+  if [[ $time_seconds == 0 ]]; then
+    time_seconds="00"
+  fi
+  printf "\r%02i:%02i:%02i" "${time_hours}" "${time_minutes}" "${time_seconds}"
+}
+update_time() {
+  local input=$1
+
+  time_hours=$(($input / 3600))
+  input=$(($input % 3600))
+  time_minutes=$(($input / 60))
+  time_seconds=$(($input % 60))
 }
 print_available_sessions() {
   if [ -e "$config_path" ];then
@@ -78,7 +95,7 @@ print_available_sessions() {
     find $config_path -type f | xargs -I {} basename -s ".session" {} | xargs -n 1 echo -e "\t"
   fi
 }
-trap_SIG() {
+cleanup() {
   is_empty=$(wc $session_path -c | cut -f1 -d ' ')
   if [[ $is_empty == 0 ]]; then
     rm "$session_path"
