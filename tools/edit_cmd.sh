@@ -17,7 +17,7 @@ main() {
     exit 1
   fi
 
-  vim $path
+  $EDITOR $path
 }
 
 main "$@"
