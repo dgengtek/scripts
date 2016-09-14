@@ -1,40 +1,36 @@
 #!/bin/env bash
-# deprecated, use command basename
-#change extension name of files
+#change extension of files
 
 oldext=$1
 newext=$2
 extension=""
 rawfile=""
 
-scriptinfo() {
-  echo -e "\nUsage of $0"
-  echo "$0 {OLDEXTENSION|'*'} NEWEXTENSION"
-  echo "star must be escaped or supplied with quotes to use all files"
-  exit 1
-
+usage () {
+  cat >&2 << EOF
+Usage:  ${0##*/} {OLDEXTENSION|*} NEWEXTENSION
+EOF
 }
 
 if [ -z "$oldext" ] \
   || [ -z "$newext" ];then
   usage
+  exit 1
 fi
 # use newline as seperator
-OLDIFS=$IFS
-IFS=$(echo -en "\n\b")
-list=$(ls -1)
-IFS=$OLDIFS
 
 # get suffixes
 oldext=${oldext##*.}
 newext=${newext##*.}
 
-for file in $list; do
-  extension=${file##*.}
-  if [ "$oldext" = "*" ];then
-    mv "$file" "${file}.${newext}"
-  elif [ "$oldext" = "$extension" ];then
-    rawfile=${file%.*}.$newext
-    mv "$file" "$rawfile"
-  fi
-done
+if [[ $oldext != "*" ]];  then
+  # grab with find
+  oldext="*.$oldext"
+fi
+
+IFS=
+while read -r -d $'\0' file; do
+  raw=${file%.*}
+  mv "$file" "${raw}.${newext}"
+done < <(find . -maxdepth 1 -type f -name "$oldext" -print0)
+IFS=$OLDIFS
