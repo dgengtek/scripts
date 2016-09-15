@@ -15,19 +15,12 @@ EOF
   fi
   printf '=%.0s' {1..$count}
 }
-
-top_temperature() {
-while : ; do
-  /usr/bin/clear
-  /usr/bin/sensors
-  /usr/bin/sleep 1.5
-done
+log() {
+  echo -n "$@" | logger -s -t ${0##*/}
 }
-
-loop_cmd() {
-while : ; do
-  /usr/bin/clear
-  eval "$@"
-  /usr/bin/sleep 1.5
-done
+error_exit() {
+  exit_code=${1:-0}
+  shift
+  log "$@"
+  exit $error_code
 }
