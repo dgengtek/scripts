@@ -6,17 +6,20 @@ Usage: ${0##*/} [OPTIONS] CMD...
 Run commands in background
 
 OPTIONS:
-  -l, --log         log command output
-  -s, --silent      disable notifications   
-  -h                help
+  -l, --log           log command output
+  -s, --silent        disable notifications   
+  -m, --mail <user>   mail user
+  -h                  help
 EOF
 }
 main() {
   cmd=("$@")
-  local -i enable_verbose=0
-  local -i enable_loggin=0
+  local -i enable_logging=0
+  local -i enable_mail=0
   local -i enable_notifications=1
 
+  # mail recipient
+  local recipient="admin"
   local logfile="/dev/null"
   local commands=
   parse_options "$@"
@@ -30,7 +33,7 @@ main() {
 
   #trap handle_signal SIGINT SIGTERM SIGKILL EXIT
 
-  if (($enable_loggin)); then
+  if (($enable_logging)); then
     logfile="log_run.out"
     echo "$@" > "$logfile"
   fi
@@ -43,8 +46,10 @@ run_commands() {
   eval "$@"
   if (($enable_notifications)); then
     mplayer "$BEEP"
+    local -r subject="Background process finished by $USER"
     local -r message=$@
-    notify-send "Background process done" "'$message'"
+    notify-send "$subject" "'$message'"
+    echo "$message" | mail -s "$subject" "$recipient"
   fi
 }
 parse_options() {
@@ -54,7 +59,12 @@ parse_options() {
   local do_shift=0
   case $1 in
       -l|--log)
-        enable_loggin=1
+        enable_logging=1
+        ;;
+      -m|--mail)
+        enable_mail=1
+        recipient=$2
+        do_shift=2
         ;;
       -s|--silent)
         enable_notifications=0
@@ -63,8 +73,10 @@ parse_options() {
         do_shift=1
 	;;
   esac
-  if (($do_shift)) ; then
+  if (($do_shift == 1)) ; then
     commands+=("$1")
+  elif(($do_shift == 2)) ; then
+    shift
   fi
   shift
   parse_options "$@"
