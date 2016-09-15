@@ -96,6 +96,7 @@ print_available_sessions() {
   fi
 }
 cleanup() {
+  trap - SIGHUP SIGKILL SIGINT
   is_empty=$(wc $session_path -c | cut -f1 -d ' ')
   if [[ $is_empty == 0 ]]; then
     rm "$session_path"
