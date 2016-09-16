@@ -7,12 +7,6 @@ usage() {
 Usage:  ${0##*/} [Options] [-- STOWOPTIONS]
 
 Options:
-    -d directory      
-	directory to link from
-    -t target	      
-	target directory to link to
-    {-p pkg}	      
-	package to stow, can be used repeatedly
     (-r | -m)	      
 	-r, remove conflicting destination files |
 	-m, move all conflicting destination files to a backup folder 
@@ -26,7 +20,6 @@ Options:
     -s		      
 	simulate program execution
 EOF
-  exit 1
 }
 logger() {
   command logger -s -t "${0##*/}" --no-act "$@"
@@ -34,15 +27,16 @@ logger() {
 check_input() {
   local -ir conflict=$((mv_destination_files == 1 \
     && remove_destination_files == 1))
-  if ((conflict == 1)); then
+  if (($conflict)); then
     usage
-  elif ((mv_destination_files == 1)); then
+    exit 1
+  elif (($mv_destination_files)); then
     if ! mkdir -p "$mv_dest"; then
       logger "Dir creation of $mv_dest failed."
       exit 2
     fi
     cmd=mv
-  elif ((remove_destination_files == 1)); then
+  elif (($remove_destination_files)); then
     cmd=rm
   else
     return
@@ -51,8 +45,6 @@ check_input() {
 }
 
 main() {
-  local -r optlist="rm:ht:d:p:vif"
-
   local -i target_set=0
   local -i remove_destination_files=0
   local -i mv_destination_files=0
@@ -61,44 +53,17 @@ main() {
   local -i force=0
   local -i simulate=0
   local mv_dest=""
-  local tdir=""
-  local ddir=""
   local -i selective_stow=0
-  local -a pkgs
+
+  local args=
+  # options passed to stow after --
+  local options=
+  parse_options "$@"
+  set -- ${args[@]}
+  unset -v args
+
   while getopts $optlist opt; do
     case $opt in
-      r)
-	let remove_destination_files=1
-	;;
-      m)
-	let mv_destination_files=1
-	mv_dest="$OPTARG"
-	;;
-      h)
-	usage
-	;;
-      p)
-	let selective_stow=1
-	pkgs+=("$OPTARG")
-	;;
-      t)
-	tdir="$OPTARG"
-	;;
-      d)
-	ddir="$OPTARG"
-	;;
-      v)
-	let enable_verbose=1
-	;;
-      i)
-	let enable_prompt=1
-	;;
-      f)
-	let force=1
-	;;
-      s)
-	let simulate=1
-	;;
     esac
   done
   shift $((OPTIND - 1))
@@ -122,6 +87,65 @@ main() {
   fi
   stow_pkgs $pkgs
 }
+parse_options() {
+  # exit if no options left
+  [[ -z $1 ]] && return 0
+
+  local do_shift=0
+  case $1 in
+      r)
+	let remove_destination_files=1
+	;;
+      m)
+	let mv_destination_files=1
+	mv_dest="$OPTARG"
+        do_shift=2
+	;;
+      -v|--verbose)
+	let enable_verbose=1
+	;;
+      -i|--interactive)
+	let enable_prompt=1
+	;;
+      -f|--force)
+	let force=1
+	;;
+      -s|--simulate)
+	let simulate=1
+	;;
+      -l|--log)
+        enable_logging=1
+        ;;
+      -m|--mail)
+        enable_mail=1
+        recipient=$2
+        do_shift=2
+        ;;
+      --)
+        do_shift=3
+        ;;
+      -*)
+        usage
+        exit 1
+	;;
+      *)
+        do_shift=1
+	;;
+  esac
+  if (($do_shift == 1)) ; then
+    args+=("$1")
+  elif (($do_shift == 2)) ; then
+    # got option with argument
+    shift
+  elif (($do_shift == 3)) ; then
+    # got --, use all arguments left for rsync to process
+    shift
+    options="$options $@"
+    return
+  fi
+  shift
+  parse_options "$@"
+}
 stow_pkgs() {
   if ((simulate == 1)); then
     stow="echo stow"
@@ -129,11 +153,10 @@ stow_pkgs() {
     stow="stow"
   fi
 
-  for p in $@; do
-    if ! $stow $options "$p"; then
-      usage
-    fi
-  done
+  if ! $stow $options "$@"; then
+    usage
+    exit 1
+  fi
 
 }
 resolve_conflicts() {
@@ -166,8 +189,8 @@ resolve_conflicts() {
   done
 }
 parse_cmd() {
-  local -a cmd_options
-  local targets
+  local -a cmd_options=
+  local targets=
   local -r cmd=$1
   shift 1
 
