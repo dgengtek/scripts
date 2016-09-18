@@ -62,30 +62,11 @@ main() {
   set -- ${args[@]}
   unset -v args
 
-  while getopts $optlist opt; do
-    case $opt in
-    esac
-  done
-  shift $((OPTIND - 1))
-
-
-  local options="-t $tdir $@"
-  if ! [ -z "$ddir" ]; then
-    options="-d $ddir $options"
-  fi
-
   local files=$(find . -mindepth 2 -maxdepth 2 -type f  -not \( -path \
   "./.git/*" -prune \) -printf "%f\n")
-
   check_input
 
-  if ((selective_stow == 1)); then
-    pkgs=${pkgs[@]}
-  else
-    pkgs=$(find . -maxdepth 1 -type d -regextype egrep -regex ".*/[^.]*" \
-    -printf "%f\n")
-  fi
-  stow_pkgs $pkgs
+  stow_pkgs $@
 }
 parse_options() {
   # exit if no options left
