@@ -1,6 +1,7 @@
 #!/bin/env bash
 # TODO add different output type
 # TODO filter to only use specific input file types
+# TODO fix race condition counting by using fifos
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] target destination
@@ -73,9 +74,8 @@ main() {
       if (($batch_index%$batch_count == 0)); then
         wait || exit 5
       fi
-    else
-      processed=$(($processed + 1))
     fi
+    processed=$(($processed + 1))
   done < <(find "$target" -maxdepth 1 -print0)
   # wait for remaining background processes left after looping through list
   wait || exit 5
@@ -87,7 +87,7 @@ report() {
   echo -e "Processed: $processed"
   echo -e "Success: ${GREEN}$success${NONE}"
   echo -e "Failed: ${RED}$failed${NONE}"
-  echo -e "Total count ${WHITE}$(($processed + $failed + $success))${NONE}"
+  echo -e "Total count of valid input $(($failed + $success))"
 }
 convert() {
   local -r file=$1
