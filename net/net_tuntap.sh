@@ -11,13 +11,47 @@ Options:
   -r			      remove tap device
   -h			      help
 EOF
-  exit 1
 }
-if (( $# < 2)) || [[ $(id -u) != 0 ]];then
-  usage
-fi
-bridge_name="br$(gen_alpha.sh 4)"
-tap_dev_name=""
+main() {
+  if [[ $(id -u) != 0 ]] && [[ $# < 2 ]];then
+    usage
+    exit 2
+  fi
+  local bridge_name="br$(gen_alpha.sh 4)"
+  local tap_dev_name=""
+  local -r optlist=":b:uhr"
+
+  declare -i remove_tap=0
+  while getopts $optlist opt; do
+    case $opt in
+      b)
+        bridge_name=$OPTARG
+        ;;
+      r)
+        let remove_tap=1
+        ;;
+      *)
+        usage
+        ;;
+    esac
+  done
+  shift $((OPTIND -1))
+  unset OPTIND
+  local tap_dev_name=$1
+
+  if ((remove_tap == 1));then
+    remove_tap_dev $tap_dev_name $bridge_name
+    exit $?
+  fi
+
+  net_bridge.sh "$bridge_name"
+  if ! [ -z "$bridge_id" ];then
+    bridge_name="$bridge_id"
+  fi
+
+  local bridge_file_path="/tmp/virtual_network_$bridge_name"
+  create_tap_dev 
+}
 
 function tap_dev_exists {
   if [ -e /sys/devices/virtual/net/"$tap_dev_name" ];then
@@ -69,44 +103,11 @@ function remove_tap_dev {
   fi
   if ip tuntap del "$tap_dev_name" mode tap &&
       remove_tap_dev_file;then
-    sh ./setup_bridge.sh -r $bridge_name
+    net_bridge.sh -r $bridge_name
     return 0
   else 
     return 1
   fi
   return $?
 }
-
-
-optlist=":b:uhr"
-
-declare -i remove_tap=0
-while getopts $optlist opt; do
-  case $opt in
-    b)
-      bridge_name=$OPTARG
-      ;;
-    r)
-      let remove_tap=1
-      ;;
-    *)
-      usage
-      ;;
-  esac
-done
-shift $((OPTIND -1))
-unset OPTIND
-tap_dev_name=$1
-
-if ((remove_tap == 1));then
-  remove_tap_dev $tap_dev_name $bridge_name
-  exit $?
-fi
-
-source ./setup_bridge.sh "$bridge_name"
-if ! [ -z "$bridge_id" ];then
-  bridge_name="$bridge_id"
-fi
-
-bridge_file_path="/tmp/virtual_network_$bridge_name"
-create_tap_dev 
+main "$@"
