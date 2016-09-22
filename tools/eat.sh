@@ -206,7 +206,7 @@ cleanup() {
 ord() {
   printf "%d" "'$1"
 }
-char() {
+chr() {
   printf \\$(printf '%03o' $1)
 }
 
