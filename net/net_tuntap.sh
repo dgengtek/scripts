@@ -3,7 +3,7 @@
 # http://wiki.qemu.org/Features/HelperNetworking
 function usage {
   cat << EOF
-Usage:  ${0##*/} [Options] tapdev
+Usage:  ${0##*/} [Options] tapdev [bridge]
 
 Options:
   tapdev		      tap device  name used for virtual network
@@ -13,22 +13,18 @@ Options:
 EOF
 }
 main() {
-  if [[ $(id -u) != 0 ]] && [[ $# < 2 ]];then
-    usage
-    exit 2
-  fi
-  local bridge_name="br$(gen_alpha.sh 4)"
-  local tap_dev_name=""
+  local bridge_name="br$(genpw.sh -a 4)"
+  local tap_dev_name="tap$(genpw.sh -a 4)"
   local -r optlist=":b:uhr"
 
-  declare -i remove_tap=0
+  local -i remove_tap=0
   while getopts $optlist opt; do
     case $opt in
       b)
         bridge_name=$OPTARG
         ;;
       r)
-        let remove_tap=1
+        remove_tap=1
         ;;
       *)
         usage
@@ -37,31 +33,32 @@ main() {
   done
   shift $((OPTIND -1))
   unset OPTIND
-  local tap_dev_name=$1
+  if [[ $(id -u) != 0 ]] && [[ $# < 2 ]];then
+    usage
+    exit 2
+  fi
+  [[ -z $1 ]] && usage && exit 1
+  tap_dev_name=$1
+  [[ -n $2 ]] && bridge_name=$2
 
-  if ((remove_tap == 1));then
+  if (($remove_tap == 1));then
     remove_tap_dev $tap_dev_name $bridge_name
     exit $?
   fi
 
-  net_bridge.sh "$bridge_name"
-  if ! [ -z "$bridge_id" ];then
-    bridge_name="$bridge_id"
+  if ! net_bridge.sh "$bridge_name"; then
   fi
 
-  local bridge_file_path="/tmp/virtual_network_$bridge_name"
+  local -r bridge_file_path="/tmp/virtual_network_$bridge_name"
   create_tap_dev 
 }
 
 function tap_dev_exists {
-  if [ -e /sys/devices/virtual/net/"$tap_dev_name" ];then
-    return 0
-  else
-    return 1
-  fi
+  local -r tapdev=$1
+  [[ -e "/sys/devices/virtual/net/$tapdev" ]]
 }
 function tap_dev_up {
-  local tap_path="/sys/class/net/$tap_dev_name/operstate"
+  local -r tap_path="/sys/class/net/$tap_dev_name/operstate"
   if [ -e "$tap_path" ];then
     local is_up
     is_up="$(cat $tap_path)"
@@ -72,7 +69,7 @@ function tap_dev_up {
   return 1
 }
 function create_tap_dev {
-  if ! tap_dev_exists &&
+  if ! tap_dev_exists "$tap_dev_up" &&
 	ip tuntap add "$tap_dev_name" mode tap ;then 
     create_tap_dev_file
   fi
@@ -81,11 +78,12 @@ function create_tap_dev {
 }
 function create_tap_dev_file {
   remove_tap_dev_file
+  ! [[ -d "$bridge_file_path" ]] && exit 5
   echo "$bridge_name" > "$bridge_file_path/$tap_dev_name"
   echo "$tap_dev_name" >> "$bridge_file_path/$bridge_name"
 }
 function remove_tap_dev_file {
-  if [ -e "$bridge_file_path/$tap_dev_name" ];then
+  if [[ -f "$bridge_file_path/$tap_dev_name" ]];then
     rm "$bridge_file_path/$tap_dev_name"
     sed -i "/^${tap_dev_name}\$/d" "$bridge_file_path/$bridge_name"
     return 0
@@ -93,7 +91,7 @@ function remove_tap_dev_file {
   return 1
 }
 function remove_tap_dev {
-  if ! [ -z "$1" ] && ! [ -z "$2" ];then
+  if [[ -n $1 ]] && [[ -n $2 ]];then
     tap_dev_name="$1"
     bridge_name="$2"
     bridge_file_path="/tmp/virtual_network_$bridge_name"
