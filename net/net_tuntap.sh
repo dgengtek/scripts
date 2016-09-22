@@ -3,54 +3,87 @@
 # http://wiki.qemu.org/Features/HelperNetworking
 function usage {
   cat << EOF
-Usage:  ${0##*/} [Options] tapdev [bridge]
+Usage:  ${0##*/} [Options] bridge tapdev...
 
 Options:
   tapdev		      tap device  name used for virtual network
-  -b bridge		      bridge name used for virtual network
   -r			      remove tap device
+  -f                          remove bridge and tap device(implies -r)
   -h			      help
 EOF
 }
 main() {
-  local bridge_name="br$(genpw.sh -a 4)"
-  local tap_dev_name="tap$(genpw.sh -a 4)"
-  local -r optlist=":b:uhr"
+  if (($UID != 0 ));then
+    usage
+    error_exit 2 "Must be run as root."
+  fi
+
+  local -r optlist=":uhr"
 
   local -i remove_tap=0
+  local -i remove_all_devices=0
+
   while getopts $optlist opt; do
     case $opt in
-      b)
-        bridge_name=$OPTARG
-        ;;
       r)
         remove_tap=1
+        ;;
+      f)
+        remove_all_devices=1
         ;;
       *)
         usage
         ;;
     esac
   done
-  shift $((OPTIND -1))
-  unset OPTIND
-  if [[ $(id -u) != 0 ]] && [[ $# < 2 ]];then
-    usage
-    exit 2
-  fi
+  shift $(($OPTIND - 1))
+
+  local -r bridge_name=$1
+  shift
+  local -r bridge_file_path="/tmp/virtual_network_$bridge_name"
+
+  [[ -z $bridge_name ]] && usage && exit 1
   [[ -z $1 ]] && usage && exit 1
-  tap_dev_name=$1
-  [[ -n $2 ]] && bridge_name=$2
 
   if (($remove_tap == 1));then
-    remove_tap_dev $tap_dev_name $bridge_name
-    exit $?
+    loop_devices "remove_tap_dev" "$bridge_name" "$@"
+    exit 0
   fi
 
-  if ! net_bridge.sh "$bridge_name"; then
-  fi
+  trap cleanup SIGINT SIGTERM SIGKILL
 
-  local -r bridge_file_path="/tmp/virtual_network_$bridge_name"
-  create_tap_dev 
+  prepare
+  loop_devices "create_tap_dev" "$bridge_name" "$@"
+
+}
+loop_devices() {
+  local -r func=$1
+  local -r bridge_name=$2
+  shift 2
+  for dev in "$@"; do
+    $func "$dev" "$bridge_name"
+  done
+}
+prepare() {
+  mkdir -p "$bridge_file_path" || exit 1
+  ! bridge_exists "$bridge_name" && error_exit 1 "Bridge '$bridge_name' does not exist."
+}
+cleanup() {
+  trap cleanup SIGINT SIGTERM SIGKILL
+  rmdir "$bridge_file_path"
+}
+remove_all_attached() {
+  local -r tap_dev_name=$1
+  local -r attached_bridge=$(cat "$bridge_file_path/$tap_dev_name")
+  if ! bridge_exists "$attached_bridge"; then
+    error_exit 9 "Bridge '$bridge_name' does not exist."
+  fi
+  net_bridge.sh -r "$attached_bridge" \
+    || error_exit 3 "Failed to remove bridge '$attached_bridge'."
+}
+bridge_exists() {
+  local bridge_id=${1:?"No bridge id supplied to check if existing."}
+  [[ -e "/sys/devices/virtual/net/$bridge_id" ]]
 }
 
 function tap_dev_exists {
@@ -69,8 +102,10 @@ function tap_dev_up {
   return 1
 }
 function create_tap_dev {
-  if ! tap_dev_exists "$tap_dev_up" &&
-	ip tuntap add "$tap_dev_name" mode tap ;then 
+  local -r tap_dev_name=$1
+  local -r bridge_name=$2
+  if ! tap_dev_exists "$tap_dev_name" \
+      && ip tuntap add "$tap_dev_name" mode tap ;then 
     create_tap_dev_file
   fi
   ip link set dev "$tap_dev_name" master "$bridge_name" 
@@ -91,21 +126,31 @@ function remove_tap_dev_file {
   return 1
 }
 function remove_tap_dev {
-  if [[ -n $1 ]] && [[ -n $2 ]];then
-    tap_dev_name="$1"
-    bridge_name="$2"
-    bridge_file_path="/tmp/virtual_network_$bridge_name"
+  local -r tap_dev_name=$1
+  local -r bridge_name=$2
+
+  if (($remove_all_devices)); then
+    net_bridge.sh -r "$bridge_name"
+    exit $?
   fi
-  if ! tap_dev_exists;then
-    return $?
+
+  if ! tap_dev_exists "$tap_dev_name";then
+    error_exit 1 "Tap device '$tap_dev_name' does not exist."
   fi
-  if ip tuntap del "$tap_dev_name" mode tap &&
-      remove_tap_dev_file;then
-    net_bridge.sh -r $bridge_name
+  if ip tuntap del "$tap_dev_name" mode tap \
+    && remove_tap_dev_file;then
     return 0
   else 
     return 1
   fi
-  return $?
+}
+log() {
+  echo -n "$@" | logger -s -t ${0##*/}
+}
+error_exit() {
+  exit_code=${1:-0}
+  shift
+  log "$@"
+  exit $error_code
 }
 main "$@"
