@@ -7,8 +7,9 @@ Run commands in background
 
 OPTIONS:
   -l, --log           log command output
-  -s, --silent        disable notifications   
-  -m, --mail <user>   mail user
+  -m, --mail          mail cmd output
+  -n, --notify        enable notifications
+  -f, --foreground    run in foreground
   -h                  help
 EOF
 }
@@ -16,7 +17,10 @@ main() {
   cmd=("$@")
   local -i enable_logging=0
   local -i enable_mail=0
-  local -i enable_notifications=1
+  local -i enable_foreground=0
+  local -i enable_notifications=0
+
+  local -r fifo="/tmp/runfifo$RANDOM"
 
   # mail recipient
   local recipient="admin"
@@ -33,23 +37,29 @@ main() {
 
   #trap handle_signal SIGINT SIGTERM SIGKILL EXIT
 
-  if (($enable_logging)); then
+  if (($enable_logging)) || (($enable_mail)); then
     logfile="log_run.out"
     echo "$@" > "$logfile"
   fi
 
-  exec 1>>"$logfile"
-  exec 2>&1
-  run_commands "$@" &
+  if (($enable_foreground)); then
+    run_commands "$@"
+  else
+    exec 1>>"$logfile"
+    exec 2>&1
+    run_commands "$@" &
+  fi
 }
 run_commands() {
   eval "$@"
+  local -r subject="Background process finished by $USER"
+  local -r message=$@
   if (($enable_notifications)); then
     mplayer "$BEEP"
-    local -r subject="Background process finished by $USER"
-    local -r message=$@
     notify-send "$subject" "'$message'"
-    echo "$message" | mail -s "$subject" "$recipient"
+  fi
+  if (($enable_mail)); then
+    cat "$logfile" | mail -s "$subject" "$recipient"
   fi
 }
 parse_options() {
@@ -63,11 +73,12 @@ parse_options() {
         ;;
       -m|--mail)
         enable_mail=1
-        recipient=$2
-        do_shift=2
         ;;
-      -s|--silent)
-        enable_notifications=0
+      -f|--foreground)
+        enable_foreground=1
+        ;;
+      -n|--notify)
+        enable_notifications=1
         ;;
       *)
         do_shift=1
@@ -89,6 +100,14 @@ error_exit() {
   shift
   log "$@"
   exit $error_code
+}
+prepare() {
+  mkfifo "$fifo"
+
+}
+cleanup() {
+  rm "$fifo"
+
 }
 
 handle_signal() {
