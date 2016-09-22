@@ -4,7 +4,7 @@
 # TODO fix race condition counting by using fifos
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] target destination
+Usage:	${0##*/} [OPTIONS] [target [destination]]
   
 OPTIONS:
   -h	    help
@@ -18,7 +18,12 @@ main() {
   local -i enable_overwrite=0
   local -i enable_verbose=0
   local -i batch_count=4
-  source ${MYLIBS}libcolors.sh
+
+  local extension=
+  local outputfile=
+  local global_options=
+  # not implemented
+  local output_type="mp3"
 
   while getopts $optlist opt; do
     case $opt in
@@ -37,21 +42,21 @@ main() {
     esac
   done
   shift $((OPTIND - 1))
-  [[ -z $1 ]] && usage && exit 1
-  local -r target="$(realpath $1)"
-  [[ -z $target ]] && echo "target must exist" && usage && exit 1
-  local destination="mp3"
-  [[ -n $2 ]] && destination=$2
-  destination=$(realpath -m $target/$destination)
 
-  local extension=
-  local outputfile=
-  local global_options=
-  # not implemented
-  local output_type="mp3"
+  source ${MYLIBS}libcolors.sh
+
+  local target="."
+  local destination="mp3"
+  [[ -n $1 ]] && target=$1
+  [[ -n $2 ]] && destination=$2
+
+  target=$(realpath "$target")
+  destination=$(realpath -m "$target/$destination")
+  [[ -z $target ]] && echo "target must exist" && usage && exit 1
+  mkdir -p "$destination"
+
   set_options
 
-  mkdir -p "$destination"
   trap cleanup SIGINT SIGTERM SIGKILL EXIT
 
   local -i success=0
