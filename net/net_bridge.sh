@@ -1,18 +1,19 @@
 #!/bin/env bash
 usage() {
   cat << EOF
-Usage: ${0##*/} [mode] [options] [bridge]
-
-mode:
-    -b cidr,dev_eth	    bridged network,dev_eth to connect to 
-    -i			    internal network only
-    -h cidr		    host only network (default)
+Usage: ${0##*/} [options] bridge
 
 options:
+    mode
     [-r [-f]]
     -r			    remove named bridge
     -f			    force remove named bridge
     bridge		    name of the bridge
+
+mode:
+    -b cidr,dev_eth	    bridged network,dev_eth to connect to 
+    -i			    internal network only
+    -h cidr		    host only network
 EOF
   exit 1
 }
@@ -26,7 +27,7 @@ main() {
   local -i flagged=0
   local -i flag_remove_bridge=0
   local -i force_remove=0
-  local cidr=""
+  local cidr="10.10.5.1/24"
   local dev_eth=""
 
   local -r optlist=":b:ih:rf"
