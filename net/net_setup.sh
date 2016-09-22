@@ -80,9 +80,9 @@ main() {
   net_bridge.sh -h $network $bridge_id
   net_tuntap.sh -b $bridge_id $tapdev
 
-  mac=$(generate_mac -u)
+  mac=$(generate_mac.py -u)
   while grep -sq $mac $bridge_id_file; do
-    mac=$(generate_mac)
+    mac=$(generate_mac.py -u)
   done
   if ((enablegraphic == 1)); then
     options="${options}-vga std "
@@ -128,8 +128,8 @@ bridge_is_empty() {
 }
 
 trap_interrupt() {
-  sh ./setup_tap_device.sh -r -b $bridge_id $tapdev
-  sh ./setup_bridge.sh -r $bridge_id
+  net_tuntap.sh -r -b $bridge_id $tapdev
+  net_bridge.sh -r $bridge_id
   exit $?
 }
 trap trap_interrupt SIGINT SIGHUP SIGTERM
