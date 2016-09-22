@@ -24,3 +24,9 @@ error_exit() {
   log "$@"
   exit $error_code
 }
+ord() {
+  printf "%d" "'$1"
+}
+chr() {
+  printf \\$(printf '%03o' $1)
+}
