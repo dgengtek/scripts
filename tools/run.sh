@@ -55,7 +55,7 @@ run_commands() {
   local -r subject="Background process finished by $USER"
   local -r message=$@
   if (($enable_notifications)); then
-    mplayer "$BEEP"
+    mplayer "$BEEP" > /dev/null 2>&1
     notify-send "$subject" "'$message'"
   fi
   if (($enable_mail)); then
