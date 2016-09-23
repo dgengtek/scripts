@@ -125,14 +125,14 @@ main() {
 
 connect_netdevs() {
   local -i count=0
-  func=$1
+  local -r func=$1
   shift 1
-  if [ -z "$func" ]; then
+  if [[ -z $func ]]; then
     return 1
   fi
 
-  for n in $@; do
-    func $count $n
+  for n in "$@"; do
+    $func "$count" "$n"
     let count+=1
   done
 }
@@ -142,7 +142,7 @@ connect_netdevs() {
 connect_bridges() {
   local -r id=$1
   local -r bridge=$2
-  options+="-net nic,vlan=$id -net bridge,vlan=$id,br=$bridge"
+  options+=" -net nic,vlan=$id -net bridge,vlan=$id,br=$bridge"
 }
 
 connect_tapdevs() {
@@ -150,10 +150,8 @@ connect_tapdevs() {
   local -r tapdev=$2
   local -r mac=$(generate_mac.py -u)
 
-  options+="-netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
+  options+=" -netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
   -device e1000,netdev=t$id,id=nic$id,mac=$mac"
-}
-generate_mac() {
 }
 
 open_ports() {
