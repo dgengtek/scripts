@@ -10,6 +10,7 @@ OPTIONS:
   -m, --mail          mail cmd output
   -n, --notify        enable notifications
   -f, --foreground    run in foreground
+  -p, --print-process print process
   -h                  help
 EOF
 }
@@ -19,6 +20,7 @@ main() {
   local -i enable_mail=0
   local -i enable_foreground=0
   local -i enable_notifications=0
+  local -i print_process=0
 
   local -r fifo="/tmp/runfifo$RANDOM"
 
@@ -43,11 +45,14 @@ main() {
   fi
 
   if (($enable_foreground)); then
+    (($print_process)) && echo "$$"
     run_commands "$@"
   else
+    exec 3>&1
     exec 1>>"$logfile"
     exec 2>&1
     run_commands "$@" &
+    (($print_process)) && echo "$!" >&3
   fi
 }
 run_commands() {
@@ -79,6 +84,9 @@ parse_options() {
         ;;
       -n|--notify)
         enable_notifications=1
+        ;;
+      -p|--print-process)
+        print_process=1
         ;;
       *)
         do_shift=1
