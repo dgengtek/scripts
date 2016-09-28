@@ -12,7 +12,7 @@ main() {
   local -r filename="$1"
 
   if [[ -z $filename ]]; then
-    echo -e "${COLORS_RED}no filename supplied${COLORS_NONE}" >&2
+    echo -e "${RED}no filename supplied${NONE}" >&2
     usage
     exit 1
   fi
@@ -21,13 +21,13 @@ main() {
   local -i failures=0
   local downloader="curl -O -J -L"
   while read -r line; do
-    echo -e "${COLORS_BLUE}Name read from file - $line${COLORS_NONE}"
+    echo -e "${BLUE}Name read from file - $line${NONE}"
     $downloader "$line"
     if [[ $? == 0 ]]; then
-      echo -e "${COLORS_GREEN}Successfull download.${COLORS_NONE}"
+      echo -e "${GREEN}Successfull download.${NONE}"
       success=$(($success + 1))
     else
-      echo -e "${COLORS_RED}Failed download of ${line}${COLORS_NONE}" >&2
+      echo -e "${RED}Failed download of ${line}${NONE}" >&2
       echo "$line" >> "$failed_links"
       failures=$(($failures + 1))
     fi
