@@ -3,6 +3,7 @@
 # merge when finished to output
 # TODO add pretty result output
 # TODO add option for archive destination path, relative to destination
+# TODO use arrays for options and concatenated commands
 usage() {
   cat >&2 << EOF
 Usage: $0 [options] [<destination> <source>... [-- <rsync options>...]] 
@@ -12,6 +13,8 @@ options:
                           supplied [default: stdin]
   -a, --archive         Archive and compress files(tar,gzip)
   -v, --verbose         Verbose output
+  -q, --quiet           Quiet output
+  -d, --debug           Enable debugging
   -p, --suffix <dir>    Suffix path onto destination, disables
                           relative path names options of rsync -R.
   -C, --change <dir>    Change to directory before running.
@@ -57,6 +60,7 @@ main() {
   local -r copy="rsync"
   # relative syncing to copy relative supplied paths
   local options="-aAzu"
+  options+="AXSH"
   # final command string
   local copy_cmd=""
   # backup directory of old files
@@ -116,7 +120,7 @@ parse_config() {
 }
 check_globals_existing() {
   [[ -z ${args+z} ]] && error_exit 1 "Args variable not set"
-  [[ -z ${options+z} ]] && error_exit 1 "Args variable not set"
+  [[ -z ${options+z} ]] && error_exit 1 "Options variable not set"
 }
 start_backup() {
   # dont separate on space, only newline and backspace
@@ -198,6 +202,12 @@ parse_options() {
         target=$2
         do_shift=2
         ;;
+      -q|--quiet)
+        enable_quiet=1
+        ;;
+      -d|--debug)
+        enable_quiet=1
+        ;;
       --)
         do_shift=3
         ;;
@@ -225,11 +235,9 @@ parse_options() {
 }
 
 update_options() {
-  if ! (($enable_verbose)); then
-    options+=" -q"
-  else
-    options+=" -v"
-  fi
+  (($enable_verbose)) && options+=" -v"
+  (($enable_quiet)) && options+=" -q"
+
   if [[ -z $destination_suffix ]]; then
     # enable relative path names from sources
     options+=" -R"
