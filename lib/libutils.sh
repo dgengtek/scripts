@@ -15,18 +15,33 @@ EOF
   fi
   printf '=%.0s' {1..$count}
 }
-log() {
-  echo -n "$@" | logger -s -t ${0##*/}
-}
+ord() { printf "%d" "'$1"; }
+chr() { printf \\$(printf '%03o' $1); }
+
+echo() ( 
+  IFS=" " 
+  printf '%s\n' "$*"
+)
+
+echo_n() (
+  IFS=" "
+  printf %s "$*"
+)
+
+echo_e() (
+  IFS=" "
+  printf '%b\n' "$*"
+)
+out() { echo "$1 $2" "${@:3}"; }
+error() { out "==> ERROR:" "$@"; } >&2
+msg() { out "==>" "$@"; }
+msg2() { out "  ->" "$@";}
+ignore_error() { log "$@" 2>/dev/null; }
+log() { echo "$@" | logger -s -t ${0##*/}; }
 error_exit() {
-  exit_code=${1:-0}
+  error_code=$1
   shift
   log "$@"
   exit $error_code
 }
-ord() {
-  printf "%d" "'$1"
-}
-chr() {
-  printf \\$(printf '%03o' $1)
-}
+die() { error_exit 1 "$@"; }
