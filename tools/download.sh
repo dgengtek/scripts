@@ -1,42 +1,60 @@
 #!/bin/env bash
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] filename
+Usage:	${0##*/} [OPTIONS] (FILENAME | URL...)
 
 OPTIONS:
 EOF
 }
 main() {
-  source "${MYLIBS}libcolors.sh"
-
-  local -r filename="$1"
-
-  if [[ -z $filename ]]; then
-    echo -e "${RED}no filename supplied${NONE}" >&2
+  if [[ -z $1 ]]; then
     usage
     exit 1
   fi
-  local -r failed_links="${filename}_failed_links_$RANDOM"
+
+  source "${MYLIBS}libcolors.sh"
+
+  local -r failed_links="failed_downloads_$RANDOM"
   local -i success=0
   local -i failures=0
-  local downloader="curl -O -J -L"
-  while read -r line; do
-    echo -e "${BLUE}Name read from file - $line${NONE}"
-    $downloader "$line"
-    if [[ $? == 0 ]]; then
-      echo -e "${GREEN}Successfull download.${NONE}"
-      success=$(($success + 1))
-    else
-      echo -e "${RED}Failed download of ${line}${NONE}" >&2
-      echo "$line" >> "$failed_links"
-      failures=$(($failures + 1))
-    fi
+  local -r downloader="curl -O -J -L -C -"
+
+  if [[ -f $1 ]]; then
+    process_file "$1"
+  elif [[ -n $1 ]]; then
+    process_urls "$@"
+  fi
   cat << EOF
-Processed from $filename
+Processed from $@
   success: $success
   failures: $failures
-  total: $(wc $filename)
+  total: $(($success + $failures))
 EOF
-  done < "$filename"
+  (($failures)) && echo "Failures saved in $failed_links."
+}
+process() {
+  local -r input=$1
+  echo -e "${BLUE}URL read - $input${NONE}"
+  $downloader "$input"
+  if [[ $? == 0 ]]; then
+    echo -e "${GREEN}Successfull download.${NONE}"
+    success=$(($success + 1))
+  else
+    echo -e "${RED}Failed download of ${input}${NONE}" >&2
+    echo "$input" >> "$failed_links"
+    failures=$(($failures + 1))
+  fi
+}
+process_file() {
+  local -r file=$1
+  while read -r line; do
+    process "$line"
+  done < "$file"
+}
+process_urls() {
+  while [[ -n $1 ]]; do
+    process "$1"
+    shift
+  done
 }
 main "$@"
