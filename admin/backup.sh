@@ -15,8 +15,9 @@ options:
   -v, --verbose         Verbose output
   -q, --quiet           Quiet output
   -d, --debug           Enable debugging
-  -p, --suffix <dir>    Suffix path onto destination, disables
+  -s, --suffix <dir>    Suffix path onto destination, disables
                           relative path names options of rsync -R.
+  -e, --examine-space      Check if destination has enough space left for backup
   -C, --change <dir>    Change to directory before running.
   -b, --batch <count>   Number of backup batches to run in
                           background.[default: 1]
@@ -51,6 +52,7 @@ main() {
   local -i enable_backup=0
   local -i enable_verbose=0
   local -i enable_debug=0
+  local -i enable_examine_space=0
   local destination=
   local destination_suffix=""
 
@@ -129,6 +131,8 @@ start_backup() {
   # loop over supplied targets
   # except last arg
   local count=0
+  local -r destination_free_space=$(free_space "$destination")
+  local source_size=
   while [[ -n $1 ]]; do
     start_worker "$1" &
     shift
@@ -141,7 +145,16 @@ start_backup() {
   IFS=$OLDIFS
 }
 start_worker() {
-    run_sync "$1"
+    if (($enable_examine_space)); then
+      source_size=$(transferred_size "$1")
+      log "$destination has $destination_free_space KiB left." >&$fddebug
+      log "$1 has $source_size KiB left." >&$fddebug
+      if (($destination_free_space <= $source_size)); then
+        log "$destination has not enough space left for $1($source_size KiB)."
+        return
+      fi
+    fi
+    copy "$1"
     archive_dir >&$fdverbose
 }
 setup() {
@@ -190,6 +203,9 @@ parse_options() {
       -v|--verbose)
 	enable_verbose=1
 	;;
+      -e|--examine-space)
+	enable_examine_space=1
+	;;
       -s|--suffix)
         destination_suffix=$2
         do_shift=2
@@ -206,7 +222,7 @@ parse_options() {
         enable_quiet=1
         ;;
       -d|--debug)
-        enable_quiet=1
+        enable_debug=1
         ;;
       --)
         do_shift=3
@@ -262,6 +278,19 @@ update_options() {
   copy_cmd="$copy $options"
 }
 
+free_space() {
+  df --output=avail "$1" 2>/dev/null | awk 'NR==2 {print}'
+}
+used_space() {
+  $(($size + $(du -s "$1" 2>/dev/null | awk '{print $1}')))
+}
+transferred_size() {
+  $(($(copy "$1" -n --stats \
+    | awk -F: '/Total transferred file size/  {print $2}' \
+    | sed -r 's/^ *([0-9,]*).*$/\1/' \
+    | sed 's/,//')/1024))
+}
+
 
 archive_dir() {
   if ! (($enable_archiving)); then
@@ -277,13 +306,13 @@ archive_dir() {
 "$destination/.." "$archivename" && rm -rfv "$destination"
 }
 
-run_sync() {
+copy() {
   local return_code=0
   local -r src=$1
   if (($enable_verbose == 1)); then
     log "Backup: $src to $destination"
   fi
-  local -r cmd_string="$copy_cmd $src $destination"
+  local -r cmd_string="$copy_cmd $@ $src $destination"
 
   if ! (($enable_debug)); then
     eval "$cmd_string"
@@ -299,7 +328,7 @@ run_sync() {
   fi
   # TODO allow message to be piped to display message only when script finishes
   # for a pretty final result
-  print_message "Backup finished from $@ to $destination"
+  print_message "Backup finished from $1 to $destination"
 }
 
 is_absolute_path() {
