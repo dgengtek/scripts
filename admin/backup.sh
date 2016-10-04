@@ -3,7 +3,6 @@
 # merge when finished to output
 # TODO add pretty result output
 # TODO add option for archive destination path, relative to destination
-# TODO use arrays for options and concatenated commands
 usage() {
   cat >&2 << EOF
 Usage: $0 [options] [<destination> <source>... [-- <rsync options>...]] 
@@ -24,13 +23,13 @@ options:
 EOF
 }
 log() {
-  echo -n "$@" | logger -s -t ${0##*/}
+  echo -n "$@" | logger -s -t "${0##*/}"
 }
 error_exit() {
   error_code=$1
   shift
   log "$@"
-  exit $error_code
+  exit "$error_code"
 }
 
 catch_interrupt() {
@@ -61,16 +60,17 @@ main() {
   # cmd for copying
   local -r copy="rsync"
   # relative syncing to copy relative supplied paths
-  local options="-aAzu"
-  options+="AXSH"
+  local options=("-aAzu")
+  options+=("-AXSH")
   # final command string
   local copy_cmd=""
   # backup directory of old files
   local batch_count=1
 
-  # declare rsync options
   local -r suffix="_bak"
   local args=
+
+  # returned by copy cmd
   local return_code=
 
 
@@ -84,7 +84,7 @@ main() {
 run() {
   # reset args
   args=
-  log "input \$@: $@" 2>&$fddebug
+  log "input \$@: $*" 2>&$fddebug
   parse_options "$@"
   if (($? == 9)); then
     parse_config
@@ -94,11 +94,11 @@ run() {
   # set input args
   set -- ${args[@]}
   unset -v args
-  log "after parsing \$@: $@" 2>&$fddebug
+  log "after parsing \$@: $*" 2>&$fddebug
   # reset changed verbosity
   setup
 
-  if [[ $# < 2 ]] && ! [[ -s $config ]]; then
+  if (( $# < 2 )) && ! [[ -s $config ]]; then
     usage
     error_exit 1 "No arguments."
   fi
@@ -117,7 +117,7 @@ run() {
 parse_config() {
   log "Parsing config." >&$fddebug
   while read -r line; do
-    run $line
+    run "$line"
   done < "$config"
 }
 check_globals_existing() {
@@ -155,7 +155,7 @@ start_worker() {
       fi
     fi
     copy "$1"
-    archive_dir >&$fdverbose
+    archive_dir "$1" >&$fdverbose
 }
 setup() {
   if ! (($enable_debug)); then
@@ -243,7 +243,7 @@ parse_options() {
   elif (($do_shift == 3)) ; then
     # got --, use all arguments left for rsync to process
     shift
-    options="$options $@"
+    options+=("$@")
     return
   fi
   shift
@@ -251,12 +251,12 @@ parse_options() {
 }
 
 update_options() {
-  (($enable_verbose)) && options+=" -v"
-  (($enable_quiet)) && options+=" -q"
+  (($enable_verbose)) && options+=("-v")
+  (($enable_quiet)) && options+=("-q")
 
   if [[ -z $destination_suffix ]]; then
     # enable relative path names from sources
-    options+=" -R"
+    options+=("-R")
   fi
 
   if ! is_absolute_path "$destination"; then
@@ -268,21 +268,22 @@ update_options() {
     && mkdir -pv "$destination" >&$fdverbose
 
   if (($enable_backup)); then
-    options+=" -b"
+    options+=("-b")
     # set backup dir to used destination suffix
     local -r backup_destination=$(basename "$destination")
     local -r backup_dir=$(realpath -m "${destination}/../bak/$backup_destination")
-    options+=" --backup-dir=$backup_dir"
-    options+=" --suffix=$suffix" 
+    options+=("--backup-dir=$backup_dir")
+    options+=("--suffix=$suffix")
   fi
-  copy_cmd="$copy $options"
+  copy_cmd="$copy ${options[*]}"
 }
 
 free_space() {
   df --output=avail "$1" 2>/dev/null | awk 'NR==2 {print}'
 }
 used_space() {
-  $(($size + $(du -s "$1" 2>/dev/null | awk '{print $1}')))
+  #$(($size + $(du -s "$1" 2>/dev/null | awk '{print $1}')))
+  :
 }
 transferred_size() {
   $(($(copy "$1" -n --stats \
@@ -296,14 +297,21 @@ archive_dir() {
   if ! (($enable_archiving)); then
     return 
   fi
-  archivename=$(basename "$destination")
-  taroptions="-cz"
+  local -r src=$1
+  local archivename=$(basename "$src")
+  archivename=$(realpath "$destination/${archivename}_$(date +%d%m%y).tar.gz")
+  local tar_options=(
+  "-cz"
+  "--remove-files"
+  )
   if (($enable_verbose)); then
-    taroptions+="v"
+    tar_options+=("-v")
   fi
-  taroptions+="f"
-  tar "$taroptions" "$destination/../${archivename}_$(date +%d%m%y).tar.gz" -C \
-"$destination/.." "$archivename" && rm -rfv "$destination"
+  tar_options+=("-C" "$destination")
+
+  tar_options+=("-f" "$archivename")
+  tar "${tar_options[@]}"\
+    "$src" || error_exit 1 "Failed archiving $src in $destination."
 }
 
 copy() {
@@ -312,7 +320,7 @@ copy() {
   if (($enable_verbose == 1)); then
     log "Backup: $src to $destination"
   fi
-  local -r cmd_string="$copy_cmd $@ $src $destination"
+  local -r cmd_string="$copy_cmd $* $src $destination"
 
   if ! (($enable_debug)); then
     eval "$cmd_string"
