@@ -297,9 +297,8 @@ archive_dir() {
   if ! (($enable_archiving)); then
     return 
   fi
-  local -r src=$1
-  local archivename=$(basename "$src")
-  archivename=$(realpath "$destination/${archivename}_$(date +%d%m%y).tar.gz")
+  local -r src=$(basename "$1")
+  local -r archivename=$(realpath "$destination/${src}_$(date +%d%m%y).tar.gz")
   local tar_options=(
   "-cz"
   "--remove-files"
@@ -311,7 +310,7 @@ archive_dir() {
 
   tar_options+=("-f" "$archivename")
   tar "${tar_options[@]}"\
-    "$src" || error_exit 1 "Failed archiving $src in $destination."
+    "$src" || error_exit 1 "Failed archiving $src from $destination."
 }
 
 copy() {
