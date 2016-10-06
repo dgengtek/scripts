@@ -2,7 +2,7 @@
 # todo: add supplied seconds to session database in file
 usage() {
   cat << EOF
-Usage: ${0##*/} seconds sessionname
+Usage: ${0##*/} SECONDS [ SESSIONNAME ]
 EOF
 
 }
@@ -49,10 +49,7 @@ main() {
 update_session() {
   current_date=$(date +%d_%m_%Y)
   pattern="([0-9]+) $current_date"
-  grep -Eq "$pattern" $session_path
-  result=$?
-  if [[ $result == 0 ]];then
-    # TODO: replace with better regexp
+  if grep -Eq "$pattern" $session_path; then
     sed -i -r "s/$pattern/echo \"\$((\\1+1)) $current_date\"/e" $session_path
   else
     echo "1 $current_date" >> $session_path
