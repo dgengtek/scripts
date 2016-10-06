@@ -37,10 +37,10 @@ main() {
     error_exit 1 "No commands."
   fi
 
-  #trap handle_signal SIGINT SIGTERM SIGKILL EXIT
+  trap cleanup SIGINT SIGTERM SIGKILL EXIT
 
   if (($enable_logging)) || (($enable_mail)); then
-    logfile="log_run.out"
+    logfile=$(mktemp -u /tmp/log_runXXXXXX.out)
     echo "$@" > "$logfile"
   fi
 
@@ -114,8 +114,8 @@ prepare() {
 
 }
 cleanup() {
-  rm "$fifo"
-
+  [[ -e $fifo ]] && rm "$fifo"
+  [[ -e $logfile ]] && rm "$logfile"
 }
 
 handle_signal() {
