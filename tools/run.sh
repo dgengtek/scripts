@@ -66,6 +66,7 @@ run_commands() {
   if (($enable_mail)); then
     cat "$logfile" | mail -s "$subject" "$recipient"
   fi
+  cleanup
 }
 parse_options() {
   # exit if no options left
