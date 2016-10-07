@@ -18,11 +18,12 @@ import pathlib
 
 from argparse import ArgumentParser
 from functools import reduce
-_keys = [
+_keys = {
   "path", 
   "pkgs",
-  "exclude"
-  ]
+  "exclude",
+  "directory",
+  }
 _logger = logging.getLogger(sys.argv[0])
 _logger.setLevel(logging.INFO)
 _ch = logging.StreamHandler()
@@ -80,9 +81,12 @@ def get_argparser():
     stow installer wrap
 
     """
+    from argparse import REMAINDER
     argparser = ArgumentParser(description=summary)
 
     argparser.add_argument("config", help="Ini configuration file")
+    argparser.add_argument('args', nargs=REMAINDER, 
+        help="use remainder arguments to pass to stow")
     return argparser
 
 def get_cmd_path(cmd):
@@ -137,6 +141,7 @@ def _get_absolute_path(path):
 def build_args(values, filter_pkgs=filter_packages, **kwargs):
     global _cmd
 
+    directory = values.get("directory", None)
     path = values.get("path")
     path = _get_absolute_path(path)
 
@@ -147,7 +152,9 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
 
     args = list()
     args.append(_cmd)
-    #args.extend(["-d", source])
+    args.extend(kwargs.get("args",[]))
+    if directory:
+        args.extend(["-d", directory])
     args.extend(["-t", path])
 
     # get all packages
