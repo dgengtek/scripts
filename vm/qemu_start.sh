@@ -93,23 +93,27 @@ main() {
   hda="$1"
   shift 1
 
-  local options="-enable-kvm -cpu host -vga std" 
+  local -a options=(
+  "-enable-kvm" 
+  "-cpu host" 
+  "-vga std" 
+  )
 
-  options+=" $@"
+  options+=( "$@" )
 
   if (($enable_snapshot == 1)); then
-    options+=" -snapshot"
+    options+=("-snapshot")
   fi
 
   if (($enable_monitor == 1)); then
-    options+=" -monitor \
-      telnet:localhost:$monitor_port,server,nowait,nodelay"
+    options+=("-monitor \
+      telnet:localhost:$monitor_port,server,nowait,nodelay")
   fi
   if (($enable_netdev_passthrough)); then
-    options+=" -netdev user,id=vmnic -device virtio-net,netdev=vmnic"
+    options+=("-netdev user,id=vmnic -device virtio-net,netdev=vmnic")
   fi
   if (($enable_netboot)); then
-    options+=" -boot order=nc"
+    options+=("-boot order=nc")
   fi
 
   local devices=""
@@ -127,8 +131,12 @@ main() {
     open_ports ${ports[@]}
   fi
 
-  $qemu_cmd $options -m "$memory" -hda $hda
+  $qemu_cmd ${options[@]} -m "$memory" -hda "$hda"
 
+}
+restrict() {
+# -netdev type=user,id=mynet0,restrict=yes 
+:
 }
 
 connect_netdevs() {
@@ -144,13 +152,22 @@ connect_netdevs() {
     let count+=1
   done
 }
+smb() {
+#  -net nic -net
+#  user,smb="/mnt/nfs/os/windows/win10/Activator",smbserver=10.0.2.4
+:
+}
+no_network() {
+  # options+=("-net none")
+  :
+}
 
 
 # with bridge helper of qemu
 connect_bridges() {
   local -r id=$1
   local -r bridge=$2
-  options+=" -net nic,vlan=$id -net bridge,vlan=$id,br=$bridge"
+  options+=("-net nic,vlan=$id -net bridge,vlan=$id,br=$bridge")
 }
 
 connect_tapdevs() {
@@ -158,20 +175,21 @@ connect_tapdevs() {
   local -r tapdev=$2
   local -r mac=$(generate_mac.py -u)
 
-  options+=" -netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
-  -device e1000,netdev=t$id,id=nic$id,mac=$mac"
+  options+=("-netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
+    -device e1000,netdev=t$id,id=nic$id,mac=$mac")
 }
 
 open_ports() {
   local sport=""
   local dport=""
-  options+=" -device e1000,netdev=net0 \
+  local option+="-device e1000,netdev=net0 \
     -netdev user,id=net0"
   for p in $@; do
     sport=${p%%:*}
     dport=${p##*:}
-    options+=",hostfwd=tcp::$sport-:$dport"
+    option+=",hostfwd=tcp::$sport-:$dport"
   done
+  options+=("$option")
 
 }
 
