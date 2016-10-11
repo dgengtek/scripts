@@ -1,14 +1,14 @@
 #!/bin/env bash
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] [<pystow path> [<configuration file>]]
+Usage:	${0##*/} [OPTIONS] [<configuration file>]]
   
 OPTIONS:
   -h			  help
 EOF
 }
 main() {
-  echo "Install dotfiles"
+  echo "Install scripts"
 
   local -r optlist="abcdefgh"
   while getopts $optlist opt; do
@@ -23,21 +23,25 @@ main() {
     esac
   done
   shift $((OPTIND - 1))
-  trap cleanup SIGINT SIGTERM SIGKILL
-  local path_pystow="tools/pystow.py"
-  local setup_config="setup.ini"
-  [[ -n $1 ]] && path_pystow=$1 && [[ -n $2 ]] && setup_config=$2
+  trap cleanup SIGINT SIGTERM
+  local installer="tools/install.py"
+  ! hash "$installer" && echo "Could not find $installer in PATH." && exit 1
 
-  #setup_config="setup.yaml"
-  if ! [[ -f $path_pystow ]]; then
-    usage
-    exit 1
-  fi
-  python "$path_pystow" "$setup_config"
+  local setup_config="setup.ini"
+  [[ -n $1 ]] && setup_config=$1
+
+  python3 "$installer" "$setup_config"
 }
 cleanup() {
-  trap - SIGINT SIGTERM SIGKILL
+  trap - SIGINT SIGTERM
   exit 1
+}
+prepare() {
+  mkdir -p .local/{bin,lib}
+}
+mkdir() {
+  ! [[ -e $1 ]] && command mkdir "$@"
 }
 
 main "$@"
+
