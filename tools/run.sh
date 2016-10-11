@@ -37,10 +37,11 @@ main() {
     error_exit 1 "No commands."
   fi
 
-  trap cleanup SIGINT SIGTERM SIGKILL EXIT
+  trap handle_signal SIGINT SIGTERM 
+  trap cleanup EXIT
 
   if (($enable_logging)) || (($enable_mail)); then
-    logfile=$(mktemp -u /tmp/log_runXXXXXX.out)
+    logfile=$(mktemp -u log_runXXXXXX.out)
     echo "$@" > "$logfile"
   fi
 
@@ -57,7 +58,7 @@ main() {
 }
 run_commands() {
   eval "$@"
-  local -r subject="Background process finished by $USER"
+  local -r subject="Background process finished [ return -> $? ] by $USER"
   local -r message=$@
   if (($enable_notifications)); then
     mplayer "$BEEP" > /dev/null 2>&1
@@ -112,15 +113,16 @@ error_exit() {
 }
 prepare() {
   mkfifo "$fifo"
-
 }
 cleanup() {
+  trap - EXIT
   [[ -e $fifo ]] && rm "$fifo"
-  [[ -e $logfile ]] && rm "$logfile"
+  (($enable_mail)) && [[ -e $logfile ]] && rm "$logfile"
 }
 
 handle_signal() {
-  trap - SIGINT SIGTERM SIGKILL EXIT
+  trap - SIGINT SIGTERM
+  cleanup
   kill $$
   error_exit 1 "Signal received: stopping backup" 
 }
