@@ -34,13 +34,13 @@ EOF
 }
 process() {
   local -r input=$1
-  echo -e "${BLUE}URL read - $input${NONE}"
+  echo -e "${BLUE_BG}URL read - $input${COLOR_NONE}"
   $downloader "$input"
   if [[ $? == 0 ]]; then
-    echo -e "${GREEN}Successfull download.${NONE}"
+    echo -e "${GREEN}Successfull download.${COLOR_NONE}"
     success=$(($success + 1))
   else
-    echo -e "${RED}Failed download of ${input}${NONE}" >&2
+    echo -e "${RED}Failed download of ${input}${COLOR_NONE}" >&2
     echo "$input" >> "$failed_links"
     failures=$(($failures + 1))
   fi
@@ -52,6 +52,7 @@ process_file() {
   done < "$file"
 }
 process_urls() {
+  IFS=" "
   while [[ -n $1 ]]; do
     process "$1"
     shift
