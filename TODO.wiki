@@ -1,6 +1,2 @@
-* add the useful and simple short script functions to dotfiles .bash as util
-  functions
-* echo error messages to stderr filestream
-* use local scope vars inside functions by declaring them
-  local
-* use logger with a specific tag(script name)
+* update installer script to use environment variables defined in configuration
+  files

@@ -1,19 +1,21 @@
 #!/bin/env bash
 usage() {
-  echo -e "usage:\n\t${0##*/} \
-   cmd"
-  echo -e "\tcmd,\tedit the specific command"
+  cat >&2 << EOF
+Usage: ${0##*/} <cmd>
+  cmd     edit the specific command
+EOF
 }
 main() {
-  if [ -z $1 ]; then
-    usage;
+  if [[ -z $1 ]]; then
+    usage
+    exit 1
   fi
 
-  cmd=$1
-  path=$(type $cmd | cut -f 3 -d " ")
+  local -r cmd=$1
+  local -r path=$(type "$cmd" | awk '{print $3}')
 
-  if [[ $path == "" ]]; then
-    echo "$cmd not found" >&2 
+  if [[ -z $path ]]; then
+    echo "$cmd not found." >&2 
     exit 1
   fi
 

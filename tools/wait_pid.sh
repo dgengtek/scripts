@@ -1,18 +1,33 @@
 #!/bin/env bash
 
-
-function usage {
-echo "$0 pid {pid}"
-exit 1
+usage() {
+  cat >&2 << EOF
+Usage: ${0##*/} <pid>...
+EOF
 }
 
+main() {
+  if [[ -z $@ ]];then 
+    usage
+    exit 1
+  fi
+  echo "List of supplied PID's: $@"
 
-args=("$@")
-if [ -z $args ];then 
-  usage
-fi
+  local -a pids=()
+  while [[ -n $1 ]]; do
+    check_pid_exists "$1" &
+    pids+=($!)
+    shift
+  done
 
-echo "List of supplied PID's: ${args[@]}"
+  progress &
+  rc=$!
+
+  wait ${pids[@]}
+  kill $rc
+
+  echo -e "\nwait complete"
+}
 
 progress_output() {
   case "$1" in
@@ -36,6 +51,7 @@ progress_output() {
   esac
   sleep 1
 }
+
 progress() {
   declare -i cycle=0
   while :; do
@@ -46,22 +62,11 @@ progress() {
     let cycle++
   done
 }
+
 check_pid_exists() {
-  while [ -e /proc/$1 ]; do
+  while [[ -e "/proc/$1" ]]; do
     sleep 1
   done
 }
-pids=()
-for ((i=0; i < $#; i++)); do
-	check_pid_exists ${args[$i]} &
-	pids+=($!)
-done
 
-
-progress &
-rc=$!
-
-wait ${pids[@]}
-kill $rc
-
-echo -e "\nwait complete"
+main "$@"
