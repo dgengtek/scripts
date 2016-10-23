@@ -31,12 +31,38 @@ modes={
             "l",
             ],
         }
-log_file = "benchmark_IO_log"
-error_file = "benchmark_IO_error_log"
-args = None
-
 def main():
-    parse_args()
+    args = parse_args()
+
+    selected_modes = filter_selected_modes(args.get("mode"))
+    if "read" in selected_modes and os.geteuid() != 0:
+        print("Error: User needs root permissions for running proper read benchmarks")
+        sys.exit(2)
+
+    try:
+        blocksize = args.get("blocksize")
+        count = args.get("count")
+        rounds = args.get("rounds")
+        del args["mode"]
+
+        bytes_size = 1024
+        size_count, unit, power = parse_power_of_unit(blocksize)
+
+        bytes_size = bytes_size**power
+        bytes_count = bytes_size * int(size_count) * int(count)
+
+        for s in selected_modes:
+            print("Running benchmark for: {}".format(s))
+            run_benchmark(benchmark_factory(s, **args), 
+                    unit,
+                    bytes_count, 
+                    bytes_size,
+                    rounds)
+    except Exception as e:
+        print(e)
+    finally:
+        os.remove(args.get("destination"))
+
 
 def usage():
     pass
@@ -52,8 +78,6 @@ def parse_args():
     argparser.add_argument("-r","--rounds",type=int, default=10)
     argparser.add_argument("-s","--source",default="/dev/zero", 
             help="Data source for benchmark")
-    argparser.add_argument("-t","--total-size", 
-            help="Total size of written file in size(B,K,M,G,T)")
     argparser.add_argument("-c","--count",type=int, default=1024,
             help="count of blocksizes(default: 1024)")
     argparser.add_argument("-b","--blocksize", default="1M",
@@ -62,26 +86,12 @@ def parse_args():
     global modes
     merged = list(itertools.chain(*modes.values()))
     argparser.add_argument("mode",choices=merged, nargs="*")
-    argparser.add_argument("destination")
+    argparser.add_argument("destination", default="tmp_benchmark_IO")
     del merged
 
-    if len(sys.argv) is 1:
-        argparser.print_help()
-        sys.exit(1)
-
     namespace = argparser.parse_args(sys.argv[1:])
-    # get dictionary of values
-    global args 
-    args = vars(namespace)
-    selected_modes = filter_selected_modes(args.get("mode"))
-    if "read" in selected_modes and os.geteuid() != 0:
-        print("Error: User needs root permissions for running proper read benchmarks")
-        sys.exit(2)
+    return vars(namespace)
 
-    for s in selected_modes:
-        print("Running benchmark for: ",s)
-        run_benchmark(benchmark_factory(s, args),  args.get("rounds"))
-    cleanup()
 
 
 def filter_selected_modes(selection):
@@ -95,98 +105,99 @@ def filter_selected_modes(selection):
     selected_modes.sort(reverse=True)
     return selected_modes
 
-def run_benchmark(benchmark,rounds=10):
-
+def run_benchmark(benchmark, unit, bytes_count, bytes_size, rounds=10):
+    avg_speed = 0
     avg_time = 0
+
     for i in range(rounds):
         start_time = timeit.default_timer()
         if benchmark().returncode is not 0:
             print("Unexptected returncode of process")
             sys.exit(2)
-        avg_time += (timeit.default_timer() - start_time)
+        timing = (timeit.default_timer() - start_time)
+        avg_time += timing
+        avg_speed += bytes_count / timing
+
         print('.', end="")
         sys.stdout.flush()
     avg_time = avg_time / rounds
+    avg_speed = avg_speed / (rounds * bytes_size)
 
-    global args
-    blocksize = args.get("blocksize")
-    count = args.get("count")
-    size = 1024
-    power = 1
-    pattern = r"[0-9]*([A-Z])"
-    matcher = re.compile(pattern)
-    match = matcher.search(blocksize)
-    if match:
-        power, = match.groups()
-        power = get_power_to_byte(power)
-    bytes_count = count * (size**power)
-    speed = bytes_count / avg_time
-    speed = speed / (1024**2)
 
-    output = "{} rounds\n".format(rounds)
-    output += "bytes processed: {}\n".format(bytes_count)
-    output += "avg. time: {}\n".format(avg_time)
-    output += "avg. speed: {} MB/s\n".format(speed)
-    print(output)
-def get_power_to_byte(notation):
+    output = []
+    output.append("{} rounds".format(rounds))
+    output.append("bytes processed: {} {}B".format(bytes_count / bytes_size, unit))
+    output.append("avg. time: {} s".format(avg_time))
+    output.append("avg. speed in {} {}B/s: ".format(avg_speed, unit))
+    print("\n".join(output))
+
+def parse_power_of_unit(input_unit):
     notations = {
             "K":1,
             "M":2,
             "G":3,
             "T":4,
             }
-    return notations.get(notation,1)
+    pattern = r"([0-9]*)([A-Z])"
+    matcher = re.compile(pattern)
+    match = matcher.search(input_unit)
+    unit = "K"
+    power = 1
+    if match:
+        size, unit = match.groups()
+        power = notations.get(unit, power)
+    return size, unit, power
 
-def benchmark_factory(mode ,args , log_file="benchmark_IO_log"):
-    cmd = "dd"
-    source = args.get("source")
-    destination = args.get("destination")
-    blocksize = args.get("blocksize")
-    count = args.get("count")
+def benchmark_factory(mode, source, destination, blocksize, count, **kwargs):
+    cmd = ["dd"]
 
     preparation_functions = list()
 
     if mode in modes.get("read"):
-        preparation_functions.append(destination_exists)
+        check_destination = prepare_destination(
+                source=source, 
+                destination=destination, 
+                blocksize=blocksize,
+                count=count, **kwargs
+                )
+        preparation_functions.append(check_destination)
         preparation_functions.append(clear_disk_cache)
         source = destination
         destination = "/dev/zero"
     elif mode in modes.get("write"):
-        cmd += " conv=fdatasync,notrunc"
+        cmd.append("conv=fdatasync,notrunc")
         pass
     elif mode in modes.get("response"):
         pass
 
-    cmd += " if=" + source
-    cmd += " of=" + destination
-    cmd += " bs=" + blocksize
-    cmd += " count=" + str(count)
+    cmd.append("if={}".format(source))
+    cmd.append("of={}".format(destination))
+    cmd.append("bs={}".format(blocksize))
+    cmd.append("count={}".format(str(count)))
 
     def run_benchmark():
         fns = preparation_functions
         for f in fns:
             f()
-        dd_command = cmd.split()
-        return subprocess.run(dd_command, stderr=subprocess.DEVNULL)
+        return subprocess.run(cmd, stderr=subprocess.DEVNULL)
     return run_benchmark
 
 def clear_disk_cache():
     with open("/proc/sys/vm/drop_caches","w") as f:
         f.write("3")
-def cleanup():
-    global args
-    os.remove(args.get("destination"))
 
-def destination_exists():
-    global args
-    filename = args.get("destination")
-    if not os.path.isfile(filename):
-        args_copy = dict(args)
-        args_copy["count"] = 1
-        args_copy["blocksize"] = "1G"
-        print("Creating temporary file.")
-        f = benchmark_factory("write", args_copy)
-        f()
+
+def prepare_destination(**kwargs):
+    def check_destination():
+        if not os.path.isfile(kwargs.get("destination")):
+            args_copy = dict(kwargs)
+            print("Creating temporary file. ", end="")
+            sys.stdout.flush()
+            f = benchmark_factory("write", **kwargs)
+            f()
+            print("Done.")
+
+    return check_destination
 
 def prepare_string(string):
     """
