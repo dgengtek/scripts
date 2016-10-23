@@ -134,7 +134,7 @@ def filter_packages(pkgs=[], exclude=[]):
 def _get_absolute_path(path):
     path = path.expanduser()
     path = path.absolute()
-    while not path.is_dir():
+    if not path.is_dir():
         path = path.parent
     return str(path)
 
