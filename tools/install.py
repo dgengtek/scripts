@@ -124,12 +124,10 @@ def get_values(section, keys):
     return d
 
 
-def filter_packages(pkgs=[], exclude=[]):
+def filter_packages(pkgs=None, exclude=None):
     if len(pkgs) is 0:
         raise RuntimeError("No packages supplied")
-    for p in pkgs:
-        if p not in exclude:
-            yield p
+    return filter(lambda x:x not in exclude, pkgs)
 
 def _get_absolute_path(path):
     path = path.expanduser()
@@ -162,12 +160,12 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
     if not pkgs or pkgs.startswith("*"):
       pkgs = os.listdir(source)
     else:
-      pkgs = pkgs.split(",")
+      pkgs = [ x.strip() for x in pkgs.split(",") ]
 
     # filter excluded
     excluded_packages = values.get("exclude", [])
     if excluded_packages:
-        excluded_packages = excluded_packages.split(",")
+        excluded_packages = [ x.strip() for x in excluded_packages.split(",") ]
     else:
         excluded_packages = list()
 
