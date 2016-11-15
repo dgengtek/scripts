@@ -38,10 +38,9 @@ def main():
     global _cmd
     _cmd = str(get_cmd_path(_cmd))
 
-    # keys for stow setup in sections
     parser = ConfigParser()
 
-    global _config_file
+    global _config_filename
     main.config=""
 
     input_args = parse_argv(sys.argv[1:])

@@ -23,9 +23,14 @@ main() {
     esac
   done
   shift $((OPTIND - 1))
+
+  export PATH="$PATH:$HOME/.local/bin/:$HOME/.bin/"
+
   trap cleanup SIGINT SIGTERM
   local installer="tools/install.py"
-  ! hash "$installer" && echo "Could not find $installer in PATH." && exit 1
+  ! command -v "$installer" && installer="install.py"
+  ! command -v "$installer" && echo "Could not find $installer in PATH." && exit 1
+  prepare
 
   local setup_config="setup.ini"
   [[ -n $1 ]] && setup_config=$1
@@ -37,7 +42,9 @@ cleanup() {
   exit 1
 }
 prepare() {
+  pushd "$HOME"
   mkdir -p .local/{bin,lib}
+  popd
 }
 mkdir() {
   ! [[ -e $1 ]] && command mkdir "$@"
