@@ -1,9 +1,11 @@
 #!/bin/env bash
+
 usage() {
   echo "usage:  $0 db owner"
   exit 1
 
 }
+
 main () {
   if [ -z $1 ]; then
     usage
@@ -41,9 +43,9 @@ COMMIT;
 EOF
 
   local -r host="pg"
-  psql -h $host -U postgres -f $sql_file
+  psql -h "$host" -U postgres -f "$sql_file"
 
-  rm $sql_file
+  rm "$sql_file"
 
 }
 

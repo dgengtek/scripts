@@ -1,10 +1,13 @@
 #!/bin/env bash
+
 # create user for specific db with usage rights to schema of db
+
 usage() {
   echo "usage:  $0 db user pw"
   exit 1
 
 }
+
 main () {
   if [ -z $1 ] \
     || [ -z $2 ] \
@@ -31,10 +34,9 @@ COMMIT;
 EOF
 
   local -r host="pg"
-  psql -h $host -d $db -U postgres -f $sql_file
+  psql -h "$host" -d "$db" -U postgres -f "$sql_file"
 
-  rm $sql_file
-
+  rm "$sql_file"
 }
 
 main "$@"

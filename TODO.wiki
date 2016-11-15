@@ -1,2 +1,4 @@
 * update installer script to use environment variables defined in configuration
   files
+* write tool to automatically format bash scripts with correct spacing between
+  functions, descriptions, shebang

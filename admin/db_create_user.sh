@@ -1,4 +1,5 @@
 #!/bin/env bash
+
 # create user for specific db with usage rights to schema of db
 
 
@@ -66,8 +67,6 @@ usage:	${0##*/} [OPTIONS] db user pw
 
 EOF
   exit 1
-  exit 1
-
 }
 main () {
   local -ir ERROR_NO_GRANTS=2
@@ -106,7 +105,7 @@ main () {
   elif [[ ${#grants[@]} == 1 ]]; then
     grants_schema="${grants[0]}"
   else
-    for i in ${grants[@]}; do
+    for i in "${grants[@]}"; do
       grants_schema+="$i,"
     done
   fi
@@ -124,9 +123,9 @@ COMMIT;
 EOF
 
   local -r host="pg"
-  psql -h $host -d $db -U postgres -f $sql_file
+  psql -h "$host" -d "$db" -U postgres -f "$sql_file"
 
-  rm $sql_file
+  rm "$sql_file"
 
 }
 

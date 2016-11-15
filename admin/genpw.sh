@@ -1,4 +1,5 @@
 #!/bin/env bash
+
 usage() {
   cat << EOF
 Usage:  ${0##*/} [options] [length]
@@ -10,6 +11,7 @@ options:
   -g            (default)all printable characters, excluding space
 EOF
 }
+
 main() {
   local -r optlist=":ag"
   local charset="graph"

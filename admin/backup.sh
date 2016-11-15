@@ -1,8 +1,10 @@
 #!/bin/env bash
+
 # TODO use fifos to synchronize ordered output or write to temporary files and
 # merge when finished to output
 # TODO add pretty result output
 # TODO add option for archive destination path, relative to destination
+
 usage() {
   cat >&2 << EOF
 Usage: $0 [options] [<destination> <source>... [-- <rsync options>...]] 
@@ -22,9 +24,11 @@ options:
                           background.[default: 1]
 EOF
 }
+
 log() {
   echo -n "$@" | logger -s -t "${0##*/}"
 }
+
 error_exit() {
   error_code=$1
   shift
@@ -81,6 +85,7 @@ main() {
 
   run "$@"
 }
+
 run() {
   # reset args
   args=
@@ -114,16 +119,19 @@ run() {
   popd
 
 }
+
 parse_config() {
   log "Parsing config." >&$fddebug
   while read -r line; do
     run "$line"
   done < "$config"
 }
+
 check_globals_existing() {
   [[ -z ${args+z} ]] && error_exit 1 "Args variable not set"
   [[ -z ${options+z} ]] && error_exit 1 "Options variable not set"
 }
+
 start_backup() {
   # dont separate on space, only newline and backspace
   local -r OLDIFS=$IFS
@@ -144,6 +152,7 @@ start_backup() {
   wait || error_exit 50 "Failed waiting for background backup processes"
   IFS=$OLDIFS
 }
+
 start_worker() {
     if (($enable_examine_space)); then
       source_size=$(transferred_size "$1")
@@ -157,6 +166,7 @@ start_worker() {
     copy "$1"
     archive_dir "$1" >&$fdverbose
 }
+
 setup() {
   if ! (($enable_debug)); then
     exec {fddebug}>/dev/null
@@ -171,6 +181,7 @@ setup() {
     exec {fdverbose}>&1
   fi
 }
+
 parse_options() {
   # exit if no options left
   [[ -z $1 ]] && return 0
@@ -263,7 +274,7 @@ update_options() {
     destination=$(realpath -m "${PWD}/${destination}")
   fi
 
-  ! [ -f "$destination" ] \
+  ! [[ -f $destination ]] \
     && ! (($enable_debug)) \
     && mkdir -pv "$destination" >&$fdverbose
 
@@ -281,17 +292,18 @@ update_options() {
 free_space() {
   df --output=avail "$1" 2>/dev/null | awk 'NR==2 {print}'
 }
+
 used_space() {
   #$(($size + $(du -s "$1" 2>/dev/null | awk '{print $1}')))
   :
 }
+
 transferred_size() {
   $(($(copy "$1" -n --stats \
     | awk -F: '/Total transferred file size/  {print $2}' \
     | sed -r 's/^ *([0-9,]*).*$/\1/' \
     | sed 's/,//')/1024))
 }
-
 
 archive_dir() {
   if ! (($enable_archiving)); then
@@ -348,10 +360,13 @@ print_message() {
     echo "> $1"
   fi
 }
+
 pushd() {
   command pushd "$@" >&$fddebug 2>&1
 }
+
 popd() {
   command popd >&$fddebug 2>&1
 }
+
 main "$@"
