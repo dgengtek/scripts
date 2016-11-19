@@ -22,8 +22,6 @@ main() {
   local -i enable_notifications=0
   local -i print_process=0
 
-  local -r fifo="/tmp/runfifo$RANDOM"
-
   # mail recipient
   local recipient="admin"
   local logfile="/dev/null"
@@ -55,13 +53,15 @@ main() {
     run_commands "$@" &
     (($print_process)) && echo "$!" >&3
   fi
+  # return 0 since bash uses last test return code
+  return 0
 }
 run_commands() {
   eval "$@"
   local -r subject="Background process finished [ return -> $? ] by $USER"
   local -r message=$@
   if (($enable_notifications)); then
-    mplayer "$BEEP" > /dev/null 2>&1
+    [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
     notify-send "$subject" "'$message'"
   fi
   if (($enable_mail)); then
@@ -102,21 +102,20 @@ parse_options() {
   shift
   parse_options "$@"
 }
+
 log() {
   echo -n "$@" | logger -s -t ${0##*/}
 }
+
 error_exit() {
   error_code=${1:-0}
   shift
   log "$@"
   exit $error_code
 }
-prepare() {
-  mkfifo "$fifo"
-}
+
 cleanup() {
   trap - EXIT
-  [[ -e $fifo ]] && rm "$fifo"
   (($enable_mail)) && [[ -e $logfile ]] && rm "$logfile"
 }
 
