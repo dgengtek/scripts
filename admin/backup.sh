@@ -4,6 +4,10 @@
 # merge when finished to output
 # TODO add pretty result output
 # TODO add option for archive destination path, relative to destination
+# TODO write backup restoration 
+#     - check if source path exists in destination
+#     - use path of destination + source to copy backup over source 
+#     - add options to force overwrite?
 
 usage() {
   cat >&2 << EOF
@@ -13,7 +17,11 @@ options:
   -c, --config <file>   config file used to parse options if no arguments
                           supplied [default: stdin]
   -a, --archive         Archive and compress files(tar,gzip)
+  -x, --restore         Restores backup - reverses destination and source,
+                          deploy backup
+  -k, --keep-backups    backup old files from destination
   -v, --verbose         Verbose output
+  -r, --remove          remove backup in destination after archiving
   -q, --quiet           Quiet output
   -d, --debug           Enable debugging
   -s, --suffix <dir>    Suffix path onto destination, disables
@@ -52,7 +60,9 @@ main() {
   # restrict config to be read once
   local -i singleton=0
   local -i enable_archiving=0
-  local -i enable_backup=0
+  local -i remove_src_archive=0
+  local -i keep_backups=0
+  local -i restore_backups=0
   local -i enable_verbose=0
   local -i enable_debug=0
   local -i enable_examine_space=0
@@ -182,6 +192,10 @@ setup() {
   fi
 }
 
+prepare_backup_restore() {
+  :
+}
+
 parse_options() {
   # exit if no options left
   [[ -z $1 ]] && return 0
@@ -208,11 +222,14 @@ parse_options() {
       -a|--archive)
 	enable_archiving=1
 	;;
-      -b|--backup)
-	enable_backup=1
+      -k|--keep-backups)
+	keep_backups=1
 	;;
       -v|--verbose)
 	enable_verbose=1
+	;;
+      -r|--remove)
+	remove_src_archive=1
 	;;
       -e|--examine-space)
 	enable_examine_space=1
@@ -224,6 +241,9 @@ parse_options() {
       -b|--batch-count)
         batch_count=$2
         do_shift=2
+	;;
+      -x|--restore)
+	restore_backups=1
 	;;
       -C|--change)
         target=$2
@@ -278,7 +298,7 @@ update_options() {
     && ! (($enable_debug)) \
     && mkdir -pv "$destination" >&$fdverbose
 
-  if (($enable_backup)); then
+  if (($keep_backups)); then
     options+=("-b")
     # set backup dir to used destination suffix
     local -r backup_destination=$(basename "$destination")
@@ -309,15 +329,18 @@ archive_dir() {
   if ! (($enable_archiving)); then
     return 
   fi
-  local -r src=$(basename "$1")
-  local -r archivename=$(realpath "$destination/${src}_$(date +%d%m%y).tar.gz")
+  local -r src_basename=$(basename "$1")
+  # remove root slash
+  src=${1#/}
+  # get parent dirname which was copied as a fully path by rsync to destination
+  local -r src=${src%%/*}
+  local -r archivename=$(realpath "$destination/${src_basename}_$(date +%d%m%y).tar.gz")
   local tar_options=(
   "-cz"
-  "--remove-files"
   )
-  if (($enable_verbose)); then
-    tar_options+=("-v")
-  fi
+  (($remove_src_archive)) && tar_options+=("--remove-files")
+  (($enable_verbose)) && tar_options+=("-v")
+
   tar_options+=("-C" "$destination")
 
   tar_options+=("-f" "$archivename")
