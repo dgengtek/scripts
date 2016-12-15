@@ -38,6 +38,7 @@ main() {
   [[ -n $1 ]] && setup_config=$1
 
   python3 "$installer" "$setup_config"
+  trap - SIGINT SIGTERM EXIT
 }
 
 cleanup() {
