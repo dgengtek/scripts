@@ -7,6 +7,7 @@ options:
   -s			  create a snapshot and discard
   -x			  use cpu arch x86_64
   -m mem		  memory
+  -k mac                  use mac address
   -c                      boot from network first
   -n                      enable netdev passthrough 
   -w [port]               enable monitor
@@ -21,7 +22,7 @@ only one type possible
 EOF
 }
 main() {
-  local optlist=":shxm:cw:p:b:t:n"
+  local optlist="shk:xm:cw:p:b:t:n"
 
   local -i enable_snapshot=0
   local -i enable_monitor=0
@@ -32,6 +33,7 @@ main() {
   local -i connect_tapdevs=0
   local -i flagged=0
 
+  local mac=
   local memory="256"
   local hda=""
   local -a ports
@@ -49,6 +51,9 @@ main() {
 	;;
       m)
 	memory=$OPTARG
+	;;
+      k)
+	mac=$OPTARG
 	;;
       n)
         enable_netdev_passthrough=1
@@ -173,7 +178,7 @@ connect_bridges() {
 connect_tapdevs() {
   local -r id=$1
   local -r tapdev=$2
-  local -r mac=$(generate_mac.py -u)
+  local -r mac=${mac:-$(generate_mac.py -u)}
 
   options+=("-netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
     -device e1000,netdev=t$id,id=nic$id,mac=$mac")
