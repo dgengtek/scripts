@@ -52,7 +52,8 @@ check_input_args() {
   fi
 }
 prepare() {
-  [[ -f ${MYLIBS}libutils.sh ]] && source "${MYLIBS}libutils.sh"
+  source "${MYLIBS}libutils.sh"
+  source "${MYLIBS}libcolors.sh"
 
 }
 setup() {
