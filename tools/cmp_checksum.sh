@@ -4,6 +4,7 @@ declare -ar cmds=(
 md5sum
 sha256sum
 sha512sum
+sha1sum
 )
 usage() {
   cat << EOF
@@ -40,9 +41,9 @@ if [[ -f $digest ]]; then
   digest=$($cmd $digest | awk '{$0=$1;print}')
 fi
 
-file_sum=$($cmd "$file" | awk '{$0=$1;print}')
-if [[ $file_sum == $expected_sum ]]; then
+digest2=$($cmd "$file" | awk '{$0=$1;print}')
+if [[ "$digest" == "$digest2" ]]; then
   exit 0
 fi
+echo "$digest != $digest2"
 exit 1
-
