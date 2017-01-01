@@ -151,6 +151,6 @@ error_exit() {
   exit_code=${1:-0}
   shift
   log "$@"
-  exit $error_code
+  exit $exit_code
 }
 main "$@"
