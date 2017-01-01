@@ -7,11 +7,13 @@ options:
     -h, --help  Show this screen and exit.
 """
 import os
-import sys
 import re
 import subprocess
+import sys
+
 from pathlib import Path
 from docopt import docopt
+
 # TODO check ssh path exists
 # TODO add logging
 # TODO add unit tests
@@ -85,10 +87,13 @@ def run_non_interactive(path, ssh_keys):
 
 def run_interactive(path):
     global used_keys
+    cwd = os.getcwd()
 
-    glob = r"id*.pub"
-    ids = path.glob(glob)
-    ids = list(ids)
+    os.chdir(str(path))
+    ids = os.listdir(".")
+    ids = get_ids(ids)
+    os.chdir(cwd)
+
     ids = sorted(ids)
     menu = create_interactive_menu(ids)
     choice=-1
@@ -120,17 +125,24 @@ def interactive_input(ids):
     else:
         return None
 
-def get_ids(items, matcher):
+def get_ids(items):
+    import subprocess
     ids = []
     found = False
-    for i in items:
-        result=matcher.match(i)
-        if result:
-            # get first item of groups match
-            result,*s = result.groups()
-            ids.append(result)
-        elif len(ids) is 0:
-            raise Exception("Items empty")
+    valid_keyfiletype = "PEM RSA private key"
+    for item in items:
+        command = ["file", item]
+        result = subprocess.Popen(command, 
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE)
+        result = result.stdout.read().decode("UTF-8").split(":")
+        f, filetype = result
+        f = f.strip()
+        filetype = filetype.strip()
+
+        if filetype == valid_keyfiletype:
+            ids.append(item)
+
     return ids
 
 def is_in_bounds(choice, items):
@@ -144,7 +156,7 @@ def create_interactive_menu(ids):
     output = "{:#^40}".format("Available ssh ids")
     output += "\nSelect an id:"
     for nr,key in enumerate(ids,1):
-        output += "\n  {}\t{}".format(nr,key.name)
+        output += "\n  {}\t{}".format(nr,key)
     return output
 
 def add_ssh_key(key):
