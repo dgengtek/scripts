@@ -101,7 +101,7 @@ main() {
   local -a options=(
   "-enable-kvm" 
   "-cpu host" 
-  "-vga std" 
+  "-vga virtio" 
   )
 
   options+=( "$@" )
