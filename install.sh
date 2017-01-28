@@ -11,9 +11,6 @@ EOF
 }
 
 main() {
-
-
-
   local -r optlist="abcdefgh"
   while getopts $optlist opt; do
     case $opt in
