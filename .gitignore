@@ -1,5 +1,6 @@
 wine*
 __pycache__
+__init__.py
 commit.txt
 *.swp
 .cache

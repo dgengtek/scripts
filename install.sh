@@ -1,4 +1,5 @@
 #!/bin/env bash
+# Install scripts
 
 usage() {
   cat >&2 << EOF
@@ -37,7 +38,7 @@ main() {
   local setup_config="setup.ini"
   [[ -n $1 ]] && setup_config=$1
 
-  python3 "$installer" "$setup_config"
+  python3 "$installer" "$setup_config" || exit 1
   trap - SIGINT SIGTERM EXIT
 }
 
@@ -72,7 +73,6 @@ out() { echo "$1 $2" "${@:3}"; }
 error() { out "==> ERROR:" "$@"; } >&2
 fi
 
-echo "Install scripts."
 # silence output
 exec > /dev/null
 
