@@ -180,7 +180,12 @@ if __name__ == "__main__":
     if os.name is not "posix":
         print_error("OS not supported.")
         sys.exit(1)
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print_error("\nbye")
+        sys.exit(0)
+
 
 
 ################################################################################
