@@ -50,11 +50,11 @@ def run_sshsession(custom_prompt=True):
     with tempfile.NamedTemporaryFile(delete=True) as f:
         prompt = ""
         if custom_prompt:
-            COLOR = "\033[0;33m"
-            COLOR_NONE = "\033[0m"
+            COLOR = "\[\033[0;33m\]"
+            COLOR_NONE = "\[\033[0m\]"
             prompt= r"""
 PS1="({1}SSHSESSION{2} {0})
-$(__set_custom_bash_prompt "$?" "\u" "@\h#\W]$ ")"
+$(__set_custom_bash_prompt $? "\u" '@\h#\W]$ ')"
 """.format(used_keys, COLOR, COLOR_NONE)
         bash_cmd = r"""
 source ~/.bashrc
@@ -67,10 +67,8 @@ source ~/.bashrc
                 "/usr/bin/bash",
                 "--rcfile",
                 f.name,
-                "-i",
                 ]
         subprocess.call(command) 
-        #os.execl("/usr/bin/bash","bash", "-i")
 
 
 def run_non_interactive(path, ssh_keys):
