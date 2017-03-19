@@ -7,7 +7,6 @@ EOF
 
 }
 main() {
-  local -r config_path="$HOME/.countdown"
   local session_name="$2"
 
   local time_seconds=
@@ -24,16 +23,8 @@ main() {
   else
     session_name=${2}.session
   fi
-  local -r session_path="$config_path/$session_name"
 
   pushd ~
-  if ! [[ -e $session_path ]];then
-    mkdir -p "$config_path" || exit 1
-    pushd "$config_path" || exit 1
-    touch "$session_name"
-    trap cleanup SIGHUP SIGKILL SIGINT
-    popd
-  fi
   local -ir time_raw="$1"
   countdown_loop "$time_raw"
   update_time "$time_raw"
@@ -42,19 +33,9 @@ main() {
   echo -en "$output"
   notify-send "Countdown" "$output"
   run.sh mplayer $BEEP
-  update_session
   popd
 }
 
-update_session() {
-  current_date=$(date +%d_%m_%Y)
-  pattern="([0-9]+) $current_date"
-  if grep -Eq "$pattern" $session_path; then
-    sed -i -r "s/$pattern/echo \"\$((\\1+1)) $current_date\"/e" $session_path
-  else
-    echo "1 $current_date" >> $session_path
-  fi
-}
 countdown_loop() {
   local -i counter=$1
   local timer=""
@@ -94,10 +75,6 @@ print_available_sessions() {
 }
 cleanup() {
   trap - SIGHUP SIGKILL SIGINT
-  is_empty=$(wc $session_path -c | cut -f1 -d ' ')
-  if [[ $is_empty == 0 ]]; then
-    rm "$session_path"
-  fi
   exit 1
 }
 pushd() {
