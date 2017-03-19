@@ -1,7 +1,7 @@
 #!/bin/env python3
 """
 Usage:
-    countdown [options] [<seconds>]
+    countdown [options] [<datestring>]
 
 Options:
 """
@@ -106,15 +106,8 @@ class Countdown:
     def sync(self):
         self._normalize_from_seconds()
 
-    def countdown(self):
-        if not self.seconds:
-            self.finished = True
-        else:
-            self.seconds -= 1
-            self.sync()
-        
-        # while looping with true more accustomed habit
-        return not self.finished
+    def __str__(self):
+        return "{:02}:{:02}:{:02}".format(self.hour, self.minute, self.second)
 
     @classmethod
     def from_seconds(cls, seconds):
@@ -164,8 +157,40 @@ def _get_hours(minutes):
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
-    print(opt)
-    time.sleep(2)
+    #print(opt)
+    seconds = opt.get("<seconds>")
+    if seconds:
+        cd = Countdown.from_seconds(int(seconds))
+        counter(cd)
+
+    else:
+        while True:
+            pomodoro()
+
+def pomodoro(minutes=25, rest=5):
+    working = Countdown.from_minutes(minutes)
+    resting = Countdown.from_minutes(rest)
+
+    for cd in working, resting:
+        counter(cd)
+
+def counter(cd):
+    while True:
+        print("\r{}                    ".format(cd), end="")
+        if not countdown(cd):
+            break
+        time.sleep(1)
+
+def countdown(cd, counter=1):
+    if not cd.seconds:
+        cd.finished = True
+    else:
+        cd.seconds -= counter
+        cd.sync()
+    
+    # while looping with true more accustomed habit
+    return not cd.finished
+
 
 
 @pytest.mark.parametrize("seconds, expected", [
@@ -185,6 +210,17 @@ def test_countdown_convert_from_seconds(seconds, expected):
     cd = Countdown.from_seconds(seconds)
     cdexpected = Countdown.from_stamp(*expected)
     assert cd == cdexpected
+
+def test_countdown_timer_string():
+    cd = Countdown.from_seconds(61)
+    assert str(cd) == "00:01:01"
+    cd = Countdown.from_seconds(1)
+    assert str(cd) == "00:00:01"
+    cd = Countdown.from_seconds(3600)
+    assert str(cd) == "01:00:00"
+    cd = Countdown.from_seconds(360000)
+    assert str(cd) == "100:00:00"
+
 
 
 if __name__ == "__main__":

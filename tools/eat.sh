@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# deprecated, use python with tool
 usage() {
   cat << EOF
 Usage:	${0##*/} [OPTIONS] command
@@ -41,6 +40,7 @@ main() {
   along "$@"
   cleanup
 }
+
 along()
 {
   local prefix="$command_prefix $@"
@@ -60,6 +60,7 @@ error_exit() {
   kill $$
   exit $exit_code
 }
+
 setup() {
   if (($enable_verbose)); then
     exec {fdverbose}>&1
@@ -75,6 +76,7 @@ setup() {
   mkfifo "$fifo" || error_exit 1 "Failed to create $fifo"
   mkfifo "$fifolock" || error_exit 1 "Failed to create $fifo"
 }
+
 run_prompt() {
   local IFS=
   echo "inside prompt" >&$fddebug
@@ -87,9 +89,11 @@ run_prompt() {
   mutex
   echo "ending prompt" >&$fddebug
 }
+
 pipe_exists() {
   [[ -p $1 ]]
 }
+
 run_interpreter() {
   prefix=$1
 
@@ -110,6 +114,7 @@ run_interpreter() {
   mutex sync
   echo "ending interpret" >&$fddebug
 }
+
 parse() {
   local -r string=$1
   if [[ -z $string ]]; then
@@ -135,6 +140,7 @@ parse() {
   done < <(printf "%s" "$string")
 
 }
+
 check_illegal_input() {
   local return_code=1
   local -r string=$1
@@ -150,6 +156,7 @@ check_illegal_input() {
   
   return $return_code
 }
+
 issue_instruction() {
   local -r string=$1
   echo "got string $string" >&$fddebug
@@ -163,6 +170,7 @@ issue_instruction() {
       ;;
   esac
 }
+
 mutex() {
   local -r cmd=$1
   if [[ $cmd == "sync" ]]; then
@@ -175,17 +183,20 @@ mutex() {
   fi
   echo "sync" > "$fifolock"
 }
+
 update_prompt() {
   prefix="$1"
   shift
   prompt="$@ $prefix $prompt_symbol"
 }
+
 cmd_exists() {
   cmd=$1
   if ! hash "$1" 2> /dev/null; then
     error_exit 1 "Command '$cmd' does not exist."
   fi
 }
+
 eat_pipe() {
   local -r pipe=$1
   echo "eating pipe $pipe" >&$fddebug
@@ -198,14 +209,17 @@ eat_pipe() {
   done < $pipe
   rm -v "$pipe" >&$fdverbose 
 }
+
 cleanup() {
   trap - SIGKILL SIGTERM SIGABRT EXIT
   eat_pipe "$fifo"
   eat_pipe "$fifolock"
 }
+
 ord() {
   printf "%d" "'$1"
 }
+
 chr() {
   printf \\$(printf '%03o' $1)
 }
