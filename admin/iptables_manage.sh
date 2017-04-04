@@ -71,6 +71,53 @@ main() {
   run
 }
 
+defaults() {
+  # Reject spoofed packets
+  $IPTABLES_BIN -A INPUT -s 10.0.0.0/8 -j DROP
+  $IPTABLES_BIN -A INPUT -s 169.254.0.0/16 -j DROP
+  $IPTABLES_BIN -A INPUT -s 172.16.0.0/12 -j DROP
+  $IPTABLES_BIN -A INPUT -s 127.0.0.0/8 -j DROP
+
+  $IPTABLES_BIN -A INPUT -s 224.0.0.0/4 -j DROP
+  $IPTABLES_BIN -A INPUT -d 224.0.0.0/4 -j DROP
+  $IPTABLES_BIN -A INPUT -s 240.0.0.0/5 -j DROP
+  $IPTABLES_BIN -A INPUT -d 240.0.0.0/5 -j DROP
+  $IPTABLES_BIN -A INPUT -s 0.0.0.0/8 -j DROP
+  $IPTABLES_BIN -A INPUT -d 0.0.0.0/8 -j DROP
+  $IPTABLES_BIN -A INPUT -d 239.255.255.0/24 -j DROP
+  $IPTABLES_BIN -A INPUT -d 255.255.255.255 -j DROP
+
+# Stop smurf attacks
+  $IPTABLES_BIN -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
+  $IPTABLES_BIN -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
+  $IPTABLES_BIN -A INPUT -p icmp -m icmp -j DROP
+
+# Drop all invalid packets
+  $IPTABLES_BIN -A INPUT -m state --state INVALID -j DROP
+  $IPTABLES_BIN -A FORWARD -m state --state INVALID -j DROP
+  $IPTABLES_BIN -A OUTPUT -m state --state INVALID -j DROP
+
+# Drop excessive RST packets to avoid smurf attacks
+  $IPTABLES_BIN -A INPUT -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second --limit-burst 2 -j ACCEPT
+
+# Attempt to block portscans
+# Anyone who tried to portscan us is locked out for an entire day.
+  $IPTABLES_BIN -A INPUT   -m recent --name portscan --rcheck --seconds 86400 -j DROP
+  $IPTABLES_BIN -A FORWARD -m recent --name portscan --rcheck --seconds 86400 -j DROP
+
+# Once the day has passed, remove them from the portscan list
+  $IPTABLES_BIN -A INPUT   -m recent --name portscan --remove
+  $IPTABLES_BIN -A FORWARD -m recent --name portscan --remove
+
+# These rules add scanners to the portscan list, and log the attempt.
+  $IPTABLES_BIN -A INPUT   -p tcp -m tcp --dport 139 -m recent --name portscan --set -j LOG --log-prefix "Portscan:"
+  $IPTABLES_BIN -A INPUT   -p tcp -m tcp --dport 139 -m recent --name portscan --set -j DROP
+
+  $IPTABLES_BIN -A FORWARD -p tcp -m tcp --dport 139 -m recent --name portscan --set -j LOG --log-prefix "Portscan:"
+  $IPTABLES_BIN -A FORWARD -p tcp -m tcp --dport 139 -m recent --name portscan --set -j DROP
+
+}
+
 check_dependencies() {
   :
 }
