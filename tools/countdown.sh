@@ -10,6 +10,8 @@ main() {
   local time_seconds=
   local time_minutes=
   local time_hours=
+  local -ri long_break=900
+  local -ri short_break=300
 
   if [[ -z $1 ]];then
     pomodoro
@@ -18,9 +20,18 @@ main() {
 
 }
 pomodoro() {
+  local -i counts=0
   while :; do
     run 1500
-    run 300
+    counts=$((counts + 1))
+    if ((counts >= 4 )); then
+      counts=0
+      echo "Long break"
+      run $long_breaktime
+    else
+      echo "Break"
+      run $short_break
+    fi
   done
 }
 
@@ -29,7 +40,7 @@ run() {
   countdown_loop "$time_raw"
   update_time "$time_raw"
   local output="\rCountdown finished"
-  output+="${time_hours}h${time_minutes}m${time_seconds}s\n"
+  output+="- ${time_hours}h, ${time_minutes}m, ${time_seconds}s\n"
   echo -en "$output"
   notify-send "Countdown" "$output"
   run.sh mplayer $BEEP
