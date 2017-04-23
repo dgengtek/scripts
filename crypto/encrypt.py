@@ -2,7 +2,7 @@
 """
 Encrypt password with salt for unix
 Usage:
-    encrypt.py [options] [--sha512 | --sha256 | --md5 | --crypt] [salt] <password>
+    encrypt.py [options] [--sha512 | --sha256 | --md5 | --crypt] [<salt>]
 
 Options:
     --sha512
@@ -13,6 +13,7 @@ Options:
 
 import sys
 import crypt
+from getpass import getpass
 from docopt import docopt
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
@@ -38,8 +39,17 @@ def main():
 
     method = get_method(opt)
 
-    salt = crypt.mksalt(method)
-    password = opt.get("<password>")
+    salt = opt.get("<salt>")
+    if not salt:
+        salt = crypt.mksalt(method)
+
+    password = ""
+    if not sys.stdin.isatty():
+        password = sys.stdin.readline()
+    else:
+        password = getpass()
+    if not password:
+        sys.exit(1)
 
     shadow = crypt.crypt(password, salt)
     print(shadow)
