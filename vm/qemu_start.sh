@@ -6,6 +6,8 @@ Usage: ${0##*/} [options] [{devices}] img [addoptions]
 options:
   -s			  create a snapshot and discard
   -x			  use cpu arch x86_64
+  -d			  daemonize
+  -d			  enable vga
   -m mem		  memory
   -k mac                  use mac address
   -c                      boot from network first
@@ -22,16 +24,14 @@ only one type possible
 EOF
 }
 main() {
-  local optlist="shk:xm:cw:p:b:t:n"
+  local optlist="vdshk:xm:cw:p:b:t:n"
 
-  local -i enable_snapshot=0
-  local -i enable_monitor=0
-  local -i enable_netboot=0
-  local -i enable_netdev_passthrough=0
+  local -i enable_graphic=0
   local -i enable_ports=0
   local -i connect_bridges=0
   local -i connect_tapdevs=0
   local -i flagged=0
+  local -i daemonize=0
 
   local mac=
   local memory="256"
@@ -40,11 +40,16 @@ main() {
   local -a bridges
   local -a tapdevs
 
+  local -a options=(
+  "-enable-kvm" 
+  "-cpu host" 
+  )
+
   local qemu_cmd="qemu-system-i386"
   while getopts $optlist opt; do
     case $opt in
       s)
-	let enable_snapshot=1
+        options+=("-snapshot")
 	;;
       x)
 	qemu_cmd="qemu-system-x86_64"
@@ -55,19 +60,26 @@ main() {
       k)
 	mac=$OPTARG
 	;;
+      d)
+        options+=("-daemonize")
+	;;
+      v)
+        let enable_graphic=1
+	;;
       n)
-        enable_netdev_passthrough=1
+        options+=("-netdev user,id=vmnic -device virtio-net,netdev=vmnic")
 	;;
       c)
-        enable_netboot=1
+        options+=("-boot order=nc")
 	;;
       w)
-	let enable_monitor=1
 	if [[ $OPTARG == "" ]];then
 	  monitor_port=7100
 	else
 	  monitor_port=$OPTARG
 	fi
+        options+=("-monitor \
+          telnet:localhost:$monitor_port,server,nowait,nodelay")
 	;;
       p)
 	let enable_ports=1
@@ -98,28 +110,12 @@ main() {
   hda="$1"
   shift 1
 
-  local -a options=(
-  "-enable-kvm" 
-  "-cpu host" 
-  "-vga virtio" 
-  )
-
-  options+=( "$@" )
-
-  if (($enable_snapshot == 1)); then
-    options+=("-snapshot")
+  if (($enable_graphic)); then
+    options+=("-vga virtio")
+  else
+    options+=("-nographic")
   fi
 
-  if (($enable_monitor == 1)); then
-    options+=("-monitor \
-      telnet:localhost:$monitor_port,server,nowait,nodelay")
-  fi
-  if (($enable_netdev_passthrough)); then
-    options+=("-netdev user,id=vmnic -device virtio-net,netdev=vmnic")
-  fi
-  if (($enable_netboot)); then
-    options+=("-boot order=nc")
-  fi
 
   local devices=""
   local function=""
@@ -135,9 +131,9 @@ main() {
   if ((enable_ports == 1)); then
     open_ports ${ports[@]}
   fi
+  options+=( "$@" )
 
   $qemu_cmd ${options[@]} -m "$memory" -hda "$hda"
-
 }
 restrict() {
 # -netdev type=user,id=mynet0,restrict=yes 
