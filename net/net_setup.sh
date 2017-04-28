@@ -34,7 +34,7 @@ sanity_check() {
 main() {
   optlist=":gsn:b:m:t:h"
 
-  local tapdev="tap$(gen_alpha.sh 4)"
+  local tapdev="tap$(genpw.sh 4)"
   local mem=256
   local network=""
   local bridge_id=""
