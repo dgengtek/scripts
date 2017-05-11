@@ -1,4 +1,5 @@
 #!/bin/env bash
+# TODO: use coproc for buffering logs
 usage() {
   cat >&2 << EOF
 Usage: ${0##*/} [OPTIONS] CMD...
@@ -8,9 +9,9 @@ Run commands in background
 OPTIONS:
   -l, --log           log command output
   -m, --mail          mail cmd output
-  -n, --notify        enable notifications
+  -n, --disable-notify        disable notifications
   -f, --foreground    run in foreground
-  -p, --print-process print process
+  -p, --print-process print process regardless
   -h                  help
 EOF
 }
@@ -19,11 +20,11 @@ main() {
   local -i enable_logging=0
   local -i enable_mail=0
   local -i enable_foreground=0
-  local -i enable_notifications=0
+  local -i enable_notifications=1
   local -i print_process=0
 
   # mail recipient
-  local recipient="admin"
+  local recipient="linux+admin"
   local logfile="/dev/null"
   local commands=
   parse_options "$@"
@@ -51,14 +52,14 @@ main() {
     exec 1>>"$logfile"
     exec 2>&1
     run_commands "$@" &
-    (($print_process)) && echo "$!" >&3
+    (! (($enable_foreground)) || (($print_process)) ) && echo "$!" >&3
   fi
   # return 0 since bash uses last test return code
   return 0
 }
 run_commands() {
   eval "$@"
-  local -r subject="Background process finished [ return -> $? ] by $USER"
+  local -r subject="$?[$USER@$HOSTNAME]$ run.sh $@"
   local -r message=$@
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
@@ -84,8 +85,8 @@ parse_options() {
       -f|--foreground)
         enable_foreground=1
         ;;
-      -n|--notify)
-        enable_notifications=1
+      -n|--disable-notify)
+        enable_notifications=0
         ;;
       -p|--print-process)
         print_process=1
