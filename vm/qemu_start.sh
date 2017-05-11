@@ -6,8 +6,9 @@ Usage: ${0##*/} [options] [{devices}] img [addoptions]
 options:
   -s			  create a snapshot and discard
   -x			  use cpu arch x86_64
+  -q                      debug
   -d			  daemonize
-  -d			  enable vga
+  -v			  enable vga
   -m mem		  memory
   -k mac                  use mac address
   -c                      boot from network first
@@ -24,7 +25,8 @@ only one type possible
 EOF
 }
 main() {
-  local optlist="vdshk:xm:cw:p:b:t:n"
+  local optlist="qvdshk:xm:cw:p:b:t:n"
+  local debug=
 
   local -i enable_graphic=0
   local -i enable_ports=0
@@ -48,6 +50,10 @@ main() {
   local qemu_cmd="qemu-system-i386"
   while getopts $optlist opt; do
     case $opt in
+      q)
+        debug=echo
+        set -x
+	;;
       s)
         options+=("-snapshot")
 	;;
@@ -133,7 +139,7 @@ main() {
   fi
   options+=( "$@" )
 
-  $qemu_cmd ${options[@]} -m "$memory" -hda "$hda"
+  $debug $qemu_cmd ${options[@]} -m "$memory" -hda "$hda"
 }
 restrict() {
 # -netdev type=user,id=mynet0,restrict=yes 
