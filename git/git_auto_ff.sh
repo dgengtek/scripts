@@ -75,17 +75,26 @@ run() {
 
   set -e
   pushd $(get_root_directory) >/dev/null
-  git commit -v -a || :
+  local -i items_stashed=0
+  if ! git commit -v -a 2>/dev/null; then
+    error "Could not commit to current branch. Stashing items."
+    git stash
+    git stash
+    let items_stashed=1
+  fi
   
   if check_merge_allowed "$branch_dev" "$branch_prod"; then
-    git checkout "$branch_dev" || die "Checkout of $branch_dev failed."
-    git merge --ff-only "$branch_active" || die "Merge of $branch_active failed."
+    {
+      git checkout "$branch_dev" && git merge --ff-only "$branch_active"
+    } 2>/dev/null || die "Merge to $branch_dev failed for $branch_active."
   fi
 
-  git checkout "$branch_prod" || die "Checkout of $branch_prod failed."
-  git merge --ff-only "$branch_dev" || die "Merge of $branch_dev failed."
+  {
+    git checkout "$branch_prod" && git merge --ff-only "$branch_dev"
+  } 2>/dev/null || die "Merge to $branch_prod failed for $branch_dev."
 
   git checkout "$branch_active"
+  (($items_stashed)) && git stash pop
   popd >/dev/null
   set +e
 }
