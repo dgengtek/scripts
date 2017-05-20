@@ -63,18 +63,18 @@ run() {
   local branch_prod=$(get_valid_branch "$production_branches")
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  set -e
-  
   if check_merge_allowed "$branch_prod"; then
-    git checkout "$branch_master"
-    git merge --ff-only "$branch_prod"
+    git checkout "$branch_master" || die "Could not check out $branch_master"
+    git merge --ff-only "$branch_prod" || die "Merge failed for $branch_prod"
   fi
   for remote in $(git remote); do
-    git pull "$remote_id" && git push "$remote"
+    {
+    git pull "$remote_id"
+    git push "$remote"
+    } 2>/dev/null || error "Remote push to $remote failed"
   done
 
   git checkout "$branch_active"
-  set +e
 }
 
 

@@ -78,12 +78,12 @@ run() {
   git commit -v -a || :
   
   if check_merge_allowed "$branch_dev" "$branch_prod"; then
-    git checkout "$branch_dev"
-    git merge --ff-only "$branch_active"
+    git checkout "$branch_dev" || die "Checkout of $branch_dev failed."
+    git merge --ff-only "$branch_active" || die "Merge of $branch_active failed."
   fi
 
-  git checkout "$branch_prod"
-  git merge --ff-only "$branch_dev"
+  git checkout "$branch_prod" || die "Checkout of $branch_prod failed."
+  git merge --ff-only "$branch_dev" || die "Merge of $branch_dev failed."
 
   git checkout "$branch_active"
   popd >/dev/null
