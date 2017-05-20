@@ -60,6 +60,7 @@ main() {
 
 
 run() {
+  set -x
 
   if ! check_branches_conflict "${development_branches[@]}"; then
     die "Conflicting branches found: ${development_branches[@]}"
