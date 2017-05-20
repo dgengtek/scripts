@@ -78,9 +78,7 @@ run() {
   local -i items_stashed=0
   if ! git commit -v -a 2>/dev/null; then
     error "Could not commit to current branch. Stashing items."
-    git stash
-    git stash
-    let items_stashed=1
+    git stash && let items_stashed=1
   fi
   
   if check_merge_allowed "$branch_dev" "$branch_prod"; then
