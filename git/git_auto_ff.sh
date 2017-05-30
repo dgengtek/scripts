@@ -72,7 +72,6 @@ run() {
   [[ -z $branch_dev ]] && die "No development branch found."
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  set -e
   pushd $(get_root_directory) >/dev/null
   local -i items_stashed=0
   if ! git commit -v -a 2>/dev/null; then
@@ -93,7 +92,6 @@ run() {
   git checkout "$branch_active"
   (($items_stashed)) && git stash pop
   popd >/dev/null
-  set +e
 }
 
 check_dependencies() {
