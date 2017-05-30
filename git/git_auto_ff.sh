@@ -73,10 +73,8 @@ run() {
   [[ -z $branch_prod ]] && die "No production branch found."
 
   pushd $(get_root_directory) >/dev/null
-  local -i items_stashed=0
   if ! git commit -v -a 2>/dev/null; then
-    error "Could not commit to current branch. Stashing items."
-    git stash && let items_stashed=1
+    die "Could not commit to current branch. Stash your items or commit them."
   fi
   
   if check_merge_allowed "$branch_dev" "$branch_prod"; then
@@ -90,7 +88,6 @@ run() {
   } 2>/dev/null || die "Merge to $branch_prod failed for $branch_dev."
 
   git checkout "$branch_active"
-  (($items_stashed)) && git stash pop
   popd >/dev/null
 }
 
