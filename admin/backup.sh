@@ -25,6 +25,9 @@ options:
   -q, --quiet           Quiet output
   -d, --debug           Enable debugging
   -s, --suffix <dir>    Suffix path onto destination, disables
+  -q, --quiet           Quiet output
+  -d, --debug           Enable debugging
+  -s, --suffix <dir>    Suffix path onto destination, disables
                           relative path names options of rsync -R.
   -e, --examine-space      Check if destination has enough space left for backup
   -C, --change <dir>    Change to directory before running.
