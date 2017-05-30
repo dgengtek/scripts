@@ -20,16 +20,17 @@ main() {
 
 }
 pomodoro() {
+  echo "Run pomodoro."
   local -i counts=0
   while :; do
     run 1500
     counts=$((counts + 1))
     if ((counts >= 4 )); then
       counts=0
-      echo "Long break"
-      run $long_breaktime
+      echo "Long break."
+      run $long_break
     else
-      echo "Break"
+      echo "Break."
       run $short_break
     fi
   done
@@ -44,7 +45,6 @@ run() {
   echo -en "$output"
   notify-send "Countdown" "$output"
   run.sh mplayer $BEEP
-
 }
 
 countdown_loop() {
