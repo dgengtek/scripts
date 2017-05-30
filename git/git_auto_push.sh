@@ -74,7 +74,6 @@ run() {
     git pull "$remote_id"
     git push "$remote"
     } 2>/dev/null || error "Remote push to $remote failed."
-    msg2 "Pushed updates to $remote"
   done
 
   git checkout "$branch_active"
