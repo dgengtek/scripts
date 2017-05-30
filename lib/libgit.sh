@@ -42,3 +42,11 @@ get_valid_branch() {
   done
   get_branches | egrep -x "$lookup_branches"
 }
+
+stashing_required() { [[ -n "$(git status --porcelain)" ]]; }
+
+unstaged_items_existing() { git diff --exit-code --quiet; }
+
+staged_items_existing() { git diff --cached --exit-code --quiet; }
+
+untracked_items_existing() { git ls-files --other --exclude-standard --directory | egrep -v '/$'; }

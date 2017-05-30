@@ -66,13 +66,15 @@ run() {
   if check_merge_allowed "$branch_prod"; then
     {
     git checkout "$branch_master" && git merge --ff-only "$branch_prod"
-    } 2>/dev/null || die "Merge to $branch_master for $branch_prod failed."
+    } 2>/dev/null || die "Merge of $branch_prod on $branch_master failed."
+    msg "Merged $branch_prod to $branch_master"
   fi
   for remote in $(git remote); do
     {
     git pull "$remote_id"
     git push "$remote"
     } 2>/dev/null || error "Remote push to $remote failed."
+    msg2 "Pushed updates to $remote"
   done
 
   git checkout "$branch_active"
