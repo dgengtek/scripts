@@ -27,7 +27,7 @@ echo_e() (
   printf '%b\n' "$*"
 )
 
-log() { echo "$@" | logger -t ${0##*/}; }
+log() { echo "$@" | logger -s -t ${0##*/} 2>&1; }
 loge() { echo "$@" | logger -s -t ${0##*/}; }
 out() { echo "$1 $2" "${@:3}"; }
 
