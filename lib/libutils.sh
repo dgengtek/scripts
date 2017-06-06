@@ -27,12 +27,11 @@ echo_e() (
   printf '%b\n' "$*"
 )
 
-log() { echo "$@" | logger -s -t ${0##*/} 2>&1; }
-loge() { echo "$@" | logger -s -t ${0##*/}; }
+log() { echo "$@" | logger -s -t ${0##*/}; }
 out() { echo "$1 $2" "${@:3}"; }
 
-error() { loge "==> ERROR:" "$@"; } >&2
-ignore_error() { loge "$@" 2>/dev/null; }
+error() { log "==> ERROR:" "$@"; } >&2
+ignore_error() { log "$@" 2>/dev/null; }
 
 msg() { log "==>" "$@"; }
 msg2() { log "  ->" "$@";}
@@ -40,7 +39,7 @@ msg2() { log "  ->" "$@";}
 error_exit() {
   error_code=$1
   shift
-  loge "$@"
+  log "$@"
   exit $error_code
 }
 die() { error_exit 1 "$@"; }
