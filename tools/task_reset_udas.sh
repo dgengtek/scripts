@@ -1,6 +1,7 @@
 #!/bin/env bash
 # ------------------------------------------------------------------------------
 # reset user defined attributes for all or by filter
+# do not use for revisiting a uda
 # ------------------------------------------------------------------------------
 # 
 
