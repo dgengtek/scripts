@@ -53,7 +53,7 @@ display() {
 }
 genpw() {
   local length=${1:?"Length not set."}
-  pw=$(tr -cd [:"$charset":] < /dev/urandom | head -c "$length" | xargs -0)
+  pw=$(head -c "$length" /dev/urandom | tr -cd [:"$charset":] | xargs -0)
   printf "%b" "$pw"
   printf "    "
 }

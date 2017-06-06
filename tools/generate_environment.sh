@@ -23,8 +23,6 @@ EOF
 }
 
 main() {
-  echo "Script template"
-
   # flags
   local -i enable_verbose=0
   local -i enable_quiet=0
@@ -48,37 +46,32 @@ main() {
 
   prepare_env
   setup
+  pushd "$path"
   run
+  popd
 }
 
 generate_files() {
   local line_count=
   local filename=
-  local -ir count=$1
-  for c in seq $count; do
-    filename=$(mktemp -u "tmp.XXXXXXXXXX")
-    line_count=$(shuf -i 1-100 -n 1)
+  local -r root_path=$1
+  local -ir count=$2
+  for c in $(seq $count); do
+    filename=$(mktemp -u "$root_path/tmp.XXXXXXXXXX")
+    line_count=$(shuf -i 10-100 -n 1)
     head -n "$line_count" /dev/urandom | tr -cd [:graph:] > "$filename"
-  done
-}
-
-generate_dirs() {
-  local -ir count=$1
-  for c in seq $count; do
-    mktemp -d "dirXXXXXXXXXX"
   done
 }
 
 run() {
   local files_count=
-  local -r DIR_COUNT=$(shuf -i 1-100 -n 1)
+  local -r DIR_COUNT=$(shuf -i 10-100 -n 1)
   local selected_random_dir=
-  for d in $DIR_COUNT; do
-    selected_random_dir=$(find "$path" -type d -n 1)
-    pushd "$selected_random_dir"
-    files_count=$(shuf -i 1-100 -n 1)
-    generate_files "$files_count"
-    popd
+  for d in $(seq $DIR_COUNT); do
+    selected_random_dir=$(find . -not -path '*/\.*' -type d | shuf -n 1)
+    mktemp -d "$selected_random_dir/dirXXXXXXXXXX"
+    files_count=$(shuf -i 5-100 -n 1)
+    generate_files "$selected_random_dir" "$files_count"
   done
 }
 
@@ -94,7 +87,7 @@ check_input_args() {
 }
 
 prepare_env() {
-  :
+  mkdir -p "$path"
 }
 
 prepare() {
