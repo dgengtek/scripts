@@ -72,72 +72,108 @@ Pattern constructs:
 
 import sys
 from docopt import docopt
-from tasklib import TaskWarrior,task
+from taskw import TaskWarrior
+from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit import prompt
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.interface import AbortAction
+import pprint
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
 udas = None
+history = InMemoryHistory()
 
 def main():
     tw = TaskWarrior()
     #opt = docopt(__doc__, sys.argv[1:])
     #print(opt)
-    config = tw.config.items()
+    config = tw.config
 
-    new_task = task.Task(tw)
 
-    description = prompt_value("Task description: ", exit_if_empty=True)
-    new_task["description"] = description
-    project = prompt_value("Project: ")
-    new_task["project"] = project
+
+    udas_new_map = dict()
+
+    description = prompt_value("Task description", exit_if_empty=True)
+    udas_new_map.update({"description":description})
+
+
+    project = prompt_value("Project")
+    udas_new_map.update({"project":project})
 
     tags = []
     while True:
-        tag = prompt_value("Add tag (leave with empty input on enter): ")
+        tag = prompt_value("Add a tag")
         if not tag:
             break
         tags.append(tag)
-    new_task["tags"] = tags
+    udas_new_map.update({"tags":tags})
 
-    udas = parse_udas(config)
+    udas = config.get("uda")
+    udas_map = config.get_udas()
 
-    for uda in udas:
-        uda, defaults = canonize_uda(uda)
-        menu = create_interactive_menu(uda,defaults)
-        result = ""
+    for uda, values in udas.items():
+        defaults = values.get("default").split(",")
+        menu = create_interactive_menu(values)
+        validator = SelectMenuValidator(udas_map.get(uda))
         while True:
-            result = run_menu(menu, defaults)
+            try:
+                print(menu)
+                choice = ""
+                choice = prompt("> ",
+                    validator=validator, 
+                    history=history,
+                    on_abort=AbortAction.RETRY,
+                    auto_suggest=AutoSuggestFromHistory())
+            except InputError:
+                choice = "?"
+            except (KeyboardInterrupt, EOFError):
+                print("bye")
+                sys.exit(0)
             print("---")
-            if result:
+            if choice:
                 break
-            else:
-                print("==> ERROR: Please repeat your input.")
-        new_task[uda] = result
-    new_task.save()
-    if new_task.saved:
-        print("Task, {} - '{}', has been saved.".format(new_task["id"],new_task))
+        udas_new_map.update({str(uda):str(choice)})
+
+    print("The new task:")
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(udas_new_map)
+    if prompt_confirm():
+        new_task = tw.task_add(**udas_new_map)
+    else:
+        print("Did not add task.")
+
+class SelectMenuValidator(Validator):
+    def __init__(self, uda):
+        self.uda = uda
+
+    def validate(self, document):
+        text = document.text
+
+        if text == "":
+            raise InputError("Input is empty")
+        elif not self.uda.is_valid_choice(text):
+            raise ValidationError(message="Choice is not a valid uda.")
+
+class InputError(Exception):
+    pass
 
 
-def run_menu(menu, values, default="?"):
-    print(menu)
-    choice = interactive_input()
+def run_menu(menu, validator,  default="?"):
 
     if choice == "":
-        if not prompt_confirm("Using default: {}".format(default)):
-            return False
         return default
     elif choice is False:
-        return False
-
-    try:
-        return values[choice]
-    except IndexError:
         return False
 
 def prompt_confirm(string=""):
     print(string)
     try:
-        user_input = input("Do you want to continue?[yn]")
+        user_input = prompt("Do you want to continue?[yn]",
+                history=history,
+                on_abort=AbortAction.RETRY,
+                auto_suggest=AutoSuggestFromHistory())
     except (KeyboardInterrupt, EOFError):
         print("bye")
         sys.exit(0)
@@ -148,7 +184,11 @@ def prompt_confirm(string=""):
 
 def prompt_value(string, exit_if_empty=False):
     try:
-        user_input = input(string)
+        user_input = prompt("{}> ".format(string),
+                history=history,
+                on_abort=AbortAction.RETRY,
+                erase_when_done=True,
+                auto_suggest=AutoSuggestFromHistory())
     except (KeyboardInterrupt, EOFError):
         print("bye")
         sys.exit(0)
@@ -157,26 +197,9 @@ def prompt_value(string, exit_if_empty=False):
         sys.exit(1)
     return user_input
 
-def interactive_input():
-    try:
-        choice = input("Your choice: ")
-        choice = int(choice) - 1
-    except (KeyboardInterrupt, EOFError):
-        print("bye")
-        sys.exit(0)
-    except ValueError:
-        return ""
-
-    if choice >= 0:
-        return choice
-    else:
-        return False
-
-def create_interactive_menu(uda, defaults):
-    output = "{:#^40}".format(" {} ".format(uda))
-    output += "\nSelect your value from highest(1) to lowest(n) weighting points:"
-    for i,value in enumerate(defaults,1):
-        output += "\n({})  {}".format(i, value)
+def create_interactive_menu(values):
+    output = "{:#^40}".format(" {} ".format(values.get("label")))
+    output += "\nSelect from defaults: \n\t{}".format(values.get("default"))
     return output
 
 def canonize_uda(uda):
