@@ -114,7 +114,13 @@ def main():
     udas_map = config.get_udas()
 
     for uda, values in udas.items():
-        defaults = values.get("default").split(",")
+        defaults = values.get("default")
+
+        if defaults and defaults.find(",") != -1:
+            defaults = defaults.split(",")
+        else:
+            continue
+
         menu = create_interactive_menu(values)
         validator = SelectMenuValidator(udas_map.get(uda))
         while True:
@@ -201,34 +207,6 @@ def create_interactive_menu(values):
     output = "{:#^40}".format(" {} ".format(values.get("label")))
     output += "\nSelect from defaults: \n\t{}".format(values.get("default"))
     return output
-
-def canonize_uda(uda):
-    uda, default = uda
-    # uda.name.default
-    uda = uda.split(".")[1]
-    # 0,1,2,3,...
-    default = default.split(",")
-
-    return uda,default
-
-def parse_udas(config):
-    uda_filter = build_filter("uda")
-    default_filter = build_filter("default")
-
-    config = filter(uda_filter, config)
-    config = filter(default_filter, config )
-
-    return config
-
-
-def build_filter(string, negate=False):
-    def filter_search(item):
-        k,v = item
-        if string in k and not negate:
-            return True
-        else:
-            return False
-    return filter_search
 
 def usage():
     pass
