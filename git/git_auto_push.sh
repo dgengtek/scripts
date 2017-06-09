@@ -52,7 +52,11 @@ main() {
 
   prepare_env
   setup
-  run
+  for path in "$@"; do
+    pushd "$path"
+    run
+    popd
+  done
 }
 
 run() {
