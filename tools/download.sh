@@ -79,7 +79,7 @@ EOF
   if [[ -n ${failed_items[0]} ]]; then
     echo "Failed items:" >&2
     for item in "${failed_items[@]}"; do 
-      echo " $item" >&2
+      echo "$item"
     done
   fi
 
@@ -87,7 +87,7 @@ EOF
     return 0
   fi
 
-  if prompt_me.sh "Do you want to repeat with failed links?"; then
+  if [[ -n $PS1 ]] && prompt_me.sh "Do you want to repeat with failed links?"; then
     run "${failed_items[@]}"
     break
   fi
