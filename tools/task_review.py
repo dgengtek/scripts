@@ -79,7 +79,8 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.interface import AbortAction
 import pprint
-from datetime import datetime
+from datetime import datetime,timedelta
+import random
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
@@ -128,13 +129,18 @@ Updating task:
         pp.pprint(udas_new_map)
         if prompt_confirm():
             task.update(udas_new_map)
-            task["review"] = format_datetime_iso(datetime.now())
+
+            review_day = timedelta(days=random.randint(7,28))
+            date = datetime.now() + review_day
+            task["review"] = format_datetime_iso(date)
+
             new_task = tw.task_update(task)
         else:
             print("Did not add task.")
 
 def review_required(task):
-    now = datetime.now().date()
+    now = datetime.now().date() 
+    day28old = now - timedelta(days=28)
 
     modified = task.get("modified")
     review = task.get("review", "")
@@ -143,12 +149,10 @@ def review_required(task):
 
     if modified:
         modified = datetime.strptime(modified, "%Y%m%dT%H%M%SZ").date()
-        result = result and now > modified
     if review:
         review = datetime.strptime(review, "%Y%m%dT%H%M%S.%f").date()
-        result = result and now > review and now.day > review.day 
 
-    return result
+    return now > review or day28old > modified
 
 def format_datetime_iso(date):
     """
