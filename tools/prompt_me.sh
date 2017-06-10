@@ -2,6 +2,9 @@
 
 prompt_me() {
   local input=
+  if [[ -n $1 ]]; then
+    echo "$@" >&2
+  fi
   read -n 1 -p "Continue?[y/n] > " input
   input=$(echo -n "$input" | tr [a-z] [A-Z])
   echo
@@ -13,9 +16,9 @@ prompt_me() {
       return 1
       ;;
     *)
-      prompt_me
+      prompt_me "$@"
       ;;
   esac
 }
 
-prompt_me
+prompt_me "$@"
