@@ -7,7 +7,6 @@ OPTIONS:
   -v
   -d
   -q
-  -m,--media        download media with youtube-dl
 EOF
 }
 main() {
@@ -16,7 +15,6 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
-  local -i download_media=0
 
 
   trap cleanup SIGINT SIGTERM
@@ -33,50 +31,71 @@ main() {
   check_input_args "$@"
 
 
-  local -r failed_links="failed_downloads_$RANDOM"
-  local -i success=0
-  local -i failures=0
-  local downloader="curl -O -J -L -C -"
+  local -a failed_items=()
+  local -i success_count=0
+  local -i failures_count=0
+  #local downloader="curl -sS -O -J -L"
+  local downloader="http --download --follow --body"
 
   setup
   run "$@"
+}
 
-}
 check_dependencies() {
-  :
+  hash prompt_me.sh || die "Could not find prompt_me.sh"
 }
+
 check_input_args() {
   if [[ -z $1 ]]; then
     usage
     exit 1
   fi
 }
+
 prepare() {
+  set -e
   source "${MYLIBS}libutils.sh"
   source "${MYLIBS}libcolors.sh"
+  set +e
+}
 
-}
 setup() {
-  (($download_media)) && downloader="youtube-dl"
+  :
 }
+
 run() {
   if [[ -f $1 ]]; then
     process_file "$1"
   elif [[ -n $1 ]]; then
     process_urls "$@"
   fi
-  cat << EOF
+  cat >&2 << EOF
 Processed from $@
-  success: $success
-  failures: $failures
-  total: $(($success + $failures))
+  success_count: $success_count
+  failures_count: $failures_count
+  total: $(($success_count + $failures_count))
+
 EOF
-  (($failures)) && echo "Failures saved in $failed_links."
+  if [[ -n ${failed_items[0]} ]]; then
+    echo "Failed items:" >&2
+    for item in "${failed_items[@]}"; do 
+      echo " $item" >&2
+    done
+  fi
+
+  if ! (($failures_count)); then
+    return 0
+  fi
+
+  if prompt_me.sh "Do you want to repeat with failed links?"; then
+    run "${failed_items[@]}"
+    break
+  fi
 }
+
 parse_options() {
   # exit if no options left
   [[ -z $1 ]] && return 0
-  log "parse \$1: $1" 2>&$fddebug
 
   local do_shift=0
   case $1 in
@@ -95,9 +114,6 @@ parse_options() {
         ;;
       -d|--debug)
         enable_debug=1
-        ;;
-      -m|--media)
-        download_media=1
         ;;
       --)
         do_shift=3
@@ -124,25 +140,50 @@ parse_options() {
   shift
   parse_options "$@"
 }
+
+get_uri_filename() {
+  local result=$(http --header --follow "$1" \
+    | awk -F';' '/filename/ {print $2;}' \
+    | cut -d '=' -f 2 \
+    | sed -e 's/^"//' -e 's/".*$//')
+  echo "$result"
+}
+
+check_duplicate_file() {
+  local -r filename=$1
+  [[ -z $filename ]] && return 1
+  if [[ -f $filename ]]; then
+    echo_e "${RED}==> ERROR: file exists already: ${filename}${COLOR_NONE}"
+    if [[ -n $PS1 ]] && prompt_me.sh "Remove file?"; then
+      rm "$filename"
+    else
+      return 1
+    fi
+  fi
+}
+
 process() {
   local -r input=$1
   echo_e "${BLUE_BG}URL read - $input${COLOR_NONE}"
-  $downloader "$input"
-  if [[ $? == 0 ]]; then
-    echo_e "${GREEN}Successfull download.${COLOR_NONE}"
-    success=$(($success + 1))
+  local -r filename=$(get_uri_filename "$input")
+  
+  if check_duplicate_file "$filename" && $downloader "$input"; then
+    echo_e "${GREEN}+ $input${COLOR_NONE}"
+    success_count=$(($success_count + 1))
   else
-    echo_e "${RED}Failed download of ${input}${COLOR_NONE}" >&2
-    echo "$input" >> "$failed_links"
-    failures=$(($failures + 1))
+    echo_e "${RED}- ${input}${COLOR_NONE}"
+    failed_items+=("$input")
+    failures_count=$(($failures_count + 1))
   fi
 }
+
 process_file() {
   local -r file=$1
   while read -r line; do
     process "$line"
   done < "$file"
 }
+
 process_urls() {
   IFS=" "
   while [[ -n $1 ]]; do
