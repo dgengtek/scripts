@@ -52,6 +52,9 @@ main() {
 
   prepare_env
   setup
+  if [[ -z $1 ]]; then
+    set -- "."
+  fi
   for path in "$@"; do
     pushd "$path"
     run
