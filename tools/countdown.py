@@ -1,7 +1,7 @@
 #!/bin/env python3
 """
 Usage:
-    countdown [options] [<datestring>]
+    countdown.py [options] [<seconds>]
 
 Options:
 """
@@ -212,12 +212,14 @@ def test_countdown_convert_from_seconds(seconds, expected):
     assert cd == cdexpected
 
 def test_countdown_timer_string():
-    cd = Countdown.from_seconds(61)
-    assert str(cd) == "00:01:01"
     cd = Countdown.from_seconds(1)
     assert str(cd) == "00:00:01"
+    cd = Countdown.from_seconds(61)
+    assert str(cd) == "00:01:01"
     cd = Countdown.from_seconds(3600)
     assert str(cd) == "01:00:00"
+    cd = Countdown.from_seconds(3661)
+    assert str(cd) == "01:01:01"
     cd = Countdown.from_seconds(360000)
     assert str(cd) == "100:00:00"
 
