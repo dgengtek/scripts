@@ -109,20 +109,23 @@ def main():
 Updating task: 
  id: {}
  description: {}
+ annotations: 
+    {}
  project: {}
  tags: {}
 """.format(
     task.get("id"),
     task.get("description"),
+    task.get("annotations"),
     task.get("project"),
     task.get("tags"),
     ))
 
         for uda, values in udas.items():
             menu = create_interactive_menu(values)
-            menu += "\n[latest := {}]".format(task.get(uda))
             validator = SelectMenuValidator(udas_map.get(uda))
-            generate_udas(menu, uda ,values, validator, udas_new_map)
+            generate_udas(menu, uda ,values, validator, udas_new_map,
+                    default=task.get(uda, ""))
 
         print("The new task:")
         pp = pprint.PrettyPrinter(indent=4)
@@ -145,14 +148,19 @@ def review_required(task):
     modified = task.get("modified")
     review = task.get("review", "")
 
-    result = True
+    review_task = False
 
     if modified:
         modified = datetime.strptime(modified, "%Y%m%dT%H%M%SZ").date()
+        review_task = review_task or day28old > modified
+
     if review:
         review = datetime.strptime(review, "%Y%m%dT%H%M%S.%f").date()
+        review_task = review_task or now > review
+    else:
+        return True
 
-    return now > review or day28old > modified
+    return review_task
 
 def format_datetime_iso(date):
     """
@@ -161,7 +169,7 @@ def format_datetime_iso(date):
     return date.isoformat().replace("-","").replace(":","")
 
 
-def generate_udas(menu, uda, values, validator, udas_new_map):
+def generate_udas(menu, uda, values, validator, udas_new_map, default=""):
     defaults = values.get("default")
 
     if defaults and defaults.find(",") != -1:
@@ -176,6 +184,7 @@ def generate_udas(menu, uda, values, validator, udas_new_map):
             choice = prompt("> ",
                 validator=validator, 
                 history=history,
+                default=default,
                 on_abort=AbortAction.RETRY,
                 auto_suggest=AutoSuggestFromHistory())
         except InputError:
@@ -226,21 +235,6 @@ def prompt_confirm(string=""):
         return True
     else:
         return False
-
-def prompt_value(string, exit_if_empty=False):
-    try:
-        user_input = prompt("{}> ".format(string),
-                history=history,
-                on_abort=AbortAction.RETRY,
-                erase_when_done=True,
-                auto_suggest=AutoSuggestFromHistory())
-    except (KeyboardInterrupt, EOFError):
-        print("bye")
-        sys.exit(0)
-    if not user_input and exit_if_empty:
-        print("No input.")
-        sys.exit(1)
-    return user_input
 
 def create_interactive_menu(values):
     output = "{:#^40}".format(" {} ".format(values.get("label")))
