@@ -147,6 +147,7 @@ def main():
     pp.pprint(udas_new_map)
     if prompt_confirm():
         new_task = tw.task_add(**udas_new_map)
+        print(new_task.get("id"))
     else:
         print("Did not add task.")
 
