@@ -165,9 +165,9 @@ check_duplicate_file() {
 process() {
   local -r input=$1
   echo_e "${BLUE_BG}URL read - $input${COLOR_NONE}"
-  local -r filename=$(get_uri_filename "$input")
+  local -r filename=$(get_uri_filename "$input" | tr -cd "a-zA-Z0-9-_.~")
   
-  if check_duplicate_file "$filename" && $downloader "$input"; then
+  if check_duplicate_file "$filename" && $downloader --output "$filename" "$input"; then
     echo_e "${GREEN}+ $input${COLOR_NONE}"
     success_count=$(($success_count + 1))
   else
@@ -179,7 +179,7 @@ process() {
 
 process_file() {
   local -r file=$1
-  while read -r line; do
+  while read -r -d $'\n' line; do
     process "$line"
   done < "$file"
 }
