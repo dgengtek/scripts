@@ -41,10 +41,10 @@ run() {
   countdown_loop "$time_raw"
   update_time "$time_raw"
   local output="\rCountdown finished"
-  output+="- ${time_hours}h, ${time_minutes}m, ${time_seconds}s\n"
+  output+=" - ${time_hours}h, ${time_minutes}m, ${time_seconds}s\n"
   echo -en "$output"
   notify-send "Countdown" "$output"
-  run.sh mplayer $BEEP
+  run.sh -n mplayer $BEEP
 }
 
 countdown_loop() {
