@@ -101,6 +101,10 @@ parse_options() {
       -p|--print-process)
         print_process=1
         ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
       *)
         do_shift=1
 	;;
