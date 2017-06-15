@@ -13,6 +13,7 @@ OPTIONS:
   -f, --foreground    run in foreground
   -p, --print-process print process regardless
   -s, --sudo          run with sudo
+  -q, --quiet  quiet run
   -h                  help
 EOF
 }
@@ -100,6 +101,9 @@ parse_options() {
         ;;
       -p|--print-process)
         print_process=1
+        ;;
+      -q|--quiet)
+        exec 1>/dev/null
         ;;
       -h|--help)
         usage
