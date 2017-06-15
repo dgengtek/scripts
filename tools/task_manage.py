@@ -3,7 +3,6 @@
 Manage tasks interactively
 
 Usage:
-    task_manage.py <command>
     task_manage.py add
     task_manage.py review [<filter>]
 
@@ -35,12 +34,20 @@ history = InMemoryHistory()
 
 tw = None
 
+def get_command(opts):
+    commands = ["add", "review"]
+    for command in commands:
+        if opts.get(command):
+            return command
+    return ""
+
 def main():
     opt = docopt(__doc__, sys.argv[1:])
-
-    command = generate_command(opt.get("<command>", **opt))
+    
+    command = get_command(opt)
+    command = generate_command(command,  **opt)
     if not command:
-        logger.info("Command not legal.")
+        logging.info("Command not legal.")
         sys.exit(1)
 
     global tw
@@ -51,13 +58,14 @@ def main():
     command()
 
 def generate_command(command, *args, **kwargs):
+    def generate_review():
+        task_filter = kwargs.get("<filter>", "")
+        review_task(task_filter)
+
     commands = {
             "add": add_task,
             "review": generate_review,
             }
-    def generate_review():
-        task_filter = kwargs.get("<filter>", "")
-        review_task(task_filter)
 
     return commands.get(command, "")
 
@@ -122,18 +130,24 @@ def add_task():
     else:
         print("Did not add task.")
 
-def review_task(task_filter):
+def review_task(taskfilter, status="pending"):
     global tw
     config = tw.config.items()
     config_udas = parse_udas(config)
+    force_review = False
 
-    if task_filter:
-        pending_tasks = tw.tasks.filter(task_filter)
+    if taskfilter:
+        pending_tasks = tw.tasks.filter(taskfilter, status=status)
+        force_review = True
     else:
         pending_tasks = tw.tasks.pending()
 
+    if not pending_tasks:
+        logging.info("No tasks found.")
+        return
+
     for task in pending_tasks:
-        if not review_required(task):
+        if not (force_review or review_required(task)):
             continue
 
         udas_new_map = dict()
@@ -155,7 +169,7 @@ Updating task:
     ))
 
         config_udas, udas = tee(config_udas)
-        for uda in deepcopy(udas):
+        for uda in udas:
             uda, defaults = canonize_uda(uda)
             menu = create_interactive_menu(uda, defaults)
             validator = SelectMenuValidator(uda, defaults)
