@@ -84,12 +84,13 @@ def add_task():
     udas_new_map.update({"project":project})
 
     tags = []
-    while True:
-        tag = prompt_value("Add a tag")
-        if not tag:
-            break
+    for tag in prompt_items("Add a tag."):
         tags.append(tag)
+    udas_new_map.update({"tags": tags})
 
+    annotations = []
+    for annotation in prompt_items("Add an annotation."):
+        annotations.append(annotation)
     
     config_udas = parse_udas(config)
     config_udas, udas = tee(config_udas)
@@ -112,11 +113,20 @@ def add_task():
         new_task = Task(tw, **udas_new_map)
         new_task.save()
         if new_task.saved:
+            for annotation in annotations:
+                new_task.add_annotation(annotation)
             print(new_task["id"])
         else:
             logging.info("Task has not been saved.")
     else:
         logging.info("Did not add task.")
+
+def prompt_items(string):
+    while True:
+        tag = prompt_value(string)
+        if not tag:
+            break
+        yield tag
 
 
 def review_task(taskfilter, status="pending"):
