@@ -95,27 +95,15 @@ def add_task():
     config_udas, udas = tee(config_udas)
     for uda in udas:
         uda, defaults = canonize_uda(uda)
-
         menu = create_interactive_menu(uda, defaults)
         validator = SelectMenuValidator(uda, defaults)
+
         while True:
-            try:
-                print(menu)
-                choice = ""
-                choice = prompt("> ",
-                    validator=validator, 
-                    history=history,
-                    on_abort=AbortAction.RETRY,
-                    auto_suggest=AutoSuggestFromHistory())
-            except InputError:
-                choice = "?"
-            except (KeyboardInterrupt, EOFError):
-                print("bye")
-                sys.exit(0)
-            print("---")
-            if choice:
+            print(menu)
+            value = prompt_value(validator=validator)
+            if value:
                 break
-        udas_new_map.update({str(uda):str(choice)})
+        udas_new_map.update({uda: value})
 
     print("The new task:")
     pp = pprint.PrettyPrinter(indent=4)
@@ -126,9 +114,10 @@ def add_task():
         if new_task.saved:
             print(new_task["id"])
         else:
-            print("Task has not been saved.")
+            logging.info("Task has not been saved.")
     else:
-        print("Did not add task.")
+        logging.info("Did not add task.")
+
 
 def review_task(taskfilter, status="pending"):
     global tw
@@ -174,8 +163,13 @@ Updating task:
             menu = create_interactive_menu(uda, defaults)
             validator = SelectMenuValidator(uda, defaults)
 
-            generate_udas(menu, uda , defaults, validator, udas_new_map,
+            while True:
+                print(menu)
+                value = prompt_value(validator=validator,
                     default=task[uda])
+                if value:
+                    break
+            udas_new_map.update({uda: value})
 
         print("The new task:")
         pp = pprint.PrettyPrinter(indent=4)
@@ -183,7 +177,8 @@ Updating task:
         if prompt_confirm():
             update_task(task, **udas_new_map)
         else:
-            print("Did not continue updating task.")
+            logging.info("Did not continue updating task.")
+
 
 def update_task(task, **kwargs):
     for k, v in kwargs.items():
@@ -195,31 +190,28 @@ def update_task(task, **kwargs):
     task.save()
 
     if task.saved:
-        print(task["id"])
+        logging.info(task["id"])
     else:
-        print("Task has not been updated.")
+        logging.info("Task has not been updated.")
 
-
-def generate_udas(menu, uda, defaults, validator, udas_new_map, default=""):
-    while True:
-        try:
-            print(menu)
-            choice = ""
-            choice = prompt("> ",
-                validator=validator, 
+def prompt_value(string="", validator=None, default="", exit_if_empty=False):
+    try:
+        user_input = prompt("{}> ".format(string),
                 history=history,
+                validator=validator,
                 default=default,
                 on_abort=AbortAction.RETRY,
+                erase_when_done=True,
                 auto_suggest=AutoSuggestFromHistory())
-        except InputError:
-            choice = "?"
-        except (KeyboardInterrupt, EOFError):
-            print("bye")
-            sys.exit(0)
-        print("---")
-        if choice:
-            break
-    udas_new_map.update({str(uda):str(choice)})
+    except InputError:
+        user_input = "?"
+    except (KeyboardInterrupt, EOFError):
+        print("bye")
+        sys.exit(0)
+    if not user_input and exit_if_empty:
+        logging.error("No input. Exiting now.")
+        sys.exit(1)
+    return user_input
 
 def review_required(task):
     now = datetime.now().date() 
@@ -320,28 +312,11 @@ def prompt_confirm(string=""):
     else:
         return False
 
-def prompt_value(string, exit_if_empty=False):
-    try:
-        user_input = prompt("{}> ".format(string),
-                history=history,
-                on_abort=AbortAction.RETRY,
-                erase_when_done=True,
-                auto_suggest=AutoSuggestFromHistory())
-    except (KeyboardInterrupt, EOFError):
-        print("bye")
-        sys.exit(0)
-    if not user_input and exit_if_empty:
-        print("No input.")
-        sys.exit(1)
-    return user_input
 
 def create_interactive_menu(uda, values):
     output = "{:#^40}".format(" {} ".format(uda))
     output += "\nSelect from defaults: \n\t{}".format(values)
     return output
-
-def usage():
-    pass
 
 if __name__ == "__main__":
     main()
