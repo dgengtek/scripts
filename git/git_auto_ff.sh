@@ -7,7 +7,7 @@
 # Automatically merges dev branch into master branch with fast forward only.
 # If possible, will try to push updates from master branch to remotes mentioned
 #   in variable $remote_id
-declare branch_active
+declare branch_active=
 declare -r development_branches=(
 "dev"
 "development"
@@ -54,12 +54,12 @@ main() {
   check_input_args "$@"
 
   prepare_env
-  setup
   if [[ -z $1 ]]; then
     set -- "."
   fi
   for path in "$@"; do
     pushd "$path"
+    setup
     run
     popd
   done
