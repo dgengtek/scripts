@@ -63,6 +63,7 @@ main() {
     run
     popd
   done
+  trap - SIGINT SIGQUIT SIGABRT SIGTERM EXIT
 }
 
 
