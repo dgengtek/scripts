@@ -4,6 +4,7 @@ Manage tasks interactively
 
 Usage:
     task_manage.py add
+    task_manage.py tree
     task_manage.py review [<filter>]
 
 Options:
@@ -12,6 +13,7 @@ Options:
 Commands:
     add  Add new task
     review  Review tasks
+    tree  Manage dependency
 """
 
 import sys
@@ -22,6 +24,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.interface import AbortAction
+from iterfzf import iterfzf
 import pprint
 from datetime import datetime,timedelta
 import random
@@ -34,18 +37,11 @@ history = InMemoryHistory()
 
 tw = None
 
-def get_command(opts):
-    commands = ["add", "review"]
-    for command in commands:
-        if opts.get(command):
-            return command
-    return ""
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
     
-    command = get_command(opt)
-    command = generate_command(command,  **opt)
+    command = generate_command(opt,  **opt)
     if not command:
         logging.info("Command not legal.")
         sys.exit(1)
@@ -57,18 +53,43 @@ def main():
 
     command()
 
-def generate_command(command, *args, **kwargs):
+def generate_command(opts, *args, **kwargs):
     def generate_review():
         task_filter = kwargs.get("<filter>", "")
         review_task(task_filter)
 
+    def generate_tree_dependency():
+        add_dependencies()
+
     commands = {
             "add": add_task,
             "review": generate_review,
+            "tree": generate_tree_dependency,
             }
+
+    command = ""
+    for cmd in commands.keys():
+        if opts.get(cmd):
+            command = cmd
 
     return commands.get(command, "")
 
+def add_dependencies():
+    from time import sleep
+    global tw
+    tasks = tw.tasks.pending()
+    def loop_list():
+        for task in tasks:
+            description = canonize_string(task["description"])
+            task_id = task["id"]
+            yield "{}  {}".format(task_id, description.strip())
+    
+    taskgen, taskgencopy = tee(loop_list())
+    result = iterfzf(taskgencopy)
+    print("got ",result)
+
+def canonize_string(string):
+    return string.strip().replace("\n"," ")
 
 def add_task():
     global tw
