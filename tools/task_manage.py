@@ -104,8 +104,10 @@ def generate_command(opts, *args, **kwargs):
 
 
 def search_task(tasks):
-    tasks = ( to_string_task_simple(x, annotations=True) for x in tasks )
-    task = iterfzf(tasks)
+    tasks_mapping = ( to_string_task_simple(x, annotations=True) for x in tasks )
+    task = iterfzf(tasks_mapping)
+    if not task:
+        return
     task = task.split()[0]
     task = tasks.get(id=task)
     print(to_string_task_full(task))
@@ -224,22 +226,33 @@ def to_string_task_simple(task, annotations=False):
     task_id = task["id"]
     return "{}  {}".format(task_id, description)
 
-
 def to_string_task_full(task):
-    return """
-{}  {}
-{}
-{}
-{}
-{}
-""".format(
-        task["id"], 
-        task["description"],
-        task["projects"],
-        task["tags"],
-        task["depends"],
-        task["annotations"],
-        )
+    output = "[{}]  {}".format(task["id"], task["description"])
+    projects = task["projects"]
+    output += "\nProjects: "
+    if projects:
+        output += "{}".format(", ".join(projects))
+    else:
+        output += "{}".format(projects)
+
+    tags = task["tags"]
+    output += "\nTags: "
+    if tags:
+        output += "{}".format(", ".join(tags))
+    else:
+        output += "{}".format(tags)
+
+    output += "\nDependencies: {}".format(task["depends"])
+
+    annotations = task["annotations"]
+    output += "\nAnnotations: "
+    if tags:
+        for ann in annotations:
+            output += "\n - {}".format(ann)
+    else:
+        output += "{}".format(annotations)
+
+    return output
 
 
 def canonize_string(string):
