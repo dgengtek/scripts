@@ -4,19 +4,27 @@ Manage tasks interactively
 
 Usage:
     task_manage.py add
+    task_manage.py search [-t|-p]
     task_manage.py dep [-r] <id>
     task_manage.py review [<filter>]
 
 Options:
-    -r, --reverse  Reverse dependency. Supplied task id will be parent of all
-                    selected tasks
     -h, --help  Show this screen and exit.
 
 Commands:
     add             Add new task
+    search          Fuzzy search for task(+annotations) and retrieve id
     review          Review tasks
     dep             Add dependencies to supplied id. Blocking it until selected
                         tasks are done
+
+dep:
+    -r, --reverse  Reverse dependency. Supplied task id will be parent of all
+                    selected tasks
+search:
+    -p, --projects  Search for projects
+    -t, --tags  Search for tags
+
 """
 
 import sys
@@ -33,11 +41,13 @@ from datetime import datetime,timedelta
 import random
 import logging
 from itertools import tee
+import re
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
 history = InMemoryHistory()
 
+valid_search_attributes = ["project", "tag"]
 tw = None
 
 
@@ -49,14 +59,15 @@ def main():
         logging.info("Command not legal.")
         sys.exit(1)
 
-    global tw
-    tw = TaskWarrior()
     #opt = docopt(__doc__, sys.argv[1:])
     #print(opt)
 
     command()
 
 def generate_command(opts, *args, **kwargs):
+    global tw
+    tw = TaskWarrior()
+
     def generate_review():
         task_filter = kwargs.get("<filter>", "")
         review_task(task_filter)
@@ -66,10 +77,22 @@ def generate_command(opts, *args, **kwargs):
         reverse_dependency = kwargs.get("--reverse")
         add_dependencies(task_filter, reverse_dependency)
 
+    def generate_search():
+        tasks = tw.tasks.pending()
+
+        if kwargs.get("--projects"):
+            search_attribute(tasks, "project")
+        elif kwargs.get("--tags"):
+            search_attribute(tasks, "tag")
+        else:
+            search_task(tasks)
+
+
     commands = {
             "add": add_task,
             "review": generate_review,
             "dep": generate_dependency,
+            "search": generate_search,
             }
 
     command = ""
@@ -78,6 +101,63 @@ def generate_command(opts, *args, **kwargs):
             command = cmd
 
     return commands.get(command, "")
+
+
+def search_task(tasks):
+    tasks = ( to_string_task_simple(x, annotations=True) for x in tasks )
+    task = iterfzf(tasks)
+    task = task.split()[0]
+    task = tasks.get(id=task)
+    print(to_string_task_full(task))
+
+
+def search_attribute(tasks, attribute):
+    """
+    search for specific attribute - either
+        'tag'
+        'project'
+    """
+    global valid_search_attributes
+    if attribute not in valid_search_attributes:
+        logging.info("Supplied attribute {} is not valid(or implemented) for search".format(attribute))
+        sys.exit(1)
+
+    import subprocess
+    cmd = [ "task", "{}s".format(attribute) ]
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+    items = []
+    for line in process.stdout:
+        line = str(line.strip(), "utf-8")
+        if string_invalid(line) or line == "":
+            continue
+        items.append(line)
+    items = iterfzf(items, multi=True)
+    items = [ item.strip().split()[0] for item in items ]
+
+    if attribute == "project":
+        filter_string = [ "project:{}".format(x) for x in items ]
+    elif attribute == "tag":
+        filter_string = [ "+{}".format(x) for x in items ]
+
+    if len(items) > 1:
+        tasks = tasks.filter(" or ".join(filter_string))
+    else:
+        tasks = tasks.filter("".join(filter_string))
+
+    for task in tasks:
+        print(to_string_task_simple(task))
+
+
+
+def string_invalid(string):
+    invalid_pattern = "^([0-9- ()]|Project|Tag)"
+    match = re.match(invalid_pattern, string)
+    if match:
+        return True
+    else:
+        return False
 
 
 def add_dependencies(child_task, reverse_dependency=False, status="pending"):
@@ -101,7 +181,8 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
     dependencies = []
     while True:
         available_tasks, taskgencopy = tee(available_tasks)
-        parent_dependency = iterfzf(generate_tasks(taskgencopy))
+        taskgencopy = ( to_string_task_simple(x) for x in taskgencopy )
+        parent_dependency = iterfzf(taskgencopy)
         if not parent_dependency:
             break
         try:
@@ -136,14 +217,30 @@ def filter_task(task, tasks):
         yield t
 
 
-def generate_tasks(tasks):
-    """
-    create a generator of string tasks for fzf selection menu
-    """
-    for task in tasks:
-        description = canonize_string(task["description"])
-        task_id = task["id"]
-        yield "{}  {}".format(task_id, description.strip())
+def to_string_task_simple(task, annotations=False):
+    description = canonize_string(task["description"])
+    if annotations:
+        description += " - {}".format(task["annotations"])
+    task_id = task["id"]
+    return "{}  {}".format(task_id, description)
+
+
+def to_string_task_full(task):
+    return """
+{}  {}
+{}
+{}
+{}
+{}
+""".format(
+        task["id"], 
+        task["description"],
+        task["projects"],
+        task["tags"],
+        task["depends"],
+        task["annotations"],
+        )
+
 
 def canonize_string(string):
     return string.strip().replace("\n"," ")
