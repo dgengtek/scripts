@@ -88,7 +88,6 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
 
     global tw
     tasks = tw.tasks.pending()
-    available_tasks = deepcopy(tasks)
 
     try:
         child_task = tasks.get(id=child_task)
@@ -96,6 +95,8 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
         logging.exception(e)
         logging.error("Could not find parent task to apply dependencies for.")
         sys.exit(1)
+
+    available_tasks = filter_task(child_task, tasks)
 
     dependencies = []
     while True:
