@@ -4,16 +4,19 @@ Manage tasks interactively
 
 Usage:
     task_manage.py add
-    task_manage.py tree
+    task_manage.py dep [-r] <id>
     task_manage.py review [<filter>]
 
 Options:
+    -r, --reverse  Reverse dependency. Supplied task id will be parent of all
+                    selected tasks
     -h, --help  Show this screen and exit.
 
 Commands:
-    add  Add new task
-    review  Review tasks
-    tree  Manage dependency
+    add             Add new task
+    review          Review tasks
+    dep             Add dependencies to supplied id. Blocking it until selected
+                        tasks are done
 """
 
 import sys
@@ -58,13 +61,15 @@ def generate_command(opts, *args, **kwargs):
         task_filter = kwargs.get("<filter>", "")
         review_task(task_filter)
 
-    def generate_tree_dependency():
-        add_dependencies()
+    def generate_dependency():
+        task_filter = kwargs.get("<id>", "")
+        reverse_dependency = kwargs.get("--reverse")
+        add_dependencies(task_filter, reverse_dependency)
 
     commands = {
             "add": add_task,
             "review": generate_review,
-            "tree": generate_tree_dependency,
+            "dep": generate_dependency,
             }
 
     command = ""
@@ -74,19 +79,70 @@ def generate_command(opts, *args, **kwargs):
 
     return commands.get(command, "")
 
-def add_dependencies():
-    from time import sleep
+
+def add_dependencies(child_task, reverse_dependency=False, status="pending"):
+    """
+    add dependencies to a parent task
+    """
+    from copy import deepcopy
+
     global tw
     tasks = tw.tasks.pending()
-    def loop_list():
-        for task in tasks:
-            description = canonize_string(task["description"])
-            task_id = task["id"]
-            yield "{}  {}".format(task_id, description.strip())
-    
-    taskgen, taskgencopy = tee(loop_list())
-    result = iterfzf(taskgencopy)
-    print("got ",result)
+    available_tasks = deepcopy(tasks)
+
+    try:
+        child_task = tasks.get(id=child_task)
+    except Task.DoesNotExist as e:
+        logging.exception(e)
+        logging.error("Could not find parent task to apply dependencies for.")
+        sys.exit(1)
+
+    dependencies = []
+    while True:
+        available_tasks, taskgencopy = tee(available_tasks)
+        parent_dependency = iterfzf(generate_tasks(taskgencopy))
+        if not parent_dependency:
+            break
+        try:
+            parent_dependency = parent_dependency.split()[0]
+            parent_dependency = tasks.get(id=parent_dependency)
+        except Task.DoesNotExist as e:
+            logging.error(e)
+            logging.error("Task with id {} could not be found.".format(parent_dependency))
+
+        dependencies.append(parent_dependency)
+        available_tasks = filter_task(parent_dependency, available_tasks)
+
+    task_dependencies = child_task["depends"]
+    for dependency in dependencies:
+        # add dependency to child - blocking it until dependency is done
+        if not reverse_dependency:
+            task_dependencies.add(dependency)
+        # add dependency to selected task blocking them until 'child_task'(the
+        #   parent now) is done
+        else:
+            dependency["depends"].add(child_task)
+            dependency.save()
+
+    child_task["depends"] = task_dependencies
+    child_task.save()
+
+
+def filter_task(task, tasks):
+    for t in tasks:
+        if t["id"] == task["id"]:
+            continue
+        yield t
+
+
+def generate_tasks(tasks):
+    """
+    create a generator of string tasks for fzf selection menu
+    """
+    for task in tasks:
+        description = canonize_string(task["description"])
+        task_id = task["id"]
+        yield "{}  {}".format(task_id, description.strip())
 
 def canonize_string(string):
     return string.strip().replace("\n"," ")
