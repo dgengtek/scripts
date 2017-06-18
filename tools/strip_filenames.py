@@ -3,10 +3,12 @@
 Use only legal characters from files or current directory
 
 Usage:
+    strip_filenames.py [-a]
     strip_filenames.py [options] [<filename> ...]
 
 Options:
     -l, --lowercase  Only lowercase
+    -a, --all  Include hidden files
     -h, --help  Show this screen and exit.
 """
 
@@ -29,18 +31,18 @@ def main():
     legal_characters += ".-_~"
 
     if not opt.get("--lowercase", False):
-        legal_characters += "".join(list_N010)
+        legal_characters += "".join(list_ALPHA)
 
 
     for a in range(len(directory)):
-        newname=""
+        newname = ""
         for c in directory[a]:
             if c == " ":
                 newname += "_"
-            elif c not in legal_characters:
-                continue
-            else:
+            elif c in legal_characters:
                 newname += c
+            else:
+                continue
         print("convert {} to {}".format(directory[a],newname))
         os.rename(directory[a], newname)
 
