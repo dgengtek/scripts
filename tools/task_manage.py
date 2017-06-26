@@ -5,7 +5,7 @@ Manage tasks interactively
 Usage:
     task_manage.py add
     task_manage.py search [-t|-p]
-    task_manage.py dep [-r] <id>
+    task_manage.py dep [-r] [<id>]
     task_manage.py review [<filter>]
 
 Options:
@@ -108,9 +108,10 @@ def search_task(tasks):
     task = iterfzf(tasks_mapping)
     if not task:
         return
-    task = task.split()[0]
-    task = tasks.get(id=task)
+    task_id = task.split()[0]
+    task = tasks.get(id=task_id)
     print(to_string_task_full(task))
+    return task
 
 
 def search_attribute(tasks, attribute):
@@ -171,12 +172,15 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
     global tw
     tasks = tw.tasks.pending()
 
-    try:
-        child_task = tasks.get(id=child_task)
-    except Task.DoesNotExist as e:
-        logging.exception(e)
-        logging.error("Could not find parent task to apply dependencies for.")
-        sys.exit(1)
+    if not child_task:
+        child_task = search_task(tasks)
+    else:
+        try:
+            child_task = tasks.get(id=child_task)
+        except Task.DoesNotExist as e:
+            logging.exception(e)
+            logging.error("Could not find parent task to apply dependencies for.")
+            sys.exit(1)
 
     available_tasks = filter_task(child_task, tasks)
 
