@@ -206,6 +206,10 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
             logging.error("Could not find parent task to apply dependencies for.")
             sys.exit(1)
 
+    if not child_task:
+        logging.error("Task not valid. Abort.")
+        sys.exit(1)
+
     available_tasks = filter_task(child_task, tasks)
 
     dependencies = []
