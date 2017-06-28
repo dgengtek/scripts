@@ -7,6 +7,7 @@ Usage:
     task_manage.py search [-t|-p]
     task_manage.py dep [-r] [<id>]
     task_manage.py review [<filter>]
+    task_manage.py review [-a | -n <count>]
 
 Options:
     -h, --help  Show this screen and exit.
@@ -14,7 +15,7 @@ Options:
 Commands:
     add             Add new task
     search          Fuzzy search for task(+annotations) and retrieve id
-    review          Review tasks
+    review          Review tasks, by default will review the top 20 tasks
     dep             Add dependencies to supplied id. Blocking it until selected
                         tasks are done
 
@@ -24,6 +25,10 @@ dep:
 search:
     -p, --projects  Search for projects
     -t, --tags  Search for tags
+
+review:
+    -n <count>, --number <count>  Number of top tasks to review[default: 20]
+    -a, --all  Review all tasks which are flagged for review
 
 """
 
@@ -44,6 +49,7 @@ from itertools import tee
 import re
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
+# TODO generate singleton for taskwarrior global
 
 history = InMemoryHistory()
 
@@ -53,16 +59,15 @@ tw = None
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
+    #print(opt)
     
     command = generate_command(opt,  **opt)
     if not command:
         logging.info("Command not legal.")
         sys.exit(1)
 
-    #opt = docopt(__doc__, sys.argv[1:])
-    #print(opt)
-
     command()
+
 
 def generate_command(opts, *args, **kwargs):
     global tw
@@ -70,7 +75,16 @@ def generate_command(opts, *args, **kwargs):
 
     def generate_review():
         task_filter = kwargs.get("<filter>", "")
-        review_task(task_filter)
+        review_all = kwargs.get("--all")
+        top_count = kwargs.get("--number")
+
+        if review_all:
+            review_task("")
+        elif task_filter:
+            review_task(task_filter, force=True)
+        else:
+            for task_id in get_top_tasks(top_count):
+                review_task(task_id, force=True)
 
     def generate_dependency():
         task_filter = kwargs.get("<id>", "")
@@ -102,6 +116,16 @@ def generate_command(opts, *args, **kwargs):
 
     return commands.get(command, "")
 
+def get_top_tasks(count):
+    import subprocess
+    cmd = ["task", "limit:{}".format(count), "top"]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    valid_pattern = "^([0-9]+$)"
+    for line in p.stdout:
+        s = canonize_string(str(line,"UTF-8"))
+        if string_match(valid_pattern, s):
+            yield s
+
 
 def search_task(tasks):
     tasks_mapping = ( to_string_task_simple(x, annotations=True) for x in tasks )
@@ -131,9 +155,10 @@ def search_attribute(tasks, attribute):
             stderr=subprocess.PIPE)
 
     items = []
+    invalid_pattern = "^([0-9- ()]|Project|Tag)"
     for line in process.stdout:
         line = str(line.strip(), "utf-8")
-        if string_invalid(line) or line == "":
+        if string_match(invalid_pattern, line) or line == "":
             continue
         items.append(line)
     items = iterfzf(items, multi=True)
@@ -154,9 +179,8 @@ def search_attribute(tasks, attribute):
 
 
 
-def string_invalid(string):
-    invalid_pattern = "^([0-9- ()]|Project|Tag)"
-    match = re.match(invalid_pattern, string)
+def string_match(pattern, string):
+    match = re.match(pattern, string)
     if match:
         return True
     else:
@@ -321,15 +345,13 @@ def prompt_items(string):
         yield tag
 
 
-def review_task(taskfilter, status="pending"):
+def review_task(taskfilter, status="pending", force=False):
     global tw
     config = tw.config.items()
     config_udas = parse_udas(config)
-    force_review = False
 
     if taskfilter:
         pending_tasks = tw.tasks.filter(taskfilter, status=status)
-        force_review = True
     else:
         pending_tasks = tw.tasks.pending()
 
@@ -338,7 +360,7 @@ def review_task(taskfilter, status="pending"):
         return
 
     for task in pending_tasks:
-        if not (force_review or review_required(task)):
+        if not (force or review_required(task)):
             continue
 
         udas_new_map = dict()
