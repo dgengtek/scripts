@@ -48,6 +48,9 @@ import logging
 from itertools import tee
 import re
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 # TODO generate singleton for taskwarrior global
 
@@ -63,7 +66,7 @@ def main():
     
     command = generate_command(opt,  **opt)
     if not command:
-        logging.info("Command not legal.")
+        logger.info("Command not legal.")
         sys.exit(1)
 
     command()
@@ -146,7 +149,7 @@ def search_attribute(tasks, attribute):
     """
     global valid_search_attributes
     if attribute not in valid_search_attributes:
-        logging.info("Supplied attribute {} is not valid(or implemented) for search".format(attribute))
+        logger.info("Supplied attribute {} is not valid(or implemented) for search".format(attribute))
         sys.exit(1)
 
     import subprocess
@@ -202,12 +205,11 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
         try:
             child_task = tasks.get(id=child_task)
         except Task.DoesNotExist as e:
-            logging.exception(e)
-            logging.error("Could not find parent task to apply dependencies for.")
+            logger.error("Could not find parent task to apply dependencies for.", exc_info=True)
             sys.exit(1)
 
     if not child_task:
-        logging.error("Task not valid. Abort.")
+        logger.error("Task not valid. Abort.")
         sys.exit(1)
 
     available_tasks = filter_task(child_task, tasks)
@@ -223,8 +225,8 @@ def add_dependencies(child_task, reverse_dependency=False, status="pending"):
             parent_dependency = parent_dependency.split()[0]
             parent_dependency = tasks.get(id=parent_dependency)
         except Task.DoesNotExist as e:
-            logging.error(e)
-            logging.error("Task with id {} could not be found.".format(parent_dependency))
+            logger.error(e)
+            logger.error("Task with id {} could not be found.".format(parent_dependency))
 
         dependencies.append(parent_dependency)
         available_tasks = filter_task(parent_dependency, available_tasks)
@@ -337,9 +339,9 @@ def add_task():
                 new_task.add_annotation(annotation)
             print(new_task["id"])
         else:
-            logging.info("Task has not been saved.")
+            logger.info("Task has not been saved.")
     else:
-        logging.info("Did not add task.")
+        logger.info("Did not add task.")
 
 def prompt_items(string):
     while True:
@@ -360,8 +362,8 @@ def review_task(taskfilter, status="pending", force=False):
         pending_tasks = tw.tasks.pending()
 
     if not pending_tasks:
-        logging.info("No tasks found.")
-        return
+        logger.info("No tasks found with status '{}'.".format(status))
+        sys.exit(2)
 
     for task in pending_tasks:
         if not (force or review_required(task)):
@@ -405,7 +407,7 @@ Updating task:
         if prompt_confirm():
             update_task(task, **udas_new_map)
         else:
-            logging.info("Did not continue updating task.")
+            logger.info("Did not continue updating task.")
 
 
 def update_task(task, **kwargs):
@@ -418,9 +420,9 @@ def update_task(task, **kwargs):
     task.save()
 
     if task.saved:
-        logging.info(task["id"])
+        logger.info(task["id"])
     else:
-        logging.info("Task has not been updated.")
+        logger.info("Task has not been updated.")
 
 def prompt_value(string="", validator=None, default="", exit_if_empty=False):
     try:
@@ -437,7 +439,7 @@ def prompt_value(string="", validator=None, default="", exit_if_empty=False):
         print("bye")
         sys.exit(0)
     if not user_input and exit_if_empty:
-        logging.error("No input. Exiting now.")
+        logger.error("No input. Exiting now.")
         sys.exit(1)
     return user_input
 
@@ -458,7 +460,7 @@ def review_required(task):
         try:
             review = datetime.strptime(review, "%Y%m%dT%H%M%S.%f").date()
         except ValueError:
-            logging.error("Could not parse review date of task with id {}".format(task["id"]))
+            logger.error("Could not parse review date of task with id {}".format(task["id"]))
             sys.exit(1)
 
         review_task = review_task or now > review
