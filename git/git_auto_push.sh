@@ -4,6 +4,7 @@
 # ------------------------------------------------------------------------------
 # 
 declare branch_active=
+declare -r dev_branch="dev"
 declare -r production_branches=(
 "prod"
 "release"
@@ -84,7 +85,7 @@ run() {
     } 2>/dev/null || error "Remote push to '$remote' failed."
   done
 
-  git checkout "$branch_active"
+  git checkout "$branch_active" || git checkout "$dev_branch"
 }
 
 
