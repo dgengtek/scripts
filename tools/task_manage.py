@@ -420,7 +420,7 @@ def update_task(task, **kwargs):
     task.save()
 
     if task.saved:
-        logger.info(task["id"])
+        logger.info("Updated task: {}".format(task["id"]))
     else:
         logger.info("Task has not been updated.")
 
