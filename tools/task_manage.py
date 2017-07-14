@@ -539,10 +539,14 @@ def prompt_confirm(string=""):
     except (KeyboardInterrupt, EOFError):
         print("bye")
         sys.exit(0)
-    if user_input.lower() in ["y","yes","ye","j","ja"]:
+    user_input = user_input.lower().strip()
+    if user_input in ["y","yes","ye","j","ja"]:
         return True
-    else:
+    elif user_input in ["n","no","nein"]:
         return False
+    else:
+        # repeat if invalid
+        return prompt_confirm(string)
 
 
 def create_interactive_menu(uda, values):
