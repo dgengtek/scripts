@@ -414,7 +414,7 @@ def update_task(task, **kwargs):
     for k, v in kwargs.items():
         task[k] = v
 
-    review_day = timedelta(days=random.randint(7,28))
+    review_day = timedelta(days=random.randint(21,28))
     date = datetime.now() + review_day
     task["review"] = format_datetime_iso(date)
     task.save()
@@ -445,27 +445,29 @@ def prompt_value(string="", validator=None, default="", exit_if_empty=False):
 
 def review_required(task):
     now = datetime.now().date() 
-    day28old = now - timedelta(days=28)
+    day90old = now - timedelta(days=90)
 
     modified = task["modified"]
     review = task["review"]
 
     review_task = False
 
+    if not review:
+        return True
+
+
     if modified:
         modified = modified.date()
-        review_task = review_task or day28old > modified
+        review_task = day90old > modified
 
-    if review:
+    if review_task:
         try:
             review = datetime.strptime(review, "%Y%m%dT%H%M%S.%f").date()
         except ValueError:
             logger.error("Could not parse review date of task with id {}".format(task["id"]))
             sys.exit(1)
 
-        review_task = review_task or now > review
-    else:
-        return True
+        review_task = now > review
 
     return review_task
 
