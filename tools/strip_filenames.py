@@ -34,17 +34,27 @@ def main():
         legal_characters += "".join(list_ALPHA)
 
 
+    consecutive_char = ""
     for a in range(len(directory)):
         newname = ""
         for c in directory[a]:
+            if consecutive_char and c == consecutive_char:
+                continue
+            else:
+                consecutive_char = c
+
             if c == " ":
                 newname += "_"
             elif c in legal_characters:
                 newname += c
+
             else:
                 continue
         print("convert {} to {}".format(directory[a],newname))
         os.rename(directory[a], newname)
+
+def is_consecutive_char(char_consec, char):
+
 
 if __name__ == "__main__":
     main()
