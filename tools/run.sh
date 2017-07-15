@@ -8,7 +8,8 @@ Run commands in background
 
 OPTIONS:
   -l, --log           log command output
-  -m, --mail          mail cmd output
+  -m, --mail          mail result
+  -o, --output        mail cmd output
   -n, --disable-notify        disable notifications
   -f, --foreground    run in foreground
   -p, --print-process print process regardless
@@ -21,6 +22,7 @@ main() {
   cmd=("$@")
   local -i enable_logging=0
   local -i enable_mail=0
+  local -i enable_mail_cmd_output=0
   local -i enable_foreground=0
   local -i enable_notifications=1
   local -i run_as_sudo=0
@@ -45,20 +47,27 @@ main() {
 
   if (($enable_logging)) || (($enable_mail)); then
     logfile=$(mktemp -u shellrunXXXXXX.log)
-    echo "$@" > "$logfile"
+    echo -e "$@\n" > "$logfile"
   fi
 
   if (($run_as_sudo)); then
     set -- sudo $@
     command sudo -v
   fi 
+  exec 3>&1
   if (($enable_foreground)); then
-    (($print_process)) && echo "$$"
-    run_commands "$@"
+    local output_stream="/dev/null"
+    (($enable_mail_cmd_output)) && output_stream=$logfile
+    run_commands "$@" |& tee "$output_stream"
+    (($print_process)) && echo "$!"
   else
-    exec 3>&1
-    exec 1>>"$logfile"
-    exec 2>&1
+    if (($enable_mail_cmd_output)); then
+      exec 1>>"$logfile"
+      exec 2>&1
+    else
+      exec 1>/dev/null
+      exec 2>>"$logfile"
+    fi
     run_commands "$@" &
     (! (($enable_foreground)) || (($print_process)) ) && echo "$!" >&3
   fi
@@ -66,7 +75,8 @@ main() {
   return 0
 }
 run_commands() {
-  $@
+  time $@
+
   local -r subject="$?[$USER@$HOSTNAME]$ run.sh $@"
   local -r message=$@
   if (($enable_notifications)); then
@@ -74,7 +84,7 @@ run_commands() {
     notify-send "$subject" "'$message'"
   fi
   if (($enable_mail)); then
-    cat "$logfile" | mail -s "$subject" -r "$sender" "$recipient"
+      cat "$logfile" | mail -s "$subject" -r "$sender" "$recipient"
   fi
   cleanup
 }
@@ -98,6 +108,9 @@ parse_options() {
         ;;
       -n|--disable-notify)
         enable_notifications=0
+        ;;
+      -o|--output)
+        enable_mail_cmd_output=1
         ;;
       -p|--print-process)
         print_process=1
