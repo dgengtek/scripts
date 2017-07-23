@@ -59,6 +59,14 @@ history = InMemoryHistory()
 valid_search_attributes = ["project", "tag"]
 tw = None
 
+uda_values_filter = [
+        "label",
+        "type",
+        "values",
+        "default",
+        "description",
+        ]
+
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
@@ -314,12 +322,13 @@ def add_task():
     for annotation in prompt_items("Add an annotation."):
         annotations.append(annotation)
     
-    config_udas = parse_udas(config)
+    global uda_values_filter
+    config_udas = parse_udas(config, uda_values_filter)
     config_udas, udas = tee(config_udas)
     for uda in udas:
-        uda, defaults = canonize_uda(uda)
-        menu = create_interactive_menu(uda, defaults)
-        validator = SelectMenuValidator(uda, defaults)
+        uda, values = uda
+        menu = create_interactive_menu(uda, values)
+        validator = SelectMenuValidator(uda, values)
 
         while True:
             print(menu)
@@ -354,7 +363,8 @@ def prompt_items(string):
 def review_task(taskfilter, status="pending", force=False):
     global tw
     config = tw.config.items()
-    config_udas = parse_udas(config)
+    global uda_values_filter
+    config_udas = parse_udas(config, uda_values_filter)
 
     if taskfilter:
         pending_tasks = tw.tasks.filter(taskfilter, status=status)
@@ -389,9 +399,9 @@ Updating task:
 
         config_udas, udas = tee(config_udas)
         for uda in udas:
-            uda, defaults = canonize_uda(uda)
-            menu = create_interactive_menu(uda, defaults)
-            validator = SelectMenuValidator(uda, defaults)
+            uda, values = uda
+            menu = create_interactive_menu(uda, values)
+            validator = SelectMenuValidator(uda, values)
 
             while True:
                 print(menu)
@@ -483,55 +493,75 @@ def format_datetime_iso(date):
     return date.isoformat().replace("-","").replace(":","")
 
 class SelectMenuValidator(Validator):
-    def __init__(self, uda, defaults):
+    def __init__(self, uda, values):
         self.uda = uda
-        self.defaults = defaults
+        self.values = values.get("values")
 
     def validate(self, document):
         text = document.text
 
-        if text == "":
+        if text == "" or not text:
             raise InputError("Input is empty")
-        elif text not in self.defaults:
+        elif text not in self.values:
             raise ValidationError(message="Choice is not a valid uda.")
 
 class InputError(Exception):
     pass
 
-def canonize_uda(uda):
-    uda, defaults = uda
-    # uda.name.default
-    uda = uda.split(".")[1]
-    # 0,1,2,3,...
-    defaults = defaults.split(",")
-
-    return uda,defaults
-
-def parse_udas(config):
+def parse_udas(config, values_filter):
     """
-    Get uda default values
+    Get uda default values from strings filter
     """
-    uda_filter = build_filter("uda")
-    default_filter = build_filter("values")
+    filters = []
+    uda_filter = build_filter(["^uda."])
+    values_filter = build_filter(values_filter)
 
-    config = filter(uda_filter, config)
-    config = filter(default_filter, config )
+    filters.append(uda_filter)
+    filters.append(values_filter)
 
-    return config
+    def get_uda(key):
+        return key.split(".")[1]
 
+    def get_option(key):
+        return key.split(".")[2]
 
-def build_filter(string, negate=False):
+    def update_uda(uda, values, orig_config):
+        new_values = orig_config.get(uda, "")
+        if not new_values:
+            new_values = dict()
+        new_values.update(values)
+        orig_config.update({uda: new_values})
+
+    new_config = dict()
+    for item in config:
+        is_valid = (f(item) for f in filters)
+        is_valid = all(is_valid)
+        if not is_valid:
+            continue
+        k, v = item
+        uda = get_uda(k)
+        option = get_option(k)
+        values = {option:v}
+        update_uda(uda, values, new_config)
+    return sorted(new_config.items())
+
+def build_filter(patterns, negate=False):
+    """
+    Build a filter from a list of strings
+    """
+    import re
     def filter_search(item):
         k,v = item
-        if string in k and not negate:
-            return True
-        else:
-            return False
+        for pattern in patterns:
+            pattern = re.compile(pattern)
+            match = re.search(pattern, k)
+            if bool(match) ^ bool(negate):
+                return True
+        return False
     return filter_search
 
 
 def run_menu(menu, validator,  default="?"):
-
     if choice == "":
         return default
     elif choice is False:
@@ -559,8 +589,70 @@ def prompt_confirm(string=""):
 
 def create_interactive_menu(uda, values):
     output = "{:#^40}".format(" {} ".format(uda))
-    output += "\nSelect from values: \n\t{}".format(values)
+    output += "\n{}".format(values.get("description", ""))
+    output += "\nSelect from: \t{}".format(values.get("values"))
     return output
+
+################################################################################
+import pytest
+
+@pytest.fixture(scope="module")
+def config_sample():
+    return {
+            "uda.test.label":"Test",
+            "uda.test.type":"string",
+            "uda.test.values":"t,n,y,?",
+            "uda.test.default":"t",
+            "uda.test.description":"Description of test",
+            "uda.test2.label":"Test2",
+            "uda.test2.type":"string",
+            "uda.test2.values":"t2,n2,y2,?2",
+            "uda.test2.default":"t2",
+            "uda.test2.description":"Description of test2",
+            "urgency.uda.test.t":"0",
+            "urgency.uda.test.y":"2",
+            "urgency.uda.test.n":"1",
+            "urgency.uda.test.?":"0",
+            "color.uda.test.h":"color255",
+            "color.uda.test.l":"color245",
+            "color.uda.test.m":"color250",
+            }
+
+@pytest.fixture(scope="module")
+def config_sample_expected():
+    return {
+            "uda.test.label":"Test",
+            "uda.test.type":"string",
+            "uda.test.values":"t,n,y,?",
+            "uda.test.default":"t",
+            "uda.test.description":"Description of test",
+            "uda.test2.label":"Test2",
+            "uda.test2.type":"string",
+            "uda.test2.values":"t2,n2,y2,?2",
+            "uda.test2.default":"t2",
+            "uda.test2.description":"Description of test2",
+            }
+
+@pytest.fixture(scope="module")
+def filter_sample(): 
+    return [
+            "label",
+            "type",
+            "values",
+            "default",
+            "description",
+            ]
+
+def test_config_filter(config_sample, config_sample_expected, filter_sample):
+    std_filter = build_filter(filter_sample)
+    config = filter(std_filter, config_sample.items())
+    assert dict(config) == config_sample_expected
+
+def test_uda_parsing(config_sample, filter_sample):
+    config = parse_udas(config_sample.items(), filter_sample)
+    config = dict(config)
+    assert "test" in config and "test2" in config
+
 
 if __name__ == "__main__":
     main()
