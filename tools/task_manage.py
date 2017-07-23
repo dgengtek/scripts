@@ -395,8 +395,11 @@ Updating task:
 
             while True:
                 print(menu)
+                default = task[uda]
+                if not default:
+                    default = "?"
                 value = prompt_value(validator=validator,
-                    default=task[uda])
+                    default=default)
                 if value:
                     break
             udas_new_map.update({uda: value})
@@ -425,6 +428,8 @@ def update_task(task, **kwargs):
         logger.info("Task has not been updated.")
 
 def prompt_value(string="", validator=None, default="", exit_if_empty=False):
+    if not default:
+        default = ""
     try:
         user_input = prompt("{}> ".format(string),
                 history=history,
@@ -503,6 +508,9 @@ def canonize_uda(uda):
     return uda,defaults
 
 def parse_udas(config):
+    """
+    Get uda default values
+    """
     uda_filter = build_filter("uda")
     default_filter = build_filter("default")
 
