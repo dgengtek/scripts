@@ -512,7 +512,7 @@ def parse_udas(config):
     Get uda default values
     """
     uda_filter = build_filter("uda")
-    default_filter = build_filter("default")
+    default_filter = build_filter("values")
 
     config = filter(uda_filter, config)
     config = filter(default_filter, config )
@@ -559,7 +559,7 @@ def prompt_confirm(string=""):
 
 def create_interactive_menu(uda, values):
     output = "{:#^40}".format(" {} ".format(uda))
-    output += "\nSelect from defaults: \n\t{}".format(values)
+    output += "\nSelect from values: \n\t{}".format(values)
     return output
 
 if __name__ == "__main__":
