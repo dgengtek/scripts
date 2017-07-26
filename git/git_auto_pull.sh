@@ -6,6 +6,14 @@
 declare branch_active=
 declare -r branch_master="master"
 
+declare -r production_branches=(
+"prod"
+"release"
+)
+
+declare -r remote_id="origin"
+declare -r branch_master="master"
+
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] <arg1> -- [EXTRA]
