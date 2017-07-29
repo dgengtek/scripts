@@ -4,7 +4,7 @@ Manage tasks interactively
 
 Usage:
     task_manage.py add
-    task_manage.py note (add|open|rm|cat|ls) [<filter>]
+    task_manage.py note <subcommand> [<filter>]
     task_manage.py search [-t|-p]
     task_manage.py dep [-r] [<id>]
     task_manage.py review [<filter>]
@@ -13,7 +13,7 @@ Usage:
 Options:
     -h, --help  Show this screen and exit.
 
-Commands:
+Commands overview:
     add             Add new task
     search          Fuzzy search for task(+annotations) and retrieve id
     review          Review tasks, by default will review the top 20 tasks
@@ -22,10 +22,11 @@ Commands:
     note            Add a note to a task
 
 Note subcommands:
-    add|open        Create and open note with $EDITOR
+    add|edit        Create and edit note with $EDITOR
     rm              Remove a note
     cat             Display to stdout
     ls              Show path to note
+    cleanup         Cleanup notes in notes directory if task has been deleted
 
 dep:
     -r, --reverse  Reverse dependency. Supplied task id will be parent of all
@@ -86,7 +87,6 @@ __notes_dir = Path("~/.task/notes/").expanduser()
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
-    #print(opt)
     
     command = generate_command(opt,  **opt)
     if not command:
