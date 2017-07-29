@@ -4,6 +4,7 @@ Manage tasks interactively
 
 Usage:
     task_manage.py add
+    task_manage.py note (add|open|rm|cat|ls) [<filter>]
     task_manage.py search [-t|-p]
     task_manage.py dep [-r] [<id>]
     task_manage.py review [<filter>]
@@ -18,6 +19,13 @@ Commands:
     review          Review tasks, by default will review the top 20 tasks
     dep             Add dependencies to supplied id. Blocking it until selected
                         tasks are done
+    note            Add a note to a task
+
+Note subcommands:
+    add|open        Create and open note with $EDITOR
+    rm              Remove a note
+    cat             Display to stdout
+    ls              Show path to note
 
 dep:
     -r, --reverse  Reverse dependency. Supplied task id will be parent of all
@@ -32,7 +40,6 @@ review:
 
 """
 
-import sys
 from docopt import docopt
 from tasklib import TaskWarrior,Task
 from prompt_toolkit.validation import Validator, ValidationError
@@ -41,12 +48,19 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.interface import AbortAction
 from iterfzf import iterfzf
+from functools import partial
 import pprint
 from datetime import datetime,timedelta
 import random
 import logging
 from itertools import tee
 import re
+from pathlib import Path
+import sys, tempfile, os
+from subprocess import call
+
+EDITOR = os.environ.get('EDITOR','vim')
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -66,6 +80,8 @@ uda_values_filter = [
         "default",
         "description",
         ]
+
+__notes_dir = Path("~/.task/notes/").expanduser()
 
 
 def main():
