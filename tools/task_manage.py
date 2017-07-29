@@ -128,12 +128,21 @@ def generate_command(opts, *args, **kwargs):
         else:
             search_task(tasks)
 
+    def generate_note():
+        task_filter = kwargs.get("<filter>", "")
+        subcommand = kwargs.get("<subcommand>")
+        if subcommand == "cleanup":
+            cleanup_notes()
+        else:
+            command_note(task_filter, subcommand)
+
 
     commands = {
             "add": add_task,
             "review": generate_review,
             "dep": generate_dependency,
             "search": generate_search,
+            "note": generate_note,
             }
 
     command = ""
@@ -412,15 +421,17 @@ def command_note(task_filter, subcommand, status="pending"):
 
         commands = {
                 "add": add,
-                "open": add,
+                "edit": add,
                 "rm": rm,
                 "cat": display,
                 "ls": ls,
                 }
-        return commands.get(subcommand)
+        return commands.get(subcommand, "")
 
+    cmd = build_command(subcommand)
+    if not cmd:
+        raise NotImplementedError("Subcommand is not available.")
     for task in pending_tasks:
-        cmd = build_command(subcommand)
         cmd(task)
     
 
@@ -469,6 +480,13 @@ def display_note(task, notes_dir):
         for line in f:
             print(line)
 
+def cleanup_notes(notes_dir):
+    global tw
+    for uuid in os.listdir(notes_dir):
+        task = tw.tasks.get(uuid=uuid)
+        if not task.deleted:
+            continue
+        os.remove(notes_dir.joinpath(uuid))
 
 
 def review_task(taskfilter, status="pending", force=False):
