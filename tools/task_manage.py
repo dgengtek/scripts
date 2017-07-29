@@ -386,6 +386,91 @@ def prompt_items(string):
             break
         yield tag
 
+def command_note(task_filter, subcommand, status="pending"):
+    global tw
+    if task_filter:
+        pending_tasks = tw.tasks.filter(task_filter, status=status)
+    else:
+        pending_tasks = tw.tasks.pending()
+        pending_tasks = select_tasks(pending_tasks)
+
+    def build_command(command):
+        global __notes_dir
+        notes_dir = __notes_dir
+
+        add = partial(create_note, notes_dir=notes_dir)
+        rm = partial(rm_note, notes_dir=notes_dir)
+        def display(task):
+            print("---")
+            print("{} ; {}".format(task, task["uuid"]))
+            display_note(task, notes_dir)
+            print("---")
+        def ls(task):
+            print("---")
+            print("{} ; {}".format(task, task["uuid"]))
+            get_note_path(task, notes_dir)
+            print("---")
+
+        commands = {
+                "add": add,
+                "open": add,
+                "rm": rm,
+                "cat": display,
+                "ls": ls,
+                }
+        return commands.get(subcommand)
+
+    for task in pending_tasks:
+        cmd = build_command(subcommand)
+        cmd(task)
+    
+
+
+def create_note(task, notes_dir):
+    def create_note_dir(note_dir):
+        note_dir = Path(note_dir).expanduser()
+        if not note_dir.exists():
+            note_dir.mkdir(parents=True)
+            logger.info("Created notes directory at {}".format(note_dir))
+        return note_dir
+
+    notes_dir = create_note_dir(notes_dir)
+    add_note(task, notes_dir)
+
+def add_note(task, notes_dir):
+    task_note = get_note_path(task, notes_dir)
+    message = """ 
+Add some notes for this task
+{}
+""".format(task)
+
+    with task_note.open(mode="w") as tmpfile:
+      tmpfile.write(message)
+      tmpfile.flush()
+      call([EDITOR, tmpfile.name])
+
+def rm_note(task, notes_dir):
+    task_note = get_note_path(task, notes_dir)
+    if task_note.exists():
+        os.remove(task_note)
+        logger.info("Remove task {}".format(task))
+
+def get_note_path(task, notes_dir):
+    uuid = task["uuid"]
+    task_note = notes_dir.joinpath(uuid)
+    return task_note
+
+def display_note(task, notes_dir):
+    task_note = get_note_path(task, notes_dir)
+
+    if not task_note.exists():
+        logger.info("Task does not exist.")
+        return
+    with task_note.open() as f:
+        for line in f:
+            print(line)
+
+
 
 def review_task(taskfilter, status="pending", force=False):
     global tw
