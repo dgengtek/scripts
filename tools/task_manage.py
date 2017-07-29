@@ -164,6 +164,17 @@ def search_task(tasks):
     print(to_string_task_full(task))
     return task
 
+def select_tasks(tasks):
+    available_tasks = ( to_string_task_simple(x, annotations=True) for x in tasks )
+    while True:
+        available_tasks, taskgencopy = tee(available_tasks)
+        taskgencopy = ( to_string_task_simple(x) for x in taskgencopy )
+        task = iterfzf(taskgencopy)
+        if task:
+            yield task 
+        else:
+            return
+        available_tasks = filter_task(task, available_tasks)
 
 def search_attribute(tasks, attribute):
     """
