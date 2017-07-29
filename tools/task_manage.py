@@ -401,15 +401,14 @@ def command_note(task_filter, subcommand, status="pending"):
         add = partial(create_note, notes_dir=notes_dir)
         rm = partial(rm_note, notes_dir=notes_dir)
         def display(task):
-            print("---")
-            print("{} ; {}".format(task, task["uuid"]))
+            print("{} | {}".format(task["id"], task["uuid"]))
             display_note(task, notes_dir)
-            print("---")
         def ls(task):
-            print("---")
-            print("{} ; {}".format(task, task["uuid"]))
-            get_note_path(task, notes_dir)
-            print("---")
+            note_path = get_note_path(task, notes_dir)
+            if not note_path.exists():
+                return
+
+            print("{} | {}".format(task["id"], note_path))
 
         commands = {
                 "add": add,
