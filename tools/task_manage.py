@@ -454,14 +454,16 @@ def add_note(task, notes_dir):
 Add some notes for this task
 {}
 """.format(task)
-
-    with task_note.open(mode="w") as tmpfile:
-      tmpfile.write(message)
-      tmpfile.flush()
-      # TODO check if changed
-      call([EDITOR, tmpfile.name])
-      task["note"] = "y"
-      task.save()
+    content = ""
+    is_empty = os.stat(task_note).st_size == 0
+    with task_note.open(mode="a") as tmpfile:
+        if is_empty:
+            tmpfile.write(message)
+            tmpfile.flush()
+        # TODO check if changed
+        call([EDITOR, tmpfile.name])
+        task["note"] = "y"
+        task.save()
 
 def rm_note(task, notes_dir):
     task_note = get_note_path(task, notes_dir)
