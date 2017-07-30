@@ -486,7 +486,7 @@ def display_note(task, notes_dir):
         return
     with task_note.open() as f:
         for line in f:
-            print(line)
+            print(line,end="")
 
 def cleanup_notes(notes_dir):
     global tw
