@@ -365,10 +365,11 @@ def add_task():
         uda, values = uda
         menu = create_interactive_menu(uda, values)
         validator = SelectMenuValidator(uda, values)
+        default = values.get("default")
 
         while True:
             print(menu)
-            value = prompt_value(validator=validator)
+            value = prompt_value(validator=validator, default=default)
             if value:
                 break
         udas_new_map.update({uda: value})
@@ -539,9 +540,7 @@ Updating task:
 
             while True:
                 print(menu)
-                default = task[uda]
-                if not default:
-                    default = "?"
+                default = values.get("default")
                 value = prompt_value(validator=validator,
                     default=default)
                 if value:
@@ -693,13 +692,6 @@ def build_filter(patterns, negate=False):
                 return True
         return False
     return filter_search
-
-
-def run_menu(menu, validator,  default="?"):
-    if choice == "":
-        return default
-    elif choice is False:
-        return False
 
 def prompt_confirm(string=""):
     print(string)
