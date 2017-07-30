@@ -457,12 +457,17 @@ Add some notes for this task
     with task_note.open(mode="w") as tmpfile:
       tmpfile.write(message)
       tmpfile.flush()
+      # TODO check if changed
       call([EDITOR, tmpfile.name])
+      task["note"] = "y"
+      task.save()
 
 def rm_note(task, notes_dir):
     task_note = get_note_path(task, notes_dir)
     if task_note.exists():
         os.remove(task_note)
+        task["note"] = "n"
+        task.save()
         logger.info("Removed note for task: {}".format(task))
 
 def get_note_path(task, notes_dir):
