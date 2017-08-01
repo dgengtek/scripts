@@ -116,6 +116,8 @@ def interactive_input(ids):
     try:
         choice = input("Your choice: ")
         choice = int(choice) - 1
+    except ValueError:
+        return None
     except (KeyboardInterrupt, EOFError):
         logger.error("bye")
         sys.exit(0)
