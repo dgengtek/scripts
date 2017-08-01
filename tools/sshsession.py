@@ -10,12 +10,14 @@ import os
 import re
 import subprocess
 import sys
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 from pathlib import Path
 from docopt import docopt
 
 # TODO check ssh path exists
-# TODO add logging
 # TODO add unit tests
 # TODO add bash prompt coloring
 #       research: import PS1 from current invoked interactive bash session?
@@ -38,9 +40,8 @@ def main():
     if success:
         print()
         run_sshsession()
-
     else:
-        print_error("Failed sshsession.")
+        logger.info("Failed sshsession.")
         sys.exit(1)
 
 def run_sshsession(custom_prompt=True):
@@ -109,14 +110,14 @@ def run_interactive(path):
                 return False
         else:
             print(choice)
-            print_error("Invalid choice")
+            logger.info("Invalid choice")
 
 def interactive_input(ids):
     try:
         choice = input("Your choice: ")
         choice = int(choice) - 1
     except (KeyboardInterrupt, EOFError):
-        print_error("bye")
+        logger.error("bye")
         sys.exit(0)
     if is_in_bounds(choice, ids):
         return choice
@@ -160,7 +161,7 @@ def create_interactive_menu(ids):
 def add_ssh_key(key):
     # strip away .pub to get private key file
     if not key.is_file():
-        print_error("Key {} does not exist.".format(str(key)))
+        logger.info("Key {} does not exist.".format(str(key)))
         return False
     key = remove_suffix(str(key), ".pub")
     return subprocess.run(["/usr/bin/ssh-add", key])
@@ -171,17 +172,14 @@ def remove_suffix(string, suffix):
     position = string.find(suffix)
     return string[:position]
 
-def print_error(text, fd=sys.stderr):
-    print(text, file=fd)
-
 if __name__ == "__main__":
     if os.name is not "posix":
-        print_error("OS not supported.")
+        logger.info("OS not supported.")
         sys.exit(1)
     try:
         main()
     except KeyboardInterrupt:
-        print_error("\nbye")
+        logger.error("\nbye")
         sys.exit(0)
 
 
