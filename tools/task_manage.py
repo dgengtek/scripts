@@ -57,7 +57,9 @@ import logging
 from itertools import tee
 import re
 from pathlib import Path
-import sys, tempfile, os
+import sys
+import tempfile
+import os
 from subprocess import call
 
 EDITOR = os.environ.get('EDITOR','vim')
