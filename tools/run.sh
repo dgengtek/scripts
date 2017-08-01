@@ -83,8 +83,16 @@ run_commands() {
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
     notify-send "$subject" "'$message'"
   fi
+
   if (($enable_mail)); then
-      cat "$logfile" | mail -s "$subject" -r "$sender" "$recipient"
+    cat | sendmail -f "$sender" "$recipient" << EOF_HEADER
+From: $sender
+To: $recipient
+
+Subject: $subject
+
+$(cat $logfile)
+EOF_HEADER
   fi
   cleanup
 }
