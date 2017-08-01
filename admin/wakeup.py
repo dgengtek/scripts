@@ -1,32 +1,43 @@
 #!/bin/env python3
 from pathlib import Path
 import subprocess
+import logging
+import sys
+logger = logging.getLogger(__name__)
+
+wol_path = "~/.config/wol.cfg"
+# TODO query list from database when available
 
 def main():
-    main.path = Path(".config/wol.cfg")
-    main.path = main.path.home().joinpath(main.path)
+    global wol_path
+    wol_path = Path(wol_path).expanduser()
     # iterate wake on lan list, wollist
-    menu = generate_menulist(main.path)
-    if display_menu(menu):
-        hostname, hwadress = menu[main.user_choice]
-        subprocess.run(["wol", hwadress])
+    menu = generate_menulist(wol_path)
+    while True:
+        user_choice = ""
+        display_menu(menu)
+        try:
+            choice = input("Your choice: ")
+            user_choice = int(choice) - 1
+            if check_in_bounds(user_choice, menu):
+                break
+            else:
+                logger.info("Choose a number from the menu.")
+
+        except (KeyboardInterrupt, EOFError):
+            logger.error("\nbye")
+            sys.exit(0)
+        except (ValueError, TypeError):
+            logger.error("Input is not a number.")
+
+
+    hostname, hwadress = menu[user_choice]
+    subprocess.run(["wol", hwadress])
 
             
 def display_menu(menu):
     for i, item in enumerate(menu):
         print("{} - {}".format((i+1),item))
-    try:
-        choice = input("Your choice: ")
-        main.user_choice = int(choice) - 1
-    except KeyboardInterrupt:
-        print()
-        return False
-    if check_in_bounds(main.user_choice, menu):
-        return True
-    else:
-        print("{:-^80}".format("Invalid choice"))
-        display_menu(menu)
-    
 
 def check_in_bounds(choice, l):
     length = len(l)
