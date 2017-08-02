@@ -278,39 +278,12 @@ def main():
     opt = docopt(__doc__, sys.argv[1:])
     #print(opt)
     seconds = opt.get("<seconds>")
+    counter = None
     if seconds:
-        cd = Countdown.from_seconds(int(seconds))
-        counter(cd)
-
-    else:
-        while True:
-            pomodoro()
-
-def pomodoro(minutes=25, rest=5):
-    working = Countdown.from_minutes(minutes)
-    resting = Countdown.from_minutes(rest)
-
-    for cd in working, resting:
-        counter(cd)
-
-def counter(cd):
-    while True:
-        print("\r{}                    ".format(cd), end="")
-        if not countdown(cd):
-            break
-        time.sleep(1)
-
-def countdown(cd, counter=1):
-    if not cd.seconds:
-        cd.finished = True
-    else:
-        cd.seconds -= counter
-        cd.sync()
-    
-    # while looping with true more accustomed habit
-    return not cd.finished
-
-
+        timer = Countdown.from_seconds(int(seconds))
+        counter = Counter(timer)
+        counter()
+        counter.wait()
 
 @pytest.mark.parametrize("seconds, expected", [
             (1, (0,0,1)),
