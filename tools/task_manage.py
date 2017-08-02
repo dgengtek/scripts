@@ -211,6 +211,9 @@ def search_attribute(tasks, attribute):
             continue
         items.append(line)
     items = iterfzf(items, multi=True)
+    if not items:
+        logger.info("No items selected.")
+        return
     items = [ item.strip().split()[0] for item in items ]
 
     if attribute == "project":
