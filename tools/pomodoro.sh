@@ -20,26 +20,36 @@ pomodoro() {
   echo "Starting pomodoro."
   local -i counts=0
   while :; do
-    countdown "Working" $work
+    countdown "work" $work
     counts=$((counts + 1))
     if ((counts % $break_cycle == 0)); then
       counts=0
-      countdown "Long break" $long_break
+      countdown "break" $long_break
     else
-      countdown "Short break" $short_break
+      countdown "break" $short_break
     fi
   done
+}
+
+timew() {
+  if ! hash command timew; then
+    echo "Timewarrior could not be found in env." >&2
+    return 1
+  fi
+  command timew "$@"
 }
 
 countdown() {
   local -r description=$1
   shift
+  timew start "$description"
   if ! countdown.py -m "$@"; then
     echo "Stopping pomodoro."
     exit 0
   fi
   mplayer "$BEEP" >/dev/null 2>&1
-  notify-send "Countdown finished" "$description"
+  notify-send -u critical "Countdown finished" "$description"
+  timew stop "$description"
 }
 
 print_available_sessions() {
