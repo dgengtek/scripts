@@ -184,6 +184,79 @@ class Countdown:
             and cd.minute == cd2.minute \
             and cd.second == cd2.second
 
+class Counter(threading.Thread):
+    def __init__(self, countdown, *args, **kwargs):
+        threading.Thread.__init__(self, **kwargs)
+        self.countdown = countdown
+        self.name = "Counter of countdown: {}".format(self.countdown)
+        self.__initial_seconds = self.countdown.seconds
+        self._lock = threading.Lock()
+        self.running = False
+        self.finished = False
+        self.paused = False
+        self.pause_condition = threading.Condition(threading.Lock())
+
+    def run(self):
+        self.running = True
+        while self:
+            with self.pause_condition:
+                while self.paused:
+                    self.pause_condition.wait()
+            if self._count():
+                self.running = False
+                break
+            print("\r{}".format(self.countdown), end="", file=sys.stderr)
+            time.sleep(1)
+        print()
+
+    def pause(self):
+        self.paused = True
+        self.pause_condition.acquire()
+
+    def resume(self):
+        self.paused = False
+        self.pause_condition.notify()
+        self.pause_condition.release()
+
+    def __bool__(self):
+        return self.running
+
+    def __call__(self):
+        if self:
+            self.stop()
+        else:
+            self.start()
+
+    def _count(self, counter=1):
+        if not self.countdown.seconds:
+            self.finished = True
+        else:
+            self._lock.acquire()
+            self.countdown.seconds -= counter
+            self.countdown.sync()
+            self._lock.release()
+        
+        return self.finished
+
+    def stop(self):
+        self.running = False
+        self.finished = True
+        self.join()
+
+    def wait(self):
+        self.join()
+
+    def reset(self):
+        self.countdown.seconds = self.__initial_seconds
+
+    def restart(self):
+        self.pause()
+        self.reset()
+        self.resume()
+
+    def __str__(self):
+        pass
+
 def _get_second(seconds):
     "return leftover second"
     return seconds % 60
