@@ -1,8 +1,10 @@
 #!/bin/env bash
-# todo: add supplied seconds to session database in file
+# track time via pomodoro
+# use taskwarrior for flagging task
+# use timewarrior for recording total time used for tasks
 usage() {
   cat << EOF
-Usage: ${0##*/}
+Usage: ${0##*/} [<task filter>]
 EOF
 
 }
@@ -12,44 +14,55 @@ main() {
   local -ri work=25
   local -ri break_cycle=4
 
-  if [[ -z $1 ]];then
-    pomodoro
-  fi
+  pomodoro "$@"
 }
 pomodoro() {
   echo "Starting pomodoro."
   local -i counts=0
   while :; do
-    countdown "work" $work
+    countdown $work "work" "$@"
     counts=$((counts + 1))
     if ((counts % $break_cycle == 0)); then
       counts=0
-      countdown "break" $long_break
+      countdown $long_break "break" 
     else
-      countdown "break" $short_break
+      countdown $short_break "break" 
     fi
   done
 }
 
-timew() {
+taskwarrior() {
   if ! hash command timew; then
     echo "Timewarrior could not be found in env." >&2
     return 1
   fi
-  command timew "$@"
+  if ! hash command task; then
+    echo "Taskwarrior shell script could not be found in env." >&2
+    return 1
+  fi
+  local -r cmd=$1
+  local -r description=$2
+  shift 2
+  if [[ -z $1 ]]; then
+    command timew "$cmd" "$description"
+  else
+    command task "$@" "$cmd"
+  fi
 }
 
 countdown() {
-  local -r description=$1
-  shift
-  timew start "$description"
-  if ! countdown.py -m "$@"; then
+  local -r time_unit=$1
+  local -r description=$2
+  shift 2
+  taskwarrior start "$description" "$@"
+  if ! countdown.py -m "$time_unit"; then
     echo "Stopping pomodoro."
+    taskwarrior stop "$description" "$@"
     exit 0
   fi
   mplayer "$BEEP" >/dev/null 2>&1
-  notify-send -u critical "Countdown finished" "$description"
-  timew stop "$description"
+  notify-send -t 10000 -u critical "Countdown finished" "$description"
+  taskwarrior stop "$description" "$@"
 }
 
 print_available_sessions() {
