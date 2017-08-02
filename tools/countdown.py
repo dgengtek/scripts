@@ -76,18 +76,23 @@ import sys
 from docopt import docopt
 import logging
 import time
+import itertools
+import functools
 import pytest
+import threading
+import copy
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class Countdown:
     def __init__(self):
-        self.hour = 0
-        self.minute = 0
-        self.second = 0
-        self.seconds= 0
-        self.finished = False
-
+        self.__hour = 0
+        self.__minute = 0
+        self.__second = 0
+        self._seconds= 0
 
     def _normalize_from_seconds(self):
         second = _get_second(self.seconds)
@@ -95,19 +100,60 @@ class Countdown:
         minute = _get_minute(minutes)
         hour = _get_hours(minutes)
 
-        self.hour = hour
-        self.minute = minute
-        self.second = second
+        self.__hour = hour
+        self.__minute = minute
+        self.__second = second
 
     def _normalize_to_seconds(self):
-        minutes = self.hour*60 + self.minute
-        self.seconds = minutes*60 + self.second
+        minutes = self.__hour*60 + self.__minute
+        self.seconds = minutes*60 + self.__second
 
     def sync(self):
         self._normalize_from_seconds()
 
     def __str__(self):
-        return "{:02}:{:02}:{:02}".format(self.hour, self.minute, self.second)
+        return "{:02}:{:02}:{:02}".format(self.__hour, self.__minute, self.__second)
+
+    @property
+    def __hour(self):
+        """The hour property."""
+        return self.___hour
+
+    @__hour.setter
+    def __hour(self, value):
+        self.___hour = value
+
+    @property
+    def __minute(self):
+        """The minute property."""
+        return self.___minute
+
+    @__minute.setter
+    def __minute(self, value):
+        self.___minute = value
+
+    @property
+    def __second(self):
+        """The second property."""
+        return self.___second
+
+    @__second.setter
+    def __second(self, value):
+        self.___second = value
+
+    @property
+    def seconds(self):
+        """The seconds property."""
+        return self._seconds
+
+    @seconds.setter
+    def seconds(self, value):
+        self._seconds = value
+        self.sync()
+
+    @seconds.deleter
+    def seconds(self):
+        del self._seconds
 
     @classmethod
     def from_seconds(cls, seconds):
