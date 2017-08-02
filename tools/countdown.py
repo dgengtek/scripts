@@ -136,7 +136,7 @@ class Countdown:
             and self.__second == cd2.__second
 
 class Counter(threading.Thread):
-    def __init__(self, countdown, *args, **kwargs):
+    def __init__(self, countdown, delay=1, *args, **kwargs):
         threading.Thread.__init__(self, **kwargs)
         self.countdown = countdown
         self.name = "Counter of countdown: {}".format(self.countdown)
@@ -146,6 +146,8 @@ class Counter(threading.Thread):
         self.finished = False
         self.paused = False
         self.pause_condition = threading.Condition(threading.Lock())
+        self.exit_flag = threading.Event()
+        self.__DELAY = delay
 
     def run(self):
         self.running = True
@@ -157,7 +159,8 @@ class Counter(threading.Thread):
                 self.running = False
                 break
             print("\r{}".format(self.countdown), end="", file=sys.stderr)
-            time.sleep(1)
+            self.exit_flag.wait(timeout=self.__DELAY)
+
         print()
 
     def pause(self):
@@ -192,6 +195,7 @@ class Counter(threading.Thread):
     def stop(self):
         self.running = False
         self.finished = True
+        self.exit_flag.set()
         self.join()
 
     def wait(self):
