@@ -1,9 +1,16 @@
 #!/bin/env python3
 """
 Usage:
-    countdown.py [options] [<seconds>]
+    countdown.py [options] [<unit>]
+
+Simple countdown
+
+<unit>  default unit is seconds
 
 Options:
+    -m, --minute  count as minutes
+    -h, --hour  count as hour
+
 """
 
 import sys
@@ -105,18 +112,28 @@ class Countdown:
         return cls.from_minutes(hours*60)
 
     @classmethod
-    def from_stamp(cls, hour, minute, second):
-        cd = cls()
-        cd.hour = hour
-        cd.minute = minute
-        cd.second = second
-        cd._normalize_to_seconds()
-        return cd
+    def from_timestamp(cls, hour, minute, second):
+        minutes = minute + hour*60
+        seconds = second + minutes*60
+        return cls.from_seconds(seconds)
 
-    def __eq__(cd, cd2):
-        return cd.hour == cd2.hour \
-            and cd.minute == cd2.minute \
-            and cd.second == cd2.second
+    @classmethod
+    def from_string(cls, string):
+        """
+        Expecting string in form of HH:MM:SS
+        """
+        timestamp = string.split(":")
+        return cls.from_timestamp(
+                timestamp[0],
+                timestamp[1],
+                timestamp[2],
+                )
+
+
+    def __eq__(self, cd2):
+        return self.__hour == cd2.__hour \
+            and self.__minute == cd2.__minute \
+            and self.__second == cd2.__second
 
 class Counter(threading.Thread):
     def __init__(self, countdown, *args, **kwargs):
@@ -211,23 +228,32 @@ def _get_hours(minutes):
 def main():
     opt = docopt(__doc__, sys.argv[1:])
     #print(opt)
-    seconds = opt.get("<seconds>")
+    unit = opt.get("<unit>")
     counter = None
-    if not seconds:
+    if not unit:
         print(__doc__)
         sys.exit(1)
 
+    countdown_from = Countdown.from_seconds
+    if opt.get("--minute"):
+        countdown_from = Countdown.from_minutes
+    if opt.get("--hour"):
+        countdown_from = Countdown.from_hours
+
+    countdown = countdown_from(int(unit))
+
     try:
-        timer = Countdown.from_seconds(int(seconds))
-        counter = Counter(timer)
+        counter = Counter(countdown)
         counter()
         counter.wait()
     except Exception as e:
         logger.error(e)
         counter.stop()
+        sys.exit(1)
     except KeyboardInterrupt:
         print("\nbye", file=sys.stderr, end="")
         counter.stop()
+        sys.exit(127)
 
 @pytest.mark.parametrize("seconds, expected", [
             (1, (0,0,1)),
@@ -244,7 +270,7 @@ def main():
             ])
 def test_countdown_convert_from_seconds(seconds, expected):
     cd = Countdown.from_seconds(seconds)
-    cdexpected = Countdown.from_stamp(*expected)
+    cdexpected = Countdown.from_timestamp(*expected)
     assert cd == cdexpected
 
 def test_countdown_timer_string():
