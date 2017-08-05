@@ -54,6 +54,7 @@ countdown() {
   local -r time_unit=$1
   local -r description=$2
   shift 2
+  notify-send -t 10000 -u critical "Starting countdown" "$description"
   taskwarrior start "$description" "$@"
   if ! countdown.py -m "$time_unit"; then
     echo "Stopping pomodoro."
@@ -61,7 +62,6 @@ countdown() {
     exit 0
   fi
   mplayer "$BEEP" >/dev/null 2>&1
-  notify-send -t 10000 -u critical "Countdown finished" "$description"
   taskwarrior stop "$description" "$@"
 }
 
