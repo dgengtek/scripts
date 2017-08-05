@@ -1,7 +1,10 @@
 #!/bin/env bash
+
 usage() {
   cat << EOF
 Usage: ${0##*/} [options] [{devices}] img [addoptions]
+
+Simple wrapper around qemu. Aliasing commands for reference and easier access
 
 options:
   -s			  create a snapshot and discard
@@ -199,5 +202,8 @@ open_ports() {
   options+=("$option")
 
 }
+# example commands to maybe integrate
+# terminal on socket with monitor
+# -chardev socket,host=127.0.0.1,port=4556,id=gnc0,server,nowait -device isa-serial,chardev=gnc0 -monitor tcp:127.0.0.1:4555,server,nodelay
 
 main "$@"
