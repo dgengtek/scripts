@@ -75,8 +75,8 @@ run() {
     die "Conflicting branches found: ${production_branches[@]}"
   fi
 
-  local branch_dev=$(get_valid_branch "$development_branches")
-  local branch_prod=$(get_valid_branch "$production_branches")
+  local branch_dev=$(get_valid_branch "${development_branches[@]}")
+  local branch_prod=$(get_valid_branch "${production_branches[@]}")
   [[ -z $branch_dev ]] && die "No development branch found."
   [[ -z $branch_prod ]] && die "No production branch found."
 

@@ -69,7 +69,7 @@ run() {
     die "Conflicting branches found: ${production_branches[@]}"
   fi
 
-  local branch_prod=$(get_valid_branch "$production_branches")
+  local branch_prod=$(get_valid_branch "${production_branches[@]}")
   [[ -z $branch_prod ]] && die "No production branch found."
 
   if check_merge_allowed "$branch_prod"; then
