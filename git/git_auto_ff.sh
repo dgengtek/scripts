@@ -97,7 +97,7 @@ run() {
   msg "Merged to $branch_prod with $branch_dev."
 
   git checkout -q "$branch_active"
-  (($items_stashed)) && git stash pop -q
+  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items."
   popd >/dev/null
 }
 
