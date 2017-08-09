@@ -32,7 +32,7 @@ msg2() { log "  ->" "$@";}
 error_exit() {
   error_code=$1
   shift
-  log "$@"
+  error "$@"
   exit $error_code
 }
 die() { error_exit 1 "$@"; }

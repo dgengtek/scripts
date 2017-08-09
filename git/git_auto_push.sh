@@ -56,10 +56,10 @@ main() {
     set -- "."
   fi
   for path in "$@"; do
-    pushd "$path"
+    pushd "$path" >/dev/null 2>&1 && log "PUSH $path"
     setup
     run
-    popd
+    popd >/dev/null 2>&1
   done
   trap - SIGINT SIGQUIT SIGABRT SIGTERM EXIT
 }
@@ -74,18 +74,18 @@ run() {
 
   if check_merge_allowed "$branch_prod"; then
     {
-    git checkout "$branch_master" && git merge --ff-only "$branch_prod"
+    git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
     } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
     msg "Merged '$branch_prod' to '$branch_master'"
   fi
   for remote in $(git remote); do
     {
-    git pull "$remote_id"
-    git push "$remote"
+    git pull -q "$remote_id"
+    git push -q "$remote"
     } 2>/dev/null || error "Remote push to '$remote' failed."
   done
 
-  git checkout "$branch_active" || git checkout "$dev_branch"
+  git checkout -q "$branch_active" || git checkout "$dev_branch"
 }
 
 

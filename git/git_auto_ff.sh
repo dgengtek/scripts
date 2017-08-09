@@ -58,10 +58,10 @@ main() {
     set -- "."
   fi
   for path in "$@"; do
-    pushd "$path"
+    pushd "$path" >/dev/null 2>&1 && log "FF $path"
     setup
     run
-    popd
+    popd >/dev/null 2>&1
   done
   trap - SIGINT SIGQUIT SIGABRT SIGTERM EXIT
 }
@@ -86,18 +86,18 @@ run() {
   
   if check_merge_allowed "$branch_dev" "$branch_prod"; then
     {
-      git checkout "$branch_dev" && git merge --ff-only "$branch_active"
+      git checkout -q "$branch_dev" && git merge -q --ff-only "$branch_active"
     } 2>/dev/null || die "Merge of $branch_active on $branch_dev failed."
     msg "Merged to $branch_dev with $branch_active."
   fi
 
   {
-    git checkout "$branch_prod" && git merge --ff-only "$branch_dev"
+    git checkout -q "$branch_prod" && git merge -q --ff-only "$branch_dev"
   } 2>/dev/null || die "Merge of $branch_dev on $branch_prod failed."
   msg "Merged to $branch_prod with $branch_dev."
 
-  git checkout "$branch_active"
-  (($items_stashed)) && git stash pop
+  git checkout -q "$branch_active"
+  (($items_stashed)) && git stash pop -q
   popd >/dev/null
 }
 
@@ -105,7 +105,7 @@ stash_items() {
   stashing_required || return 1
 
   if staged_items_existing || untracked_items_existing; then
-    git stash || die "Could not stash items."
+    git stash -q || die "Could not stash items."
     msg2 "Stashing items."
     return 0
   fi
