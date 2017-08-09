@@ -4,7 +4,6 @@ Generate passwords
 Usage:
     genpw.py [options] [<length> [<count>]]
     genpw.py (-h | --help)
-    genpw.py [(-a | -p)]
 
 Options:
     -a, --alpha  Only alphanumeric chars
