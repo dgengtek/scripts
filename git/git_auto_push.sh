@@ -82,7 +82,7 @@ run() {
     {
     git pull -q "$remote_id"
     git push -q "$remote"
-    } 2>/dev/null || error "Remote push to '$remote' failed."
+    } 2>/dev/null || warning "Remote push to '$remote' failed."
   done
 
   git checkout -q "$branch_active" || git checkout "$dev_branch"

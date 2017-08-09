@@ -23,7 +23,10 @@ echo_e() (
 log() { echo "$@" | logger -s -t ${0##*/}; }
 out() { echo "$1 $2" "${@:3}"; }
 
+info() { log "==> INFO:" "$@"; } >&2
 error() { log "==> ERROR:" "$@"; } >&2
+warning() { log "==> WARNING:" "$@"; } >&2
+critical() { log "==> CRITICAL:" "$@"; } >&2
 errorq() { log "$@" 2>/dev/null; }
 
 msg() { log "==>" "$@"; }
