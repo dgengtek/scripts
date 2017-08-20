@@ -14,8 +14,11 @@ main() {
   local -ri work=25
   local -ri break_cycle=4
 
+  trap cleanup SIGHUP SIGKILL SIGINT
+
   pomodoro "$@"
 }
+
 pomodoro() {
   echo "Starting pomodoro."
   local -i counts=0
@@ -74,6 +77,7 @@ print_available_sessions() {
 
 cleanup() {
   trap - SIGHUP SIGKILL SIGINT
+  taskwarrior stop "$description" "$@"
   exit 1
 }
 
