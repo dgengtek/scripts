@@ -4,6 +4,17 @@ get_active_branch() { git branch | awk '/^\*/ {print $2}'; }
 
 get_branches() { git branch | sed 's/^[* ]*//'; }
 
+stash_items() {
+  stashing_required || return 1
+
+  if staged_items_existing || untracked_items_existing; then
+    git stash -q || die "Could not stash items."
+    msg2 "Stashing items."
+    return 0
+  fi
+  return 1
+}
+
 check_branch_existing() {
   local branches=$(get_branches)
   echo "$branches" | grep -x "$branch" > /dev/null 2>&1

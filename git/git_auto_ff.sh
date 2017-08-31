@@ -101,17 +101,6 @@ run() {
   popd >/dev/null
 }
 
-stash_items() {
-  stashing_required || return 1
-
-  if staged_items_existing || untracked_items_existing; then
-    git stash -q || die "Could not stash items."
-    msg2 "Stashing items."
-    return 0
-  fi
-  return 1
-}
-
 check_dependencies() {
   :
 }

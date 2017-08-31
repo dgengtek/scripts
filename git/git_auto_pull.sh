@@ -66,7 +66,6 @@ main() {
 }
 
 run() {
-  set -x
   if ! check_branches_conflict "${production_branches[@]}"; then
     die "Conflicting branches found: ${production_branches[@]}"
   fi
@@ -74,14 +73,14 @@ run() {
   local branch_prod=$(get_valid_branch "${production_branches[@]}")
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  git checkout "$branch_master" || die "Could not checkout $branch_master"
+  git checkout -q "$branch_master" || die "Could not checkout $branch_master"
   for remote in $(git remote); do
     {
     git pull "$remote_id"
     } 2>/dev/null || error "Pull from remote: $remote failed."
   done
 
-  git checkout "$branch_active"
+  git checkout -q "$branch_active"
 }
 
 
