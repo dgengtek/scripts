@@ -33,6 +33,13 @@
 # b1: 0 - unicast, 1 - multicast
 # b2: 0 - globally unique(OUI enforced), 1 - locally administered
 
+# common prefixes
+#    00:16:3E -- Xen
+#    00:18:51 -- OpenVZ
+#    00:50:56 -- VMware (manually generated)
+#    52:54:00 -- QEMU/KVM
+#    AC:DE:48 -- PRIVATE
+
 import sys
 import getopt
 import random
