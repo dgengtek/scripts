@@ -79,7 +79,7 @@ run() {
   fi
   for remote in $(git remote); do
     {
-      if ((${#errors[@]} == 0)); then
+      if ((${#options[@]} == 0)); then
         git push "${options[@]}" -q "$remote"
       else
         git push -q "$remote"
