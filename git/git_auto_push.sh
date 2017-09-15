@@ -10,12 +10,11 @@ declare -r production_branches=(
 "release"
 )
 
-declare -r remote_id="origin"
-declare -r branch_master="master"
+declare branch_master="master"
 
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] <arg1> -- [EXTRA]
+Usage:	${0##*/} [OPTIONS] [<path>] -- [GIT PUSH OPTIONS]
 
 arg1
   mandatory argument passed to script
@@ -25,10 +24,8 @@ OPTIONS:
   -v			  verbose
   -q			  quiet
   -d			  debug
-
-
-EXTRA
-  Additional options passed for other purposes
+  -b <branch>		  branch master to push 
+  -a, --all               push all branches
 EOF
 }
 
@@ -41,6 +38,8 @@ main() {
 
   local -a options=
   local -a args=
+
+  local enable_pull_all=0
 
   check_dependencies
   # parse input args 
@@ -80,9 +79,8 @@ run() {
   fi
   for remote in $(git remote); do
     {
-    git pull -q "$remote_id"
-    git push -q "$remote"
-    } 2>/dev/null || warning "Remote push to '$remote' failed."
+    git push "${options[@]}" -q "$remote"
+    } || warning "Remote push to '$remote' failed."
   done
 
   git checkout -q "$branch_active" || git checkout "$dev_branch"
@@ -160,6 +158,13 @@ parse_options() {
       -d|--debug)
         enable_debug=1
         ;;
+      -b|--branch)
+        branch_master=$2
+        do_shift=2
+        ;;
+      -a|--all)
+        options+=("-a")
+        ;;
       --)
         do_shift=3
         ;;
@@ -177,7 +182,7 @@ parse_options() {
     # got option with argument
     shift
   elif (($do_shift == 3)) ; then
-    # got --, use all arguments left for rsync to process
+    # got --, use all arguments left
     shift
     options+=("$@")
     return

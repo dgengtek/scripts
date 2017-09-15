@@ -4,32 +4,25 @@
 # ------------------------------------------------------------------------------
 # 
 declare branch_active=
-declare -r branch_master="master"
 
 declare -r production_branches=(
 "prod"
 "release"
 )
 
-declare -r remote_id="origin"
-declare -r branch_master="master"
+declare remote_id="origin"
+declare branch_master="master"
 
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] <arg1> -- [EXTRA]
+Usage:	${0##*/} [OPTIONS] [<path>] -- [GIT PUSH OPTIONS]
 
-arg1
-  mandatory argument passed to script
-  
 OPTIONS:
   -h			  help
   -v			  verbose
-  -q			  quiet
-  -d			  debug
-
-
-EXTRA
-  Additional options passed for other purposes
+  -b <branch>		  branch master to pull to
+  -a,--all		  all(TODO)
+  -r <remote id>	  remote id
 EOF
 }
 
@@ -42,6 +35,8 @@ main() {
 
   local -a options=
   local -a args=
+
+  local enable_pull_all=0
 
   check_dependencies
   # parse input args 
@@ -66,19 +61,10 @@ main() {
 }
 
 run() {
-  if ! check_branches_conflict "${production_branches[@]}"; then
-    die "Conflicting branches found: ${production_branches[@]}"
-  fi
-
-  local branch_prod=$(get_valid_branch "${production_branches[@]}")
-  [[ -z $branch_prod ]] && die "No production branch found."
-
   git checkout -q "$branch_master" || die "Could not checkout $branch_master"
-  for remote in $(git remote); do
-    {
-    git pull "$remote_id"
-    } 2>/dev/null || error "Pull from remote: $remote failed."
-  done
+  {
+    git pull -q "${options[@]}" "$remote_id"
+  } || error "Pull from remote: $remote failed."
 
   git checkout -q "$branch_active"
 }
@@ -154,6 +140,17 @@ parse_options() {
         ;;
       -d|--debug)
         enable_debug=1
+        ;;
+      -b|--branch)
+        branch_master=$2
+        do_shift=2
+        ;;
+      -r|--remote)
+        remote_id=$2
+        do_shift=2
+        ;;
+      -a|--all)
+        options+=("-a")
         ;;
       --)
         do_shift=3
