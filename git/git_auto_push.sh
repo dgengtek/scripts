@@ -79,7 +79,7 @@ run() {
   fi
   for remote in $(git remote); do
     {
-    git push "${options[@]}" -q "$remote"
+    git push "${options[@]}" -q "$remote" "$branch_master"
     } || warning "Remote push to '$remote' failed."
   done
 
