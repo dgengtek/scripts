@@ -63,7 +63,11 @@ main() {
 run() {
   git checkout -q "$branch_master" || die "Could not checkout $branch_master"
   {
-    git pull -q "${options[@]}" "$remote_id"
+    if ((${#errors[@]} == 0)); then
+      git pull -q "${options[@]}" "$remote_id"
+    else
+      git pull -q "$remote_id"
+    fi
   } || error "Pull from remote: $remote failed."
 
   git checkout -q "$branch_active"
