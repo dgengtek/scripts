@@ -77,7 +77,7 @@ print_available_sessions() {
 
 cleanup() {
   trap - SIGHUP SIGKILL SIGINT
-  taskwarrior stop "$description" "$@"
+  timew stop
   exit 1
 }
 
