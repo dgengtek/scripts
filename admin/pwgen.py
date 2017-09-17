@@ -7,6 +7,7 @@ Usage:
 
 Options:
     -a, --alpha  Only alphanumeric chars
+    -f, --filter <characters>  Filter string of characters
     -p, --printable  Only printable chars
     -h, --help  Show this screen and exit.
 """
@@ -27,6 +28,8 @@ def main():
     opt = docopt(__doc__, sys.argv[1:], options_first=True)
     length = opt.get("<length>")
     count = opt.get("<count>")
+    character_filter = opt.get("--filter")
+
     length = int(length) if length else 8
     count = int(count) if count else 30
 
@@ -35,6 +38,10 @@ def main():
         string = string_alpha
     if opt.get("--printable"):
         string = string_printable
+    if not character_filter:
+        character_filter = ""
+    for character in character_filter:
+        string = string.replace(character, "")
 
     for i in range(1, count+1):
         print(generate_password(string, length), end="\t")
