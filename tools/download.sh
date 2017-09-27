@@ -16,7 +16,6 @@ main() {
   local -i enable_quiet=0
   local -i enable_debug=0
 
-
   trap cleanup SIGINT SIGTERM
   prepare
 
@@ -35,7 +34,7 @@ main() {
   local -i success_count=0
   local -i failures_count=0
   #local downloader="curl -sS -O -J -L"
-  local downloader="http --download --follow --body"
+  local downloader="http --ignore-stdin --download --follow --body"
 
   setup
   run "$@"
@@ -89,7 +88,6 @@ EOF
 
   if [[ -n $PS1 ]] && prompt_me.sh "Do you want to repeat with failed links?"; then
     run "${failed_items[@]}"
-    break
   fi
 }
 
@@ -142,11 +140,10 @@ parse_options() {
 }
 
 get_uri_filename() {
-  local result=$(http --header --follow "$1" \
+  http --ignore-stdin --header --follow "$1" \
     | awk -F';' '/filename/ {print $2;}' \
     | cut -d '=' -f 2 \
-    | sed -e 's/^"//' -e 's/".*$//')
-  echo "$result"
+    | sed -e 's/^"//' -e 's/".*$//'
 }
 
 check_duplicate_file() {
@@ -179,7 +176,7 @@ process() {
 
 process_file() {
   local -r file=$1
-  while read -r -d $'\n' line; do
+  while read -r line; do
     process "$line"
   done < "$file"
 }
