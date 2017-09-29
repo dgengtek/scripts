@@ -86,7 +86,7 @@ EOF
     return 0
   fi
 
-  if [[ -n $PS1 ]] && prompt_me.sh "Do you want to repeat with failed links?"; then
+  if prompt_me.sh "Do you want to repeat with failed links?"; then
     run "${failed_items[@]}"
   fi
 }
