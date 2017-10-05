@@ -3,12 +3,14 @@
 Generate passwords
 Usage:
     genpw.py [options] [<length> [<count>]]
+    genpw.py [(-a|-p|-l)] [<length> [<count>]]
     genpw.py (-h | --help)
 
 Options:
-    -a, --alpha  Only alphanumeric chars
-    -f, --filter <characters>  Filter string of characters
-    -p, --printable  Only printable chars
+    -a, --alnum  Only alphanumeric chars
+    -f, --filter <characters>  Filter character_pool of characters
+    -p, --pin  Only pin
+    -l, --letters  Only alpha characters
     -h, --help  Show this screen and exit.
 """
 
@@ -16,11 +18,10 @@ import sys
 from docopt import docopt
 import random
 
-string_all = "".join([ chr(x+32) for x in range(94) ])
-string_printable = "".join([ chr(x+97) for x in range(26) ])
-string_printable += "".join([ chr(x+65) for x in range(26) ])
-string_alpha = "{}{}".format(string_printable, 
-        "".join([ chr(x+48) for x in range(10) ]))
+set_all = { chr(x+32) for x in range(94) }
+set_alpha = { chr(x+97) for x in range(26) }
+set_alpha = set_alpha.union({ chr(x+65) for x in range(26) })
+set_pin = { chr(x+48) for x in range(10) }
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
@@ -33,23 +34,27 @@ def main():
     length = int(length) if length else 8
     count = int(count) if count else 30
 
-    string = string_all
-    if opt.get("--alpha"):
-        string = string_alpha
-    if opt.get("--printable"):
-        string = string_printable
+    character_pool = set_all
+    if opt.get("--alnum"):
+        character_pool = set_alpha.union(set_pin)
+    if opt.get("--letters"):
+        character_pool = set_alpha
+    if opt.get("--pin"):
+        character_pool = set_pin
     if not character_filter:
-        character_filter = ""
-    for character in character_filter:
-        string = string.replace(character, "")
+        character_filter = set()
+    else:
+        character_filter = set(character_filter)
+    character_pool = character_pool.difference(character_filter)
+    character_pool = "".join(character_pool)
 
     for i in range(1, count+1):
-        print(generate_password(string, length), end="\t")
+        print(generate_password(character_pool, length), end="\t")
         if i % 3 == 0:
             print("\n")
 
-def generate_password(string, size):
-    return "".join([ random.choice(string) for x in range(size) ])
+def generate_password(pool, size):
+    return "".join([ random.choice(pool) for x in range(size) ])
 
 if __name__ == "__main__":
     main()
