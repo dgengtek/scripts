@@ -29,7 +29,7 @@ main() {
   local -i print_process=0
 
   # mail recipient
-  local recipient="admin+linux"
+  local recipient="notification"
   local sender="runsh+script"
   local logfile="/dev/null"
   local -a commands=
@@ -46,7 +46,7 @@ main() {
   trap cleanup EXIT
 
   if (($enable_logging)) || (($enable_mail)); then
-    logfile=$(mktemp -u shellrunXXXXXX.log)
+    logfile=$(mktemp -u /tmp/runXXXXXX.log)
     echo -e "$@\n" > "$logfile"
   fi
 
@@ -77,7 +77,7 @@ main() {
 run_commands() {
   time $@
 
-  local -r subject="$?[$USER@$HOSTNAME]$ run.sh $@"
+  local -r subject="$?[$USER@$HOSTNAME]$ run.sh"
   local -r message=$@
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
