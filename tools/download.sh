@@ -7,6 +7,7 @@ OPTIONS:
   -v
   -d
   -q
+  -t timeout
 EOF
 }
 main() {
@@ -15,6 +16,8 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
+
+  local timeout=30
 
   trap cleanup SIGINT SIGTERM
   prepare
@@ -34,7 +37,7 @@ main() {
   local -i success_count=0
   local -i failures_count=0
   #local downloader="curl -sS -O -J -L"
-  local downloader="http --ignore-stdin --download --follow --body"
+  local downloader="http --timeout $timeout --ignore-stdin --download --follow --body"
 
   setup
   run "$@"
@@ -84,11 +87,13 @@ EOF
 
   if ! (($failures_count)); then
     return 0
+  else
+    return 1
   fi
 
-  if prompt_me.sh "Do you want to repeat with failed links?"; then
-    run "${failed_items[@]}"
-  fi
+  #if prompt_me.sh "Do you want to repeat with failed links?"; then
+  #  run "${failed_items[@]}"
+  #fi
 }
 
 parse_options() {
@@ -112,6 +117,10 @@ parse_options() {
         ;;
       -d|--debug)
         enable_debug=1
+        ;;
+      -t|--timeout)
+        timeout=$2
+        do_shift=2
         ;;
       --)
         do_shift=3
@@ -140,7 +149,7 @@ parse_options() {
 }
 
 get_uri_filename() {
-  http --ignore-stdin --header --follow "$1" \
+  http --timeout "$timeout" --ignore-stdin --header --follow "$1" \
     | awk -F';' '/filename/ {print $2;}' \
     | cut -d '=' -f 2 \
     | sed -e 's/^"//' -e 's/".*$//'
