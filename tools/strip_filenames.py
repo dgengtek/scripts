@@ -10,6 +10,7 @@ Options:
     -l, --lowercase  Only lowercase
     -a, --all  Include hidden files
     -h, --help  Show this screen and exit.
+    -v, --verbose  be verbose
 """
 
 import sys
@@ -20,41 +21,58 @@ from docopt import docopt
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
-    directory = opt.get("filename", os.listdir())
-    legal_characters = ""
-    list_N010 = [ str(x) for x in range(10) ]
-    list_alpha = [ chr(x+97) for x in range(26) ]
-    list_ALPHA = [ chr(x+65) for x in range(26) ]
+    enable_verbose = opt.get("--verbose")
 
-    legal_characters += "".join(list_N010)
-    legal_characters += "".join(list_alpha)
-    legal_characters += ".-_~"
+    directory = opt.get("filename", os.listdir())
+    legal_characters = set()
+    set_N010 = { str(x) for x in range(10) }
+    set_alpha = { chr(x+97) for x in range(26) }
+    set_ALPHA = { chr(x+65) for x in range(26) }
+    set_etc = ".-_~"
+    charmap = {
+            " ": "_",
+            "ä": "ae",
+            "ö": "oe",
+            "ü": "ue",
+            "Ä": "Ae",
+            "Ö": "Oe",
+            "Ü": "Ue",
+            }
+
+    legal_characters = legal_characters.union(set_N010)
+    legal_characters = legal_characters.union(set_alpha)
+    legal_characters = legal_characters.union(set_etc)
 
     if not opt.get("--lowercase", False):
-        legal_characters += "".join(list_ALPHA)
+        legal_characters = legal_characters.union(set_ALPHA)
 
-
-    consecutive_char = ""
     for a in range(len(directory)):
         newname = ""
+        previous_char = directory[a][0]
         for c in directory[a]:
-            if consecutive_char and c == consecutive_char:
-                continue
-            else:
-                consecutive_char = c
+            mapped_char = charmap.get(c, "")
 
-            if c == " ":
-                newname += "_"
+            # check if previous character matches current character
+            if previous_char == mapped_char \
+                    or (c == previous_char and c in set_etc):
+                continue
+
+            if mapped_char:
+                newname += mapped_char
+                previous_char = mapped_char
             elif c in legal_characters:
                 newname += c
-
+                previous_char = c
             else:
                 continue
-        print("convert {} to {}".format(directory[a],newname))
+
+        # check for illegal characters in first char
+        if newname[0] in set_etc:
+            newname = newname[1:]
+
+        if enable_verbose:
+            print("convert {} to {}".format(directory[a],newname))
         os.rename(directory[a], newname)
-
-def is_consecutive_char(char_consec, char):
-
 
 if __name__ == "__main__":
     main()
