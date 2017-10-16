@@ -3,8 +3,8 @@
 Use only legal characters from files or current directory
 
 Usage:
-    strip_filenames.py [-a]
     strip_filenames.py [options] [<filename> ...]
+    strip_filenames.py [-a]
 
 Options:
     -l, --lowercase  Only lowercase
