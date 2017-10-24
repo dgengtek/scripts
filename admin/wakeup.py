@@ -32,7 +32,7 @@ def main():
 
 
     hostname, hwadress = menu[user_choice]
-    subprocess.run(["wol", hwadress])
+    subprocess.run(["wol", "-p", "9", hwadress])
 
             
 def display_menu(menu):
