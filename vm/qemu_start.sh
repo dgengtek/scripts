@@ -120,7 +120,7 @@ main() {
   shift 1
 
   if (($enable_graphic)); then
-    options+=("-vga virtio")
+    options+=("-vga qxl")
   else
     options+=("-nographic")
   fi
