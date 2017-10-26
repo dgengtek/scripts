@@ -15,6 +15,7 @@ import os
 # TODO  verbose output:
 #           - progress of command with status=progress 
 #           - no redirection of command output 
+# TODO  add to output maximum and minimum recorded values
 
 modes={
         "read":[
@@ -71,6 +72,8 @@ def parse_args():
     summary="""
     Benchmark IO 
 
+    default config uses a blocksize of 1M * 1024 = 1GB with 10 rounds
+
     """
     argparser = argparse.ArgumentParser(description=summary)
 
@@ -78,8 +81,8 @@ def parse_args():
     argparser.add_argument("-r","--rounds",type=int, default=10)
     argparser.add_argument("-s","--source",default="/dev/zero", 
             help="Data source for benchmark")
-    argparser.add_argument("-c","--count",type=int, default=4096,
-            help="count of blocksizes(default: 4096)")
+    argparser.add_argument("-c","--count",type=int, default=1024,
+            help="count of blocksizes(default: 1024)")
     argparser.add_argument("-b","--blocksize", default="1M",
             help="blocksize in bytes with additional size as B,K,M,G,T(default: 1M)")
 
