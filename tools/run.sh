@@ -42,7 +42,7 @@ main() {
     error_exit 1 "No commands."
   fi
 
-  trap handle_signal SIGINT SIGTERM 
+  trap signal_handler SIGINT SIGTERM 
   trap cleanup EXIT
 
   if (($enable_logging)) || (($enable_mail)); then
@@ -85,7 +85,7 @@ run_commands() {
   fi
 
   if (($enable_mail)); then
-    cat | sendmail -f "$sender" "$recipient" << EOF_HEADER
+    sendmail -f "$sender" "$recipient" << EOF_HEADER
 From: $sender
 To: $recipient
 
@@ -159,7 +159,7 @@ cleanup() {
   [[ -f $logfile ]] && rm "$logfile"
 }
 
-handle_signal() {
+signal_handler() {
   trap - SIGINT SIGTERM
   cleanup
   kill $$
