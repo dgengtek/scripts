@@ -24,7 +24,7 @@ OPTIONS:
   -v			  verbose
   -q			  quiet
   -d			  debug
-  -b <branch>		  branch master to push 
+  -b <branch>		  branch to push to(development branch)
   -a, --all               push all branches
 EOF
 }
@@ -71,11 +71,11 @@ run() {
   local branch_prod=$(get_valid_branch "${production_branches[@]}")
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  if check_merge_allowed "$branch_prod"; then
+  if check_merge_allowed "$dev_branch"; then
     {
-    git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
-    } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
-    msg "Merged '$branch_prod' to '$branch_master'"
+    git checkout -q "$dev_branch" && git merge -q --ff-only "$branch_active"
+    } 2>/dev/null || die "Merge of '$branch_active' on $dev_branch failed."
+    msg "Merged '$branch_active' to '$dev_branch'"
   fi
   for remote in $(git remote); do
     {
@@ -163,7 +163,7 @@ parse_options() {
         enable_debug=1
         ;;
       -b|--branch)
-        branch_master=$2
+        dev_branch=$2
         do_shift=2
         ;;
       -a|--all)
