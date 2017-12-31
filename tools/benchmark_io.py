@@ -167,8 +167,9 @@ def benchmark_factory(mode, source, destination, blocksize, count, **kwargs):
         preparation_functions.append(clear_disk_cache)
         source = destination
         destination = "/dev/zero"
+        cmd.append("iflag=direct")
     elif mode in modes.get("write"):
-        cmd.append("conv=fdatasync,notrunc")
+        cmd.append("oflag=direct")
         pass
     elif mode in modes.get("response"):
         pass
