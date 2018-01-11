@@ -198,7 +198,8 @@ sigh_cleanup() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
   mplayer "$BEEP" >/dev/null 2>&1
   timew stop
-  kill -SIGINT $(jobs -p)
+  local active_jobs=$(jobs -p)
+  [[ -n $active_jobs ]] && kill -SIGINT $active_jobs
   exit 0
 }
 

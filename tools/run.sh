@@ -162,7 +162,8 @@ cleanup() {
 signal_handler() {
   trap - SIGINT SIGTERM
   cleanup
-  kill $$
+  local active_jobs=$(jobs -p)
+  [[ -n $active_jobs ]] && kill -SIGINT $active_jobs
   error_exit 1 "Signal received: stopping backup" 
 }
 
