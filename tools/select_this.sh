@@ -30,7 +30,7 @@ Usage: $FUNCNAME <path>
 EOF
     return
   fi
-  input=$(find $1 -type f)
+  input=$(find -L $1 -type f)
   local -r OLDPS3=$PS3
   PS3="Your selection > "
   select selection in $input; do
