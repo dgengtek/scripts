@@ -199,7 +199,11 @@ sigh_cleanup() {
   mplayer "$BEEP" >/dev/null 2>&1
   timew stop
   local active_jobs=$(jobs -p)
-  [[ -n $active_jobs ]] && kill -SIGINT $active_jobs
+  for p in $active_jobs; do
+    if ps -p $p >/dev/null 2>&1; then
+      kill -SIGINT $p >/dev/null 2>&1
+    fi
+  done
   exit 0
 }
 
