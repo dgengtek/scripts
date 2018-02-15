@@ -11,14 +11,18 @@ Usage:	${0##*/} [OPTIONS] <command>
 ${0##*/} [OPTIONS] add <directory>
 ${0##*/} [OPTIONS] del <directory>
 ${0##*/} [OPTIONS] cat
-${0##*/} [OPTIONS] ls
+${0##*/} [OPTIONS] check
 ${0##*/} [OPTIONS] clear
+${0##*/} [OPTIONS] ls
+${0##*/} [OPTIONS] rm
 
 add  add a bookmarked path
 del  delete bookmarked path
 cat  display file content
+check  print invalid directories in bookmarks file
+clear  clear any invalid directories in bookmarks file
 ls  list file path of bookmarks
-clear | rm  remove database file
+rm  remove database file
 
 OPTIONS:
   -h			  help
@@ -33,6 +37,7 @@ main() {
   local PATH_BOOKMARKS=${PATH_BOOKMARKS:-"${HOME}/.local/share/"}
   local TMP=${TMP:-"/tmp/"}
   local -r FSBOOKMARKS="${PATH_BOOKMARKS}fsbookmarks.db.txt"
+  local -r tmp_bookmarks="$(mktemp --dry-run $TMP/fsbookmarks.XXXXXXXXtmp.db.txt)"
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
@@ -68,9 +73,7 @@ run() {
   if (($rc == 127)); then
     error_exit 127 "Subcommand '$subcommand' is invalid."
   fi
-
 }
-
 
 check_dependencies() {
   :
@@ -220,6 +223,7 @@ sigh_usr2() {
 
 sigh_cleanup() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
+  rm -f "$tmp_bookmarks"
   local active_jobs=$(jobs -p)
   for p in $active_jobs; do
     if ps -p $p >/dev/null 2>&1; then
@@ -249,9 +253,21 @@ cmd_add() {
   info "a'$input'"
   echo "$input" >> "$FSBOOKMARKS"
 }
-cmd_clear() {
-  rm -i "$FSBOOKMARKS"
+
+cmd_check() {
+  cat "$FSBOOKMARKS" | xargs -I {} sh -c "if ! test -d {}; then echo '{}';fi"
 }
+
+cmd_clear() {
+  while read line; do
+    if [[ -d $line ]]; then
+      info "d:'$line'"
+      echo "$line" >> "$tmp_bookmarks"
+    fi
+  done < "$FSBOOKMARKS"
+  mv "$tmp_bookmarks" "$FSBOOKMARKS"
+}
+
 cmd_del() {
   if read -t 0; then
     input=$(cat)
@@ -269,12 +285,15 @@ cmd_del() {
   info "d:$line_number:'$input'"
   sed -i "$line_number d" "$FSBOOKMARKS"
 }
+
 cmd_cat() {
   cat "$FSBOOKMARKS"
 }
+
 cmd_rm() {
-  cmd_clear
+  rm -i "$FSBOOKMARKS"
 }
+
 cmd_ls() {
   ls "$FSBOOKMARKS"
 }
