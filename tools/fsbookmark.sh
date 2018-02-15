@@ -243,10 +243,10 @@ cmd_add() {
     error_exit 1 "Input is either not a directory or does not exist. Input: '$input'"
   fi
   info "input: $input"
-  if grep -n -F "$input" "$FSBOOKMARKS"; then
+  if grep -n -F -x "$input" "$FSBOOKMARKS"; then
     error_exit 1 "The path '$input' has already been added."
   fi
-  info "a'$INPUT'"
+  info "a'$input'"
   echo "$input" >> "$FSBOOKMARKS"
 }
 cmd_clear() {
@@ -260,7 +260,7 @@ cmd_del() {
   fi
   info "input: $input"
   local line_number=
-  if ! line_number=$(grep -n "$input" "$FSBOOKMARKS" | awk -F: '{print $1}'); then
+  if ! line_number=$(grep -n -F -x "$input" "$FSBOOKMARKS" | awk -F: '{print $1}'); then
     info "Input not found in booksmarks."
   fi
   if (($(echo "$line_number" | wc -l) > 1)); then
