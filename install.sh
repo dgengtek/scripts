@@ -39,6 +39,12 @@ main() {
   trap - SIGINT SIGTERM EXIT
 }
 
+check_dependencies() {
+  if ! hash stow 2>&1 | logger -t install -p user.info; then
+    error "'stow' is required for installation."
+  fi
+}
+
 cleanup() {
   trap - SIGINT SIGTERM EXIT
   pushd "$HOME"
