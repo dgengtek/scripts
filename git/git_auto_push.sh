@@ -4,7 +4,10 @@
 # ------------------------------------------------------------------------------
 # 
 declare branch_active=
-declare -r dev_branch="dev"
+declare development_branches=(
+"dev"
+"development"
+)
 declare -r production_branches=(
 "prod"
 "release"
@@ -24,7 +27,8 @@ OPTIONS:
   -v			  verbose
   -q			  quiet
   -d			  debug
-  -b <branch>		  branch to push to(development branch)
+  -b, --branch <branch>	  branch to merge to master instead of ${production_branches[@]}
+  -m, --master <branch>   branch to be pushed from to remote branches
   -a, --all               push all branches
 EOF
 }
@@ -64,30 +68,36 @@ main() {
 }
 
 run() {
+  if ! check_branches_conflict "${development_branches[@]}"; then
+    die "Conflicting branches found: ${development_branches[@]}"
+  fi
   if ! check_branches_conflict "${production_branches[@]}"; then
     die "Conflicting branches found: ${production_branches[@]}"
   fi
 
+  local branch_dev=$(get_valid_branch "${development_branches[@]}")
   local branch_prod=$(get_valid_branch "${production_branches[@]}")
+  [[ -z $branch_dev ]] && die "No development branch found."
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  if check_merge_allowed "$dev_branch"; then
-    {
-    git checkout -q "$dev_branch" && git merge -q --ff-only "$branch_active"
-    } 2>/dev/null || die "Merge of '$branch_active' on $dev_branch failed."
-    msg "Merged '$branch_active' to '$dev_branch'"
+  if ! check_merge_allowed "$branch_prod"; then
+    die "Branch prod:$branch_prod is not allowed to be merged."
   fi
+  {
+  git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
+  } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
+  msg "Merged '$branch_prod' to '$branch_master'"
   for remote in $(git remote); do
     {
       if ((${#options[@]} == 0)); then
-        git push "${options[@]}" -q "$remote"
-      else
         git push -q "$remote"
+      else
+        git push "${options[@]}" -q "$remote"
       fi
     } || warning "Remote push to '$remote' failed."
   done
 
-  git checkout -q "$branch_active" || git checkout "$dev_branch"
+  git checkout -q "$branch_active" || git checkout "$branch_dev"
 }
 
 
@@ -163,7 +173,11 @@ parse_options() {
         enable_debug=1
         ;;
       -b|--branch)
-        dev_branch=$2
+        development_branches=$2
+        do_shift=2
+        ;;
+      -m|--master)
+        branch_master=$2
         do_shift=2
         ;;
       -a|--all)

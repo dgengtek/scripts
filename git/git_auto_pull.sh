@@ -52,25 +52,28 @@ main() {
     set -- "."
   fi
   for path in "$@"; do
-    pushd "$path"
+    pushd "$path" >/dev/null 2>&1 && log "PUSH $path"
     setup
     run
-    popd
+    popd >/dev/null 2>&1
   done
   trap - SIGINT SIGQUIT SIGABRT SIGTERM EXIT
 }
 
 run() {
+  local -i items_stashed=0
+  stash_items && let items_stashed=1
   git checkout -q "$branch_master" || die "Could not checkout $branch_master"
   {
     if ((${#options[@]} == 0)); then
-      git pull -q "${options[@]}" "$remote_id"
-    else
       git pull -q "$remote_id"
+    else
+      git pull -q "${options[@]}" "$remote_id"
     fi
   } || error "Pull from remote: $remote failed."
 
   git checkout -q "$branch_active"
+  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items."
 }
 
 
