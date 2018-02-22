@@ -91,7 +91,7 @@ run() {
       if ((${#options[@]} == 0)); then
         git push -q "$remote"
       else
-        git push "${options[@]}" -q "$remote"
+        git push -q ${options[@]} "$remote"
       fi
     } || warning "Remote push to '$remote' failed."
   done
