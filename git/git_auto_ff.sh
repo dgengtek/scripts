@@ -84,18 +84,19 @@ run() {
   local -i items_stashed=0
   stash_items && let items_stashed=1
   
-  if ! check_merge_allowed "$branch_dev" "$branch_prod"; then
-    die "Branches dev:$branch_dev and prod:$branch_prod are not allowed to be merged."
-  fi
+  if check_merge_allowed "$branch_dev"; then
   {
     git checkout -q "$branch_dev" && git merge -q --ff-only "$branch_active"
   } 2>/dev/null || die "Merge of $branch_active on $branch_dev failed."
   msg "Merged to $branch_dev with $branch_active."
+  fi
 
+  if check_merge_allowed "$branch_prod"; then
   {
     git checkout -q "$branch_prod" && git merge -q --ff-only "$branch_dev"
   } 2>/dev/null || die "Merge of $branch_dev on $branch_prod failed."
   msg "Merged to $branch_prod with $branch_dev."
+  fi
 
   git checkout -q "$branch_active"
   (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items."

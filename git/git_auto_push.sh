@@ -80,13 +80,12 @@ run() {
   [[ -z $branch_dev ]] && die "No development branch found."
   [[ -z $branch_prod ]] && die "No production branch found."
 
-  if ! check_merge_allowed "$branch_prod"; then
-    die "Branch prod:$branch_prod is not allowed to be merged."
-  fi
+  if check_merge_allowed "$branch_prod"; then
   {
   git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
   } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
   msg "Merged '$branch_prod' to '$branch_master'"
+  fi
   for remote in $(git remote); do
     {
       if ((${#options[@]} == 0)); then
