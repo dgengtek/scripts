@@ -84,12 +84,13 @@ run() {
   local -i items_stashed=0
   stash_items && let items_stashed=1
   
-  if check_merge_allowed "$branch_dev" "$branch_prod"; then
-    {
-      git checkout -q "$branch_dev" && git merge -q --ff-only "$branch_active"
-    } 2>/dev/null || die "Merge of $branch_active on $branch_dev failed."
-    msg "Merged to $branch_dev with $branch_active."
+  if ! check_merge_allowed "$branch_dev" "$branch_prod"; then
+    die "Branches dev:$branch_dev and prod:$branch_prod are not allowed to be merged."
   fi
+  {
+    git checkout -q "$branch_dev" && git merge -q --ff-only "$branch_active"
+  } 2>/dev/null || die "Merge of $branch_active on $branch_dev failed."
+  msg "Merged to $branch_dev with $branch_active."
 
   {
     git checkout -q "$branch_prod" && git merge -q --ff-only "$branch_dev"
