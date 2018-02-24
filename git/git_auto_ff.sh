@@ -58,8 +58,11 @@ main() {
     set -- "."
   fi
   for path in "$@"; do
-    pushd "$path" >/dev/null 2>&1 && log "FF $path"
-    setup
+    if ! pushd "$path" >/dev/null 2>&1; then
+      error "PUSH: $path"
+      continue
+    fi
+    setup || continue
     run
     popd >/dev/null 2>&1
   done
@@ -144,7 +147,10 @@ set_descriptors() {
 }
 
 setup() {
-  branch_active=$(get_active_branch)
+  if ! branch_active=$(get_active_branch); then
+    error "$PWD is not a git directory."
+    return 1
+  fi
   trap "cleanup $branch_active" SIGINT SIGQUIT SIGABRT SIGTERM EXIT
   set_descriptors
 }
