@@ -112,13 +112,13 @@ source_libs() {
 
 set_descriptors() {
   if (($enable_verbose)); then
-    exec {fdverbose}>&1
+    exec {fdverbose}>&2
   else
     exec {fdverbose}>/dev/null
   fi
   if (($enable_debug)); then
     set -xv
-    exec {fddebug}>&1
+    exec {fddebug}>&2
   else
     exec {fddebug}>/dev/null
   fi
@@ -237,6 +237,7 @@ sigh_cleanup() {
 # custom functions
 #-------------------------------------------------------------------------------
 cmd_add() {
+  local input=
   if read -t 0; then
     input=$(cat)
   else
@@ -246,11 +247,11 @@ cmd_add() {
   if ! { input=$(realpath "$input") && [[ -d "$input" ]]; }; then
     error_exit 1 "Input is either not a directory or does not exist. Input: '$input'"
   fi
-  info "input: $input"
-  if grep -n -F -x "$input" "$FSBOOKMARKS"; then
+  info "input: $input" 2>&$fdverbose
+  if grep -q -n -F -x "$input" "$FSBOOKMARKS"; then
     error_exit 1 "The path '$input' has already been added."
   fi
-  info "a'$input'"
+  info "a'$input'" 2>&$fdverbose
   echo "$input" >> "$FSBOOKMARKS"
 }
 
@@ -259,9 +260,10 @@ cmd_check() {
 }
 
 cmd_clear() {
+  local line=
   while read line; do
     if [[ -d $line ]]; then
-      info "d:'$line'"
+      info "d:'$line'" 2>&$fdverbose
       echo "$line" >> "$tmp_bookmarks"
     fi
   done < "$FSBOOKMARKS"
@@ -269,20 +271,24 @@ cmd_clear() {
 }
 
 cmd_del() {
+  local input=
   if read -t 0; then
     input=$(cat)
   else
     input="$@"
   fi
-  info "input: $input"
+  [[ -z "$input" ]] && error_exit 1 "No input."
+  input=$(realpath "$input")
+  info "input: $input" 2>&$fdverbose
   local line_number=
-  if ! line_number=$(grep -n -F -x "$input" "$FSBOOKMARKS" | awk -F: '{print $1}'); then
-    info "Input not found in booksmarks."
+  if ! line_number=$(grep -n -F -x "$input" "$FSBOOKMARKS"); then
+    error_exit 1 "Input not found in bookmarks."
   fi
   if (($(echo "$line_number" | wc -l) > 1)); then
     error_exit 1 "Query unspecific. Too many results"
   fi
-  info "d:$line_number:'$input'"
+  line_number=$(echo "$line_number" | awk -F: '{print $1}')
+  info "d:$line_number:'$input'" 2>&$fdverbose
   sed -i "$line_number d" "$FSBOOKMARKS"
 }
 
