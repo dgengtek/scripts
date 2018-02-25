@@ -53,6 +53,7 @@ main() {
   unset -v args
   check_input_args "$@"
 
+  prepare
   prepare_env
   if [[ -z $1 ]]; then
     set -- "."
