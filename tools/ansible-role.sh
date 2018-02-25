@@ -82,14 +82,14 @@ prepare_env() {
 }
 
 prepare() {
-  #export MYLIBS="$HOME/.local/lib/"
+  #export PATH_USER_LIB="$HOME/.local/lib/"
   source_libs
   set_descriptors
 }
 
 source_libs() {
-  source "${MYLIBS}libutils.sh"
-  source "${MYLIBS}libcolors.sh"
+  source "${PATH_USER_LIB}libutils.sh"
+  source "${PATH_USER_LIB}libcolors.sh"
 }
 
 set_descriptors() {

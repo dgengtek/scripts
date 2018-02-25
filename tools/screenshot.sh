@@ -49,8 +49,8 @@ check_input_args() {
 }
 
 prepare() {
-  export MYLIBS="$HOME/.local/lib/"
-  [[ -f ${MYLIBS}libutils.sh ]] && source "${MYLIBS}libutils.sh"
+  export PATH_USER_LIB="$HOME/.local/lib/"
+  [[ -f ${PATH_USER_LIB}libutils.sh ]] && source "${PATH_USER_LIB}libutils.sh"
 }
 
 setup() {

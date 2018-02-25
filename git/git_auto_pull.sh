@@ -102,9 +102,9 @@ prepare() {
 }
 
 source_libs() {
-  source "${MYLIBS}libutils.sh"
-  source "${MYLIBS}libcolors.sh"
-  source "${MYLIBS}libgit.sh"
+  source "${PATH_USER_LIB}libutils.sh"
+  source "${PATH_USER_LIB}libcolors.sh"
+  source "${PATH_USER_LIB}libgit.sh"
 }
 
 set_descriptors() {

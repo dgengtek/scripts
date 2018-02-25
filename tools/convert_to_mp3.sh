@@ -43,7 +43,7 @@ main() {
   done
   shift $((OPTIND - 1))
 
-  source ${MYLIBS}libcolors.sh
+  source ${PATH_USER_LIB}libcolors.sh
 
   local target="."
   local destination="mp3"

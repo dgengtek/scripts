@@ -64,9 +64,9 @@ mkdir() {
 }
 
 export PATH="$PATH:$HOME/.local/bin/:$HOME/.bin/"
-export MYLIBS="$HOME/.local/lib/"
+export PATH_USER_LIB="$HOME/.local/lib/"
 
-source ./lib/libutils.sh || source "${MYLIBS}libutils.sh"
+source ./lib/libutils.sh || source "${PATH_USER_LIB}libutils.sh"
 if [[ $(type -t error) != "function" ]]; then
 echo() ( 
   IFS=" " 

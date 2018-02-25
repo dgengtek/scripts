@@ -96,7 +96,7 @@ prepare_env() {
 }
 
 prepare() {
-  export MYLIBS=${MYLIBS:-"$HOME/.local/lib/"}
+  export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
 
   set -e
   source_libs
@@ -106,8 +106,8 @@ prepare() {
 }
 
 source_libs() {
-  source "${MYLIBS}libutils.sh"
-  source "${MYLIBS}libcolors.sh"
+  source "${PATH_USER_LIB}libutils.sh"
+  source "${PATH_USER_LIB}libcolors.sh"
 }
 
 set_descriptors() {

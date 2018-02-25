@@ -56,8 +56,8 @@ check_input_args() {
 
 prepare() {
   set -e
-  source "${MYLIBS}libutils.sh"
-  source "${MYLIBS}libcolors.sh"
+  source "${PATH_USER_LIB}libutils.sh"
+  source "${PATH_USER_LIB}libcolors.sh"
   set +e
 }
 
