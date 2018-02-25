@@ -109,13 +109,13 @@ source_libs() {
 
 set_descriptors() {
   if (($enable_verbose)); then
-    exec {fdverbose}>&1
+    exec {fdverbose}>&2
   else
     exec {fdverbose}>/dev/null
   fi
   if (($enable_debug)); then
     set -xv
-    exec {fddebug}>&1
+    exec {fddebug}>&2
   else
     exec {fddebug}>/dev/null
   fi

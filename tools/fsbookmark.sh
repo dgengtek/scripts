@@ -279,7 +279,7 @@ cmd_del() {
   fi
   [[ -z "$input" ]] && error_exit 1 "No input."
   input=$(realpath "$input")
-  info "input: $input" 2>&$fdverbose
+  info "input: $input"  2>&$fdverbose
   local line_number=
   if ! line_number=$(grep -n -F -x "$input" "$FSBOOKMARKS"); then
     error_exit 1 "Input not found in bookmarks."
@@ -288,7 +288,7 @@ cmd_del() {
     error_exit 1 "Query unspecific. Too many results"
   fi
   line_number=$(echo "$line_number" | awk -F: '{print $1}')
-  info "d:$line_number:'$input'" 2>&$fdverbose
+  info "d:$line_number:'$input'"  2>&$fdverbose
   sed -i "$line_number d" "$FSBOOKMARKS"
 }
 

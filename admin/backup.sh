@@ -184,14 +184,14 @@ setup() {
   if ! (($enable_debug)); then
     exec {fddebug}>/dev/null
   else
-    exec {fddebug}>&1
+    exec {fddebug}>&2
     exec 2>&$fddebug
     set -xv
   fi
   if ! (($enable_verbose)); then
     exec {fdverbose}>/dev/null
   elif (($enable_verbose)) || (($enable_debug)); then
-    exec {fdverbose}>&1
+    exec {fdverbose}>&2
   fi
 }
 
