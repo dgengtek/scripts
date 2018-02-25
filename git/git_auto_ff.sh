@@ -91,18 +91,18 @@ run() {
   {
     git checkout -q "$branch_dev" && git merge -q --ff-only "$branch_active"
   } 2>/dev/null || die "Merge of $branch_active on $branch_dev failed."
-  msg "Merged to $branch_dev with $branch_active."
+  msg "Merged to $branch_dev with $branch_active." >&$fdverbose
   fi
 
   if check_merge_allowed "$branch_prod"; then
   {
     git checkout -q "$branch_prod" && git merge -q --ff-only "$branch_dev"
   } 2>/dev/null || die "Merge of $branch_dev on $branch_prod failed."
-  msg "Merged to $branch_prod with $branch_dev."
+  msg "Merged to $branch_prod with $branch_dev." >&$fdverbose
   fi
 
   git checkout -q "$branch_active"
-  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items."
+  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items." >&$fdverbose
   popd >/dev/null
 }
 

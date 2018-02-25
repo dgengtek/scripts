@@ -76,7 +76,7 @@ run() {
   } || error "Pull from remote: $remote failed."
 
   git checkout -q "$branch_active"
-  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items."
+  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items." >&$fdverbose
 }
 
 

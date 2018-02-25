@@ -9,7 +9,7 @@ stash_items() {
 
   if staged_items_existing || untracked_items_existing; then
     git stash -q || die "Could not stash items."
-    msg2 "Stashing items."
+    msg2 "Stashing items." >&$fdverbose
     return 0
   fi
   return 1
