@@ -54,7 +54,6 @@ main() {
   unset -v args
   check_input_args "$@"
 
-  prepare
   prepare_env
   if [[ -z $1 ]]; then
     set -- "."
@@ -88,7 +87,7 @@ run() {
   {
   git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
   } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
-  msg "Merged '$branch_prod' to '$branch_master'" >&$fdverbose
+  msg "Merged '$branch_prod' to '$branch_master'" 2>&$fdverbose
   fi
   for remote in $(git remote); do
     {

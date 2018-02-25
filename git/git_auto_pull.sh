@@ -47,7 +47,6 @@ main() {
   unset -v args
   check_input_args "$@"
 
-  prepare
   prepare_env
   if [[ -z $1 ]]; then
     set -- "."
@@ -77,7 +76,7 @@ run() {
   } || error "Pull from remote: $remote failed."
 
   git checkout -q "$branch_active"
-  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items." >&$fdverbose
+  (($items_stashed)) && git stash pop -q && msg2 "Pop stashed items." 2>&$fdverbose
 }
 
 

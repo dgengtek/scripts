@@ -30,7 +30,7 @@ critical() { log "==> CRITICAL:" "$@"; } >&2
 errorq() { log "$@" 2>/dev/null; }
 
 msg() { log "==>" "$@"; }
-msg2() { log "  ->" "$@";}
+msg2() { log "  ->" "$@"; }
 
 error_exit() {
   error_code=$1
