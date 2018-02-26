@@ -3,17 +3,22 @@
 Generate passwords
 Usage:
     genpw.py [options] [<length> [<count>]]
-    genpw.py [(-a|-p|-l)] [<length> [<count>]]
+    genpw.py [options] [(-a|-p|-l)] [<length> [<count>]]
     genpw.py (-h | --help)
 
 Options:
     -a, --alnum  Only alphanumeric chars
+    -b, --bits  Use length for bits length of password
     -f, --filter <characters>  Filter character_pool of characters
     -p, --pin  Only pin
     -l, --letters  Only alpha characters
     -h, --help  Show this screen and exit.
+
+length: default 8 chars; 256 bits, 32 chars if bits set
+count: default 30
 """
 
+# TODO: generate passwords first then build aligned output table format
 import sys
 from docopt import docopt
 import random
@@ -30,9 +35,19 @@ def main():
     length = opt.get("<length>")
     count = opt.get("<count>")
     character_filter = opt.get("--filter")
+    enable_bits = opt.get("--bits")
 
-    length = int(length) if length else 8
+    if length:
+        length = int(length) 
+    elif enable_bits:
+        length = 256
+    else:
+        length = 8
+
     count = int(count) if count else 30
+
+    if enable_bits:
+        length = length // 8
 
     character_pool = set_all
     if opt.get("--alnum"):
