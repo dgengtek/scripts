@@ -11,7 +11,8 @@
 
 usage() {
   cat >&2 << EOF
-Usage: $0 [options] [<destination> <source>... [-- <rsync options>...]] 
+Usage: $0 [options] <destination> <source>... [-- <rsync options>...]
+Usage: $0 [options] (- | -c <config file>)
 
 options:
   -c, --config <file>   config file used to parse options if no arguments
