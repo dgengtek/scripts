@@ -63,10 +63,20 @@ def main():
     character_pool = character_pool.difference(character_filter)
     character_pool = "".join(character_pool)
 
-    for i in range(1, count+1):
-        print(generate_password(character_pool, length), end="\t")
+    passwords = [ generate_password(character_pool, length) for i in range(1, count+1)]
+    print_passwords(passwords)
+
+def print_passwords(passwords):
+    if len(passwords) == 1:
+        password = passwords[0]
+        print(password, end="")
+        return
+
+    for i,password in enumerate(passwords, 1):
+        print(password, end="\t")
         if i % 3 == 0:
-            print("\n")
+            print()
+
 
 def generate_password(pool, size):
     return "".join([ random.choice(pool) for x in range(size) ])
