@@ -1,0 +1,14 @@
+= Scripts
+
+== Description
+General purpose repository containing multiple scripts for occassional use.
+
+== Requirements
+* stow
+* bash
+* python3
+
+== Installation
+Installation path defined in setup.ini
+
+$ bash install.sh
