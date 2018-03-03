@@ -6,12 +6,12 @@
 
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] [<git repo path>]
+Usage:	${0##*/} [OPTIONS] [<git repository path> [<git remote name>]]
 OPTIONS:
-  -h			  help
-  -v			  verbose
-  -q			  quiet
-  -d			  debug
+  -h    help
+  -v    verbose
+  -q    quiet
+  -d    debug
 EOF
 }
 
@@ -23,6 +23,9 @@ main() {
 
   local -a options=
   local -a args=
+
+  local remote_path=""
+  local path="."
 
   check_dependencies
   # parse input args 
@@ -45,9 +48,8 @@ main() {
 ################################################################################
 
 run() {
-  local path
-  local git_root
-  if ! path=$(realpath ${1:-.}); then
+  local git_root=
+  if ! path=$(realpath ${1:-$path}); then
     error 1 "$path is not valid."
   fi
   shift
@@ -56,12 +58,13 @@ run() {
   if ! git_root=$(get_root_directory); then
     error 1 "$path is not a git repository."
   fi
+  local remote_path=${2:-$(basename "$git_root")}
+
   git_init_remote_origin "$@"
   popd >/dev/null 2>&1
 }
 
 check_dependencies() {
-  :
 }
 
 check_input_args() {
@@ -214,22 +217,12 @@ _example_command() {
 
 git_init_remote_origin() {
   # add default remotes to repository
-  local -r git_root=$(git rev-parse --show-toplevel)
   local -r active_branch=$(git branch | awk '/^\*/ {print $2}')
   local -r remote_name=${REPOSITORY_USER:?"No repository user set in environment."}
-  [[ -z $REPOSITORY_REMOTE_URL ]] \
-    && logger -s "Repository remote URL not set in environment." 
-  local base=$git_root
-  if [[ -z $1 ]]; then
-    cd "$git_root" || exit 2
-  else
-    base=$(realpath "$1")
-  fi
-  base=$(basename "$base")
   if [[ $active_branch != "master" ]]; then
     git checkout master
   fi
-  git remote add "$remote_name" "$REPOSITORY_REMOTE_URL/${base}"
+  git remote add "$remote_name" "$REPOSITORY_REMOTE_URL/${remote_path}"
   git push --set-upstream "$remote_name" master
   git checkout "$active_branch"
 }
