@@ -1,0 +1,348 @@
+#!/bin/env bash
+# ------------------------------------------------------------------------------
+# init git repo
+# ------------------------------------------------------------------------------
+# 
+usage() {
+  cat >&2 << EOF
+Usage:	${0##*/} [<options>] <destination>
+
+Init a git repo with TODO.wiki, README.adoc, LICENCE and a 'dev,release,stage' branch.
+  
+options:
+  -r                    add a remote repo to gogs
+  -b                    do not add branches(release, stage) based on master
+  -h			help
+  -n                    no commit
+  -d                    debug
+  --mit                 add MIT licence
+  -a, --author name     add author to licence
+  -h			  help
+  -v			  verbose
+  -q			  quiet
+  -d			  debug
+
+EOF
+}
+
+main() {
+  # flags
+  local -i enable_verbose=0
+  local -i enable_quiet=0
+  local -i enable_debug=0
+
+  local -a options=
+  local -a args=
+
+  local -i init_remote=0
+  local -r optlist="rp:"
+  local author="github.com/dgengtek"
+  local add_mit_licence=0
+  local minimal_branches=0
+  local -i commit=1
+
+  check_dependencies
+  # parse input args 
+  parse_options "$@"
+  # set leftover options parsed local input args
+  set -- ${args[@]}
+  # remove args array
+  unset -v args
+  check_input_args "$@"
+
+  prepare_env
+  set_signal_handlers
+  setup
+  run "$@"
+  unset_signal_handlers
+}
+
+################################################################################
+# script internal execution functions
+################################################################################
+
+run() {
+  git_init_repo "$@"
+}
+
+check_dependencies() {
+  :
+}
+
+check_input_args() {
+  if [[ -z $1 ]]; then
+    usage
+    exit 1
+  fi
+}
+
+prepare_env() {
+  :
+}
+
+prepare() {
+  export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
+
+  set -e
+  source_libs
+  set +e
+
+  set_descriptors
+}
+
+source_libs() {
+  source "${PATH_USER_LIB}libutils.sh"
+  source "${PATH_USER_LIB}libcolors.sh"
+}
+
+set_descriptors() {
+  if (($enable_verbose)); then
+    exec {fdverbose}>&2
+  else
+    exec {fdverbose}>/dev/null
+  fi
+  if (($enable_debug)); then
+    set -xv
+    exec {fddebug}>&2
+  else
+    exec {fddebug}>/dev/null
+  fi
+}
+
+set_signal_handlers() {
+  trap sigh_abort SIGABRT
+  trap sigh_alarm SIGALRM
+  trap sigh_hup SIGHUP
+  trap sigh_cont SIGCONT
+  trap sigh_usr1 SIGUSR1
+  trap sigh_usr2 SIGUSR2
+  trap sigh_cleanup SIGINT SIGQUIT SIGTERM EXIT
+}
+
+unset_signal_handlers() {
+  trap - SIGABRT
+  trap - SIGALRM
+  trap - SIGHUP
+  trap - SIGCONT
+  trap - SIGUSR1
+  trap - SIGUSR2
+  trap - SIGINT SIGQUIT SIGTERM EXIT
+}
+
+setup() {
+  set_descriptors
+}
+
+parse_options() {
+  # exit if no options left
+  [[ -z $1 ]] && return 0
+  log "parse \$1: $1" 2>&$fddebug
+
+  local do_shift=0
+  case $1 in
+      -d|--debug)
+        enable_debug=1
+        ;;
+      -v|--verbose)
+	enable_verbose=1
+	;;
+      -q|--quiet)
+        enable_quiet=1
+        ;;
+      -h|--help)
+        usage
+        exit 1
+        ;;
+      -r)
+        init_remote=1
+	;;
+      -b)
+        minimal_branches=1
+	;;
+      --MIT|--mit)
+        add_mit_licence=1
+        ;;
+      -n)
+        commit=0
+        ;;
+      -a|--author)
+        author=$2
+        shift
+        ;;
+      --)
+        do_shift=3
+        ;;
+      *)
+        do_shift=1
+	;;
+  esac
+  if (($do_shift == 1)) ; then
+    args+=("$1")
+  elif (($do_shift == 2)) ; then
+    # got option with argument
+    shift
+  elif (($do_shift == 3)) ; then
+    # got --, use all arguments left as options for other commands
+    shift
+    options+=("$@")
+    return
+  fi
+  shift
+  parse_options "$@"
+}
+
+sigh_abort() {
+  trap - SIGABRT
+}
+
+sigh_alarm() {
+  trap - SIGALRM
+}
+
+sigh_hup() {
+  trap - SIGHUP
+}
+
+sigh_cont() {
+  trap - SIGCONT
+}
+
+sigh_usr1() {
+  trap - SIGUSR1
+}
+
+sigh_usr2() {
+  trap - SIGUSR2
+}
+
+sigh_cleanup() {
+  trap - SIGINT SIGQUIT SIGTERM EXIT
+  local active_jobs=$(jobs -p)
+  for p in $active_jobs; do
+    if ps -p $p >/dev/null 2>&1; then
+      kill -SIGINT $p >/dev/null 2>&1
+    fi
+  done
+}
+
+################################################################################
+# custom functions
+#-------------------------------------------------------------------------------
+# add here
+example_function() {
+  :
+}
+_example_command() {
+  :
+}
+
+git_init_repo() {
+  local -r directory=$(realpath $1)
+  local -r base=$(basename "$directory")
+  mkdir -p "$directory"
+  pushd "$directory"
+  git init
+  touch TODO.wiki
+  cat > README.adoc << EOF
+= Inititial repository commit for $(basename $directory)
+$author
+v.0.0.1, $(date +%F)
+EOF
+  ! [[ -f .gitignore ]] && cat > .gitignore << EOF
+*.swp
+EOF
+
+  if (($add_mit_licence)); then
+    _gen_licence_mit
+  else
+    touch LICENSE
+  fi
+  git add .
+  (($commit)) && git commit -m "Initial commit of $base"
+  if ! (($minimal_branches)); then
+    git_init_workflow
+  fi
+  if (($init_remote == 1)); then
+    git_init_remote_master
+  fi
+  popd
+
+}
+
+_gen_licence_mit() {
+  if [[ -f LICENCE ]]; then
+    echo "LICENCE already exists." >&2
+    return 1
+  fi
+  cat > LICENCE << EOF
+MIT License
+
+Copyright (c) $(date +%Y) ${author:-"github.com/dgengtek"}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+EOF
+}
+
+git_init_remote_master() {
+  # add default remotes to repository
+  local -r git_root=$(git rev-parse --show-toplevel)
+  local -r active_branch=$(git branch | awk '/^\*/ {print $2}')
+  local -r remote_name=${REPOSITORY_USER:?"No repository user set in environment."}
+  [[ -z $REPOSITORY_REMOTE_URL ]] \
+    && logger -s "Repository remote URL not set in environment." 
+  local base=$git_root
+  if [[ -z $1 ]]; then
+    cd "$git_root" || exit 2
+  else
+    base=$(realpath "$1")
+  fi
+  base=$(basename "$base")
+  if [[ $active_branch != "master" ]]; then
+    git checkout master
+  fi
+  git remote add "$remote_name" "$REPOSITORY_REMOTE_URL/${base}"
+  git push --set-upstream "$remote_name" master
+  git checkout "$active_branch"
+}
+
+git_init_workflow() {
+  # master is only merged by ci on successfull tests
+  # only release will be merged to master and also to develop
+  # development only onto develop branch, releases ready tags are merged into
+  #   release branch and then merged into master if successfull
+  # hotfixed are created from master tags and merged into dev and master
+  local -r git_root=$(git rev-parse --show-toplevel)
+  local -r active_branch=$(git branch | awk '/^\*/ {print $2}')
+  if [[ $active_branch != "master" ]]; then
+    git checkout master
+  fi
+  # develop from master
+  git checkout -b dev
+  # release from dev
+  git branch release
+  # feature branches are created from dev
+  git branch f1
+}
+
+#-------------------------------------------------------------------------------
+# end custom functions
+################################################################################
+
+prepare
+main "$@"
