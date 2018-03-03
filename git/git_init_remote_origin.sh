@@ -1,27 +1,17 @@
 #!/bin/env bash
 # ------------------------------------------------------------------------------
-# init git repo
+# set remote origin from environment
 # ------------------------------------------------------------------------------
 # 
+
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [<options>] <destination>
-
-Init a git repo with TODO.wiki, README.adoc, LICENCE and a 'dev,release,stage' branch.
-  
-options:
-  -r                    add a remote repo to gogs
-  -b                    do not add branches(release, stage) based on master
-  -h			help
-  -n                    no commit
-  -d                    debug
-  --mit                 add MIT licence
-  -a, --author name     add author to licence
+Usage:	${0##*/} [OPTIONS] [<git repo path>]
+OPTIONS:
   -h			  help
   -v			  verbose
   -q			  quiet
   -d			  debug
-
 EOF
 }
 
@@ -33,13 +23,6 @@ main() {
 
   local -a options=
   local -a args=
-
-  local -i init_remote=0
-  local -r optlist="rp:"
-  local author="github.com/dgengtek"
-  local add_mit_licence=0
-  local minimal_branches=0
-  local -i commit=1
 
   check_dependencies
   # parse input args 
@@ -62,23 +45,27 @@ main() {
 ################################################################################
 
 run() {
-  git_init_repo "$@"
+  local path
+  local git_root
+  if ! path=$(realpath ${1:-.}); then
+    error 1 "$path is not valid."
+  fi
+  shift
+  pushd "$path" >/dev/null 2>&1
+
+  if ! git_root=$(get_root_directory); then
+    error 1 "$path is not a git repository."
+  fi
+  git_init_remote_origin "$@"
+  popd >/dev/null 2>&1
 }
 
 check_dependencies() {
-  if ! hash git_init_remote_origin.sh >/dev/null 2>&1; then
-    error 1 "git_init_remote_origin.sh not found."
-  fi
-  if ! hash git_init_workflow.sh >/dev/null 2>&1; then
-    error 1 "git_init_remote_origin.sh not found."
-  fi
+  :
 }
 
 check_input_args() {
-  if [[ -z $1 ]]; then
-    usage
-    exit 1
-  fi
+  :
 }
 
 prepare_env() {
@@ -156,23 +143,7 @@ parse_options() {
         ;;
       -h|--help)
         usage
-        exit 1
-        ;;
-      -r)
-        init_remote=1
-	;;
-      -b)
-        minimal_branches=1
-	;;
-      --MIT|--mit)
-        add_mit_licence=1
-        ;;
-      -n)
-        commit=0
-        ;;
-      -a|--author)
-        author=$2
-        shift
+        exit 0
         ;;
       --)
         do_shift=3
@@ -241,73 +212,27 @@ _example_command() {
   :
 }
 
-git_init_repo() {
-  local path
-  local git_root
-  if ! path=$(realpath ${1:-.}); then
-    error 1 "$path is not valid."
-  fi
-  local -r base=$(basename "$path")
-  mkdir -p "$path"
-  pushd "$path" >/dev/null 2>&1 || error 1 "$path push failed."
-  git init || error 1 "Git repo init failed."
-  touch TODO.wiki
-  cat > README.adoc << EOF
-= Inititial repository commit for $(basename $path)
-$author
-v.0.0.1, $(date +%F)
-EOF
-  ! [[ -f .gitignore ]] && cat > .gitignore << EOF
-*.swp
-EOF
-
-  if (($add_mit_licence)); then
-    _gen_licence_mit
+git_init_remote_origin() {
+  # add default remotes to repository
+  local -r git_root=$(git rev-parse --show-toplevel)
+  local -r active_branch=$(git branch | awk '/^\*/ {print $2}')
+  local -r remote_name=${REPOSITORY_USER:?"No repository user set in environment."}
+  [[ -z $REPOSITORY_REMOTE_URL ]] \
+    && logger -s "Repository remote URL not set in environment." 
+  local base=$git_root
+  if [[ -z $1 ]]; then
+    cd "$git_root" || exit 2
   else
-    touch LICENSE
+    base=$(realpath "$1")
   fi
-  git add .
-  (($commit)) && git commit -m "Initial commit of $base"
-  if ! (($minimal_branches)); then
-    git_init_workflow.sh
+  base=$(basename "$base")
+  if [[ $active_branch != "master" ]]; then
+    git checkout master
   fi
-  if (($init_remote == 1)); then
-    git_init_remote_origin.sh
-  fi
-  popd >/dev/null 2>&1
-
+  git remote add "$remote_name" "$REPOSITORY_REMOTE_URL/${base}"
+  git push --set-upstream "$remote_name" master
+  git checkout "$active_branch"
 }
-
-_gen_licence_mit() {
-  if [[ -f LICENCE ]]; then
-    echo "LICENCE already exists." >&2
-    return 1
-  fi
-  cat > LICENCE << EOF
-MIT License
-
-Copyright (c) $(date +%Y) ${author:-"github.com/dgengtek"}
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-EOF
-}
-
 
 #-------------------------------------------------------------------------------
 # end custom functions
