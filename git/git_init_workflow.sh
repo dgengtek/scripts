@@ -219,7 +219,7 @@ git_init_workflow() {
   fi
   # develop
   git checkout -b dev || git checkout dev
-  # release 
+  git branch stage
   git branch release
   # feature branches are created from dev
   git branch f1
