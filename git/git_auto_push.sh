@@ -40,8 +40,8 @@ main() {
   local -i enable_quiet=0
   local -i enable_debug=0
 
-  local -a options=
-  local -a args=
+  local -a options
+  local -a args
 
   local enable_pull_all=0
 

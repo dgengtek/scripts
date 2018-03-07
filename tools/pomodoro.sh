@@ -18,8 +18,8 @@ main() {
   local -i enable_debug=0
   local -i enable_mail_notification=0
 
-  local -a options=
-  local -a args=
+  local -a options
+  local -a args
 
   local -ri long_break=15
   local -ri short_break=5

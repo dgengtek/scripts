@@ -24,8 +24,8 @@ main() {
   local -i capture_window=0
   local -i move_screenshot=0
 
-  local -a options=
-  local -a args=
+  local -a options
+  local -a args
   # parse input args 
   parse_options "$@"
   # set leftover options parsed local input args
