@@ -45,5 +45,5 @@ digest2=$($cmd "$file" | awk '{$0=$1;print}')
 if [[ "$digest" == "$digest2" ]]; then
   exit 0
 fi
-echo "$digest != $digest2"
+echo "$digest != $digest2" >&2
 exit 1
