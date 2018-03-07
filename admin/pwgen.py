@@ -1,65 +1,50 @@
 #!/bin/env python3
-"""
-Generate passwords
-Usage:
-    genpw.py [options] [<length> [<count>]]
-    genpw.py [options] [(-a|-p|-l)] [<length> [<count>]]
-    genpw.py (-h | --help)
-
-Options:
-    -a, --alnum  Only alphanumeric chars
-    -b, --bits  Use length for bits length of password
-    -f, --filter <characters>  Filter character_pool of characters
-    -p, --pin  Only pin
-    -l, --letters  Only alpha characters
-    -h, --help  Show this screen and exit.
-
-length: default 8 chars; 256 bits, 32 chars if bits set
-count: default 30
-"""
+# generate passwords
 
 # TODO: generate passwords first then build aligned output table format
 import sys
-from docopt import docopt
 import random
+import click
+import string
 
-set_all = { chr(x+32) for x in range(94) }
-set_alpha = { chr(x+97) for x in range(26) }
-set_alpha = set_alpha.union({ chr(x+65) for x in range(26) })
-set_pin = { chr(x+48) for x in range(10) }
 
-# docopt(doc, argv=None, help=True, version=None, options_first=False))
+@click.command("pwgen.py")
+@click.argument("count", default=30)
+@click.argument("length", default=12)
+@click.option("character_filter", "-f","--filter", help="Filter characters from the given string")
+@click.option("-i","--inverse", is_flag=True, help="Inverse filter. Only show characters from the given filter")
+@click.option('-b', '--bits', is_flag=True, help="Use bits instead of length to determine password length")
+@click.option('-g', '--graph', 'mode', flag_value='graph', default=True, help="mode: [default] All printable characters except whitespace")
+@click.option('-a', '--alnum', 'mode', flag_value='alnum', default=True, help="mode: letters + digits")
+@click.option('-d', '--digits', 'mode', flag_value='digits', help="mode: digits")
+@click.option('-p', '--printable', 'mode', flag_value='printable', help="mode: All printable characters")
+@click.option('-l', '--letters', 'mode', flag_value='letters', help="mode: letters")
+def main(length, count, character_filter, inverse, bits, mode):
+    set_alpha = set(string.ascii_letters)
+    set_digits = set(string.digits)
+    set_printable = set(string.printable)
+    set_whitespace = set(string.whitespace)
 
-def main():
-    opt = docopt(__doc__, sys.argv[1:], options_first=True)
-    length = opt.get("<length>")
-    count = opt.get("<count>")
-    character_filter = opt.get("--filter")
-    enable_bits = opt.get("--bits")
+    if bits:
+        length = 256 // 8
 
-    if length:
-        length = int(length) 
-    elif enable_bits:
-        length = 256
-    else:
-        length = 8
-
-    count = int(count) if count else 30
-
-    if enable_bits:
-        length = length // 8
-
-    character_pool = set_all
-    if opt.get("--alnum"):
-        character_pool = set_alpha.union(set_pin)
-    if opt.get("--letters"):
+    character_pool = None
+    if mode == "graph":
+        character_pool = set_printable - set_whitespace
+    if mode == "alnum":
+        character_pool = set_alpha.union(set_digits)
+    if mode == "letters":
         character_pool = set_alpha
-    if opt.get("--pin"):
-        character_pool = set_pin
+    if mode == "digits":
+        character_pool = set_digits
+    if mode == "printable":
+        character_pool = set_printable
+
     if not character_filter:
         character_filter = set()
     else:
         character_filter = set(character_filter)
+
     character_pool = character_pool.difference(character_filter)
     character_pool = "".join(character_pool)
 
