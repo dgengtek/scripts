@@ -9,9 +9,9 @@ import string
 
 
 @click.command("pwgen.py")
-@click.argument("count", default=30)
-@click.argument("length", default=12)
+@click.argument("length", default=16)
 @click.option("character_filter", "-f","--filter", help="Filter characters from the given string")
+@click.option("-c","--count",  default=30, help="Password count")
 @click.option("-i","--inverse", is_flag=True, help="Inverse filter. Only show characters from the given filter")
 @click.option('-b', '--bits', is_flag=True, help="Use bits instead of length to determine password length")
 @click.option('-g', '--graph', 'mode', flag_value='graph', default=True, help="mode: [default] All printable characters except whitespace")
@@ -19,7 +19,7 @@ import string
 @click.option('-d', '--digits', 'mode', flag_value='digits', help="mode: digits")
 @click.option('-p', '--printable', 'mode', flag_value='printable', help="mode: All printable characters")
 @click.option('-l', '--letters', 'mode', flag_value='letters', help="mode: letters")
-def main(length, count, character_filter, inverse, bits, mode):
+def main(length, character_filter, count, inverse, bits, mode):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
