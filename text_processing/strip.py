@@ -7,4 +7,4 @@ else:
     data_input = sys.argv[1:]
 
 data = " ".join(data_input)
-print(data .strip(), end='')
+print(data.strip(), end='')
