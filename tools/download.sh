@@ -171,7 +171,7 @@ check_duplicate_file() {
 process() {
   local -r input=$1
   echo_e "${BLUE_BG}URL read - $input${COLOR_NONE}"
-  local -r filename=$(get_uri_filename "$input" | tr " " "_" | tr -cd "a-zA-Z0-9-_.~")
+  local -r filename=$(get_uri_filename "$input" | filename_canonize.py -n -)
   
   if check_duplicate_file "$filename" && $downloader --output "$filename" "$input"; then
     echo_e "${GREEN}+ $input${COLOR_NONE}"
