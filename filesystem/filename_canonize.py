@@ -1,16 +1,6 @@
 #!/bin/env python3
 """
 Use only legal characters from files or current directory
-
-Usage:
-    strip_filenames.py [options] [<filename> ...]
-    strip_filenames.py [-a]
-
-Options:
-    -l, --lowercase  Only lowercase
-    -a, --all  Include hidden files
-    -h, --help  Show this screen and exit.
-    -v, --verbose  be verbose
 """
 
 import sys
@@ -56,6 +46,12 @@ def main(filename, mode, lowercase, hidden, dryrun, verbose):
 
     if not filename:
         filename = os.listdir()
+    elif len(filename) == 1 and filename[0] == "-":
+        filenames = list()
+        with click.open_file("-", "r") as f:
+            for line in f.readlines():
+                filenames.append(line.strip())
+        filename = filenames
     directory = filename
 
     for a in range(len(directory)):
