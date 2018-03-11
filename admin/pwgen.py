@@ -15,7 +15,7 @@ import string
 @click.option("-i","--inverse", is_flag=True, help="Inverse filter. Only show characters from the given filter")
 @click.option('-b', '--bits', is_flag=True, help="Use bits instead of length to determine password length")
 @click.option('-g', '--graph', 'mode', flag_value='graph', default=True, help="mode: [default] All printable characters except whitespace")
-@click.option('-a', '--alnum', 'mode', flag_value='alnum', default=True, help="mode: letters + digits")
+@click.option('-a', '--alnum', 'mode', flag_value='alnum', help="mode: letters + digits")
 @click.option('-d', '--digits', 'mode', flag_value='digits', help="mode: digits")
 @click.option('-p', '--printable', 'mode', flag_value='printable', help="mode: All printable characters")
 @click.option('-l', '--letters', 'mode', flag_value='letters', help="mode: letters")
