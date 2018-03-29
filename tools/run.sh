@@ -13,10 +13,10 @@ OPTIONS:
   -l, --log           log command output
   -m, --mail          mail result
   -o, --output        mail cmd output
-  -n, --disable-notify        disable notifications
+  -s, --silent        disable notifications
   -f, --foreground    run in foreground
   -p, --print-process print process regardless
-  -s, --sudo          run with sudo
+  -r, --sudo          run with sudo
   -h                  help
 EOF
 }
@@ -80,12 +80,12 @@ run() {
       exec 2>>"$logfile"
     fi
     run_commands "$@" &
-    (! (($enable_foreground)) || (($print_process)) ) && echo "$!" >&3
+    { ! (($enable_foreground)) || (($print_process)); } && echo "$!" >&3
   fi
 }
 
 run_commands() {
-  time $@
+  time "$@"
 
   local -r subject="$?[$USER@$HOSTNAME]$ run.sh"
   local -r message=$@
@@ -95,14 +95,14 @@ run_commands() {
   fi
 
   if (($enable_mail)); then
-    sendmail -f "$sender" "$recipient" << EOF_HEADER
+    sendmail -f "$sender" "$recipient" << EOF
 From: $sender
 To: $recipient
 
 Subject: $subject
 
 $(cat $logfile)
-EOF_HEADER
+EOF
   fi
   cleanup
 }
@@ -128,13 +128,13 @@ parse_options() {
       -m|--mail)
         enable_mail=1
         ;;
-      -s|--sudo)
+      -r|--sudo)
         run_as_sudo=1
         ;;
       -f|--foreground)
         enable_foreground=1
         ;;
-      -n|--disable-notify)
+      -s|--silent)
         enable_notifications=0
         ;;
       -o|--output)
@@ -173,15 +173,10 @@ log() {
 }
 
 error_exit() {
-  error_code=${1:-0}
+  local -r error_code=${1}
   shift
   log "$@"
   exit $error_code
-}
-
-cleanup() {
-  trap - EXIT
-  [[ -f $logfile ]] && rm "$logfile"
 }
 
 prepare_env() {
@@ -262,6 +257,7 @@ sigh_usr2() {
 
 sigh_cleanup() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
+  cleanup
   local active_jobs=$(jobs -p)
   for p in $active_jobs; do
     if [[ -e "/proc/$p" ]]; then
@@ -269,6 +265,10 @@ sigh_cleanup() {
       wait "$p"
     fi
   done
+}
+
+cleanup() {
+  [[ -f $logfile ]] && rm "$logfile"
 }
 
 prepare

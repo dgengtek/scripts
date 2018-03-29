@@ -73,8 +73,8 @@ run() {
   fi
   cat >&2 << EOF
 Processed from $@
-  success_count: $success_count
-  failures_count: $failures_count
+  success: $success_count
+  failures: $failures_count
   total: $(($success_count + $failures_count))
 
 EOF
@@ -102,13 +102,6 @@ parse_options() {
 
   local do_shift=0
   case $1 in
-      -)
-        if ! (($singleton)); then
-          singleton=1
-          return 9
-        fi
-        error_exit 5 "stdin is not allowed inside config."
-        ;;
       -v|--verbose)
 	enable_verbose=1
 	;;
