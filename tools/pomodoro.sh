@@ -8,6 +8,11 @@
 usage() {
   cat >&2 << EOF
 Usage: ${0##*/} [<task filter>]
+
+-d,--debug
+-v,--verbose
+-m,--mail
+-q,--quiet
 EOF
 }
 
@@ -21,9 +26,9 @@ main() {
   local -a options
   local -a args
 
-  local -ri long_break=15
-  local -ri short_break=5
-  local -ri work=25
+  local -ri time_long_break=15
+  local -ri time_short_break=5
+  local -ri time_working=25
   local -ri break_cycle=4
 
   check_dependencies
@@ -215,26 +220,15 @@ pomodoro() {
   echo "Starting pomodoro."
   local -i counts=0
   while :; do
-    countdown $work "work" "$@"
+    countdown $time_working "work" "$@"
     counts=$((counts + 1))
     if ((counts % $break_cycle == 0)); then
       counts=0
-      countdown $long_break "break" 
+      countdown $time_long_break "break" 
     else
-      countdown $short_break "break" 
+      countdown $time_short_break "break" 
     fi
   done
-}
-
-taskwarrior() {
-  local -r cmd=$1
-  local -r description=$2
-  shift 2
-  if [[ -z $1 ]]; then
-    command timew "$cmd" "$description"
-  else
-    command task "$@" "$cmd"
-  fi
 }
 
 countdown() {
@@ -246,21 +240,14 @@ countdown() {
   if (($enable_mail_notification)); then
     echo "Starting countdown" | mail -s "pomodoro: $description" notification
   fi
-  taskwarrior start "$description" "$@"
+  timew start "$description" "$@"
   if ! countdown.py -m "$time_unit"; then
     echo "Stopping pomodoro."
-    taskwarrior stop "$description" "$@"
+    timew stop "$description" "$@"
     exit 0
   fi
   mplayer "$BEEP" >/dev/null 2>&1
-  taskwarrior stop "$description" "$@"
-}
-
-print_available_sessions() {
-  if [ -e "$config_path" ];then
-    echo -e "\nThese sessions are available:"
-    find $config_path -type f | xargs -I {} basename -s ".session" {} | xargs -n 1 echo -e "\t"
-  fi
+  timew stop "$description" "$@"
 }
 #-------------------------------------------------------------------------------
 # end custom functions
