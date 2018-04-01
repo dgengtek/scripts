@@ -1,18 +1,30 @@
 #!/bin/env python3
-import BaseHTTPServer
+import http.server
 import random
+import string
+import click
 
-SERVER = "192.168.0.1"
-PORT = 8080
+
+@click.command()
+@click.argument("port", required=False)
+@click.option("-s", "--server", default="0.0.0.0")
+def main(port, server):
+    if not port:
+        port = 8888
+    http_server = http.server.HTTPServer((server, port), PostHandler)
+    print('Starting server on {0}:{1}, use <Ctrl-C> to stop'.format(
+        server, port))
+    http_server.serve_forever()
+
 
 def get_filename():
-    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    fn = ''.join([random.choice(chars) for i in xrange(12)])
+    chars = "{}{}".format(string.ascii_letters, string.digits)
+    fn = ''.join([random.choice(chars) for i in range(12)])
 
     return fn
 
 
-class PostHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class PostHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         length = self.headers['content-length']
         data = self.rfile.read(int(length))
@@ -23,25 +35,24 @@ class PostHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         self.send_response(200)
 
-        return
-
     def do_GET(self):
-        page = '''
-        <h1>Upload a File</h1>
-        <form action="/" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" placeholder="Enter a filename."></input><br />
-        <input type="submit" value="Import">
-        </form>
-        '''
+        page = """<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<h1>Upload a File</h1>
+<form action="/" method="post" enctype="multipart/form-data">
+<input type="file" name="file" placeholder="Enter a filename."></input><br />
+<input type="submit" value="Import">
+</form>
+</html>
+"""
 
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(page)
+        self.wfile.write(page.encode("UTF-8"))
 
 
 if __name__ == '__main__':
-    from BaseHTTPServer import HTTPServer
-    server = HTTPServer((SERVER, PORT), PostHandler)
-    print 'Starting server on {0}:{1}, use <Ctrl-C> to stop'.format(SERVER, PORT)
-    server.serve_forever()
+    main()
