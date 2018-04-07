@@ -3,6 +3,8 @@
 usage() {
   cat >&2 << EOF
 Usage: ${0##*/} <pid>...
+
+Wait for <pid>... to finish execution.
 EOF
 }
 
@@ -11,7 +13,7 @@ main() {
     usage
     exit 1
   fi
-  echo "List of supplied PID's: $@"
+  echo "PID's: $@" >&2
 
   local -a pids=()
   while [[ -n $1 ]]; do
@@ -26,7 +28,7 @@ main() {
   wait ${pids[@]}
   kill $rc
 
-  echo -e "\nwait complete"
+  echo -e "\nwait complete" >&2
 }
 
 progress_output() {
@@ -58,7 +60,7 @@ progress() {
     if (($cycle%4 == 0 ));then
       let cycle=0
     fi
-    progress_output $cycle
+    progress_output $cycle >&2
     let cycle++
   done
 }
