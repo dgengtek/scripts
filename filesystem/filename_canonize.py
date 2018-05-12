@@ -3,16 +3,16 @@
 Use only legal characters from files or current directory
 """
 
+import string
+import pathlib
 import sys
 import os
 import click
-import string
-import pathlib
 
 # docopt(doc, argv=None, help=True, version=None, options_first=False))
 
 
-@click.command("strip_filename.py")
+@click.command("filename_canonize.py")
 @click.argument("filename", nargs=-1, required=False)
 @click.option(
     '-g', '--graph', 'mode',

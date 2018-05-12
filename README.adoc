@@ -8,6 +8,11 @@ General purpose repository containing multiple scripts for occassional use.
 * bash
 * python3
 
+== Tested versions
+* stow, v2.2.2
+* bash, v4.4.19(1)
+* python 3.6.5
+
 == Installation
 Installation path defined in setup.ini
 

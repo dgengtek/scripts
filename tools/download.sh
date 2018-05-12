@@ -111,6 +111,10 @@ parse_options() {
       -d|--debug)
         enable_debug=1
         ;;
+      -h|--help)
+        usage
+        exit 1
+        ;;
       -t|--timeout)
         timeout=$2
         do_shift=2
@@ -163,7 +167,7 @@ check_duplicate_file() {
 
 process() {
   local -r input=$1
-  echo_e "${BLUE_BG}URL read - $input${COLOR_NONE}"
+  echo_e "${BLUE_BG}URL - $input${COLOR_NONE}"
   local -r filename=$(get_uri_filename "$input" | filename_canonize.py -n -)
   
   if check_duplicate_file "$filename" && $downloader --output "$filename" "$input"; then
