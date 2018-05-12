@@ -4,3 +4,4 @@ __init__.py
 commit.txt
 *.swp
 .cache
+.pytest_cache
