@@ -10,15 +10,57 @@ import string
 
 @click.command("pwgen.py")
 @click.argument("length", default=16)
-@click.option("character_filter", "-f","--filter", help="Filter characters from the given string")
-@click.option("-c","--count",  default=30, help="Password count")
-@click.option("-i","--inverse", is_flag=True, help="Inverse filter. Only show characters from the given filter")
-@click.option('-b', '--bits', is_flag=True, help="Use bits instead of length to determine password length")
-@click.option('-g', '--graph', 'mode', flag_value='graph', default=True, help="mode: [default] All printable characters except whitespace")
-@click.option('-a', '--alnum', 'mode', flag_value='alnum', help="mode: letters + digits")
-@click.option('-d', '--digits', 'mode', flag_value='digits', help="mode: digits")
-@click.option('-p', '--printable', 'mode', flag_value='printable', help="mode: All printable characters")
-@click.option('-l', '--letters', 'mode', flag_value='letters', help="mode: letters")
+@click.option(
+        "character_filter",
+        "-f",
+        "--filter",
+        help="Filter characters from the given string")
+@click.option(
+        "-c",
+        "--count",
+        default=30,
+        help="Password count")
+@click.option(
+        "-i",
+        "--inverse",
+        is_flag=True,
+        help="Inverse filter. Only show characters from the given filter")
+@click.option(
+        '-b',
+        '--bits',
+        is_flag=True,
+        help="Use bits instead of length to determine password length")
+@click.option(
+        '-g',
+        '--graph',
+        'mode',
+        flag_value='graph',
+        default=True,
+        help="mode: [default] All printable characters except whitespace")
+@click.option(
+        '-a',
+        '--alnum',
+        'mode',
+        flag_value='alnum',
+        help="mode: letters + digits")
+@click.option(
+        '-d',
+        '--digits',
+        'mode',
+        flag_value='digits',
+        help="mode: digits")
+@click.option(
+        '-p',
+        '--printable',
+        'mode',
+        flag_value='printable',
+        help="mode: All printable characters")
+@click.option(
+        '-l',
+        '--letters',
+        'mode',
+        flag_value='letters',
+        help="mode: letters")
 def main(length, character_filter, count, inverse, bits, mode):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
@@ -31,14 +73,17 @@ def main(length, character_filter, count, inverse, bits, mode):
     character_pool = None
     if mode == "graph":
         character_pool = set_printable - set_whitespace
-    if mode == "alnum":
+    elif mode == "alnum":
         character_pool = set_alpha.union(set_digits)
-    if mode == "letters":
+    elif mode == "letters":
         character_pool = set_alpha
-    if mode == "digits":
+    elif mode == "digits":
         character_pool = set_digits
-    if mode == "printable":
+    elif mode == "printable":
         character_pool = set_printable
+    else:
+        print("Invalid pool mode set.", file=sys.stderr)
+        sys.exit(1)
 
     if not character_filter:
         character_filter = set()
@@ -48,8 +93,11 @@ def main(length, character_filter, count, inverse, bits, mode):
     character_pool = character_pool.difference(character_filter)
     character_pool = "".join(character_pool)
 
-    passwords = [ generate_password(character_pool, length) for i in range(1, count+1)]
+    passwords = [
+        generate_password(character_pool, length)
+        for i in range(0, count)]
     print_passwords(passwords)
+
 
 def print_passwords(passwords):
     if len(passwords) == 1:
@@ -57,14 +105,15 @@ def print_passwords(passwords):
         print(password, end="")
         return
 
-    for i,password in enumerate(passwords, 1):
+    for i, password in enumerate(passwords, 1):
         print(password, end="\t")
         if i % 3 == 0:
             print()
 
 
 def generate_password(pool, size):
-    return "".join([ random.choice(pool) for x in range(size) ])
+    return "".join([random.choice(pool) for x in range(size)])
+
 
 if __name__ == "__main__":
     main()
