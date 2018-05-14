@@ -17,7 +17,7 @@ declare branch_master="master"
 
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] [<path>] -- [GIT PUSH OPTIONS]
+Usage:	${0##*/} [OPTIONS] [<path>... [-- [GIT PUSH OPTIONS]]]
 
 arg1
   mandatory argument passed to script

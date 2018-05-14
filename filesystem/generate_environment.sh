@@ -5,10 +5,9 @@
 # 
 usage() {
   cat >&2 << EOF
-Usage:	${0##*/} [OPTIONS] <arg1> -- [EXTRA]
+Usage:	${0##*/} [OPTIONS] <directory>
 
-arg1
-  mandatory argument passed to script
+directory  generate environment in dir
   
 OPTIONS:
   -h			  help
@@ -30,7 +29,7 @@ main() {
 
   local -a options
   local -a args
-  local path=
+  local directory=
 
   check_dependencies
   # parse input args 
@@ -41,12 +40,12 @@ main() {
   unset -v args
   check_input_args "$@"
 
-  path=$1
+  directory=$1
 
 
   prepare_env
   setup
-  pushd "$path"
+  pushd "$directory"
   run
   popd
 }
@@ -87,7 +86,7 @@ check_input_args() {
 }
 
 prepare_env() {
-  mkdir -p "$path"
+  mkdir -p "$directory"
 }
 
 prepare() {
