@@ -217,6 +217,9 @@ git_init_workflow() {
   if [[ $active_branch != "master" ]]; then
     git checkout master
   fi
+  git tag "v0.0.1"
+  # hotfix only from master branch tags, merged into dev and master
+  git branch hotfix
   # develop
   git checkout -b dev || git checkout dev
   git branch stage
