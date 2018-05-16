@@ -16,6 +16,7 @@ OPTIONS:
   -v    verbose
   -q    quiet
   -d    debug
+  -a,--append  Append basename to given <git remote url>
   -n,--name <repository name>  Name of the git remote repository
   -p,--push  Push the repository and set master branch as upstream
 EOF
@@ -34,6 +35,8 @@ main() {
   local path="."
   local remote_name="${REPOSITORY_USER:-$(id -un)}"
   local enable_push=0
+
+  local flag_append_basename=0
 
   check_dependencies
   # parse input args 
@@ -60,19 +63,21 @@ run() {
   if ! path=$(realpath ${1:-$path}); then
     error 1 "$path is not valid."
   fi
-  shift
   pushd "$path" >/dev/null 2>&1
 
   if ! git_root=$(get_root_directory); then
     error 1 "$path is not a git repository."
   fi
   local remote_path=$2
+  shift 2
   local git_basename=$(basename "$git_root")
 
   if [[ -z $remote_path ]] && [[ -z $REPOSITORY_REMOTE_URL ]]; then
     error 1 "Cannot set remote repository url. Pass the url to the script manually."
   elif [[ -z $remote_path ]]; then
     remote_path="$REPOSITORY_REMOTE_URL/$git_basename"
+  elif [[ -n $remote_path ]] && (($flag_append_basename)); then
+    remote_path="$remote_path/$git_basename"
   fi
 
   git_init_remote_origin "$@"
@@ -163,6 +168,9 @@ parse_options() {
         ;;
       -p|--push)
         enable_push=1
+        ;;
+      -a|--append)
+        flag_append_basename=1
         ;;
       -n|--name)
         remote_name=$2
