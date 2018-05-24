@@ -33,7 +33,7 @@ main() {
 
   local remote_path=""
   local path="."
-  local remote_name="${REPOSITORY_USER:-$(id -un)}"
+  local remote_name="${REPOSITORY_UPSTREAM:-upstream}"
   local enable_push=0
 
   local flag_append_basename=0

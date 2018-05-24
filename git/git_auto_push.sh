@@ -1,8 +1,4 @@
 #!/bin/env bash
-# ------------------------------------------------------------------------------
-# description
-# ------------------------------------------------------------------------------
-# 
 declare branch_active=
 declare development_branches=(
 "dev"
@@ -19,8 +15,11 @@ usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] [<path>... [-- [GIT PUSH OPTIONS]]]
 
-arg1
-  mandatory argument passed to script
+ * checkout master branch
+ * ff merge production branch to master branch
+ * push to all remotes
+ * return to active branch
+
   
 OPTIONS:
   -h			  help

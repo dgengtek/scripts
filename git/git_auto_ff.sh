@@ -1,8 +1,4 @@
 #!/bin/env bash
-# ------------------------------------------------------------------------------
-# description
-# ------------------------------------------------------------------------------
-# 
 # Use as post-commit or post-merge script for development
 # Automatically merges dev branch into master branch with fast forward only.
 # If possible, will try to push updates from master branch to remotes mentioned
@@ -20,9 +16,12 @@ usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] <arg1> -- [EXTRA]
 
-arg1
-  mandatory argument passed to script
-  
+ * checkout dev branch
+ * merge active branch to dev branch
+ * checkout production branch
+ * merge dev branch to production branch
+ * return to active branch
+
 OPTIONS:
   -h			  help
   -v			  verbose
