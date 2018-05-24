@@ -2,8 +2,14 @@
 # TODO add cleanup
 # TODO add signal handler
 usage() {
-  cat << EOF
+  cat >&2 << EOF
 Usage: ${0##*/} [options] bridge
+
+It is required to set one of the mutual exclusive modes
+
+* bridged networking
+* internal networking
+* host only networking
 
 options:
     mode
@@ -17,20 +23,16 @@ mode:
     -i			    internal network only
     -h cidr		    host only network
 EOF
-  exit 1
 }
 
 main() {
-  if (($UID != 0)); then
-    error_exit 1 "Must be run with root permissions."
-  fi
   local -i flag_host_only=0
   local -i flag_bridged_network=0
   local -i flag_internal_network=0
   local bridge_log_path="/tmp/virtual_network"
 
   # flag only once
-  local -i flagged=0
+  local -i mutual_exclusive=0
   local -i flag_remove_bridge=0
   local -i force_remove=0
   local cidr="10.10.5.1/24"
@@ -40,17 +42,17 @@ main() {
   while getopts $optlist opt; do
     case $opt in
       b)
-	is_flagged
+	is_mutual_exclusive
 	let flag_bridged_network=1
 	cidr=$(echo $OPTARG | cut -f1 -d ",")
 	dev_eth=$(echo $OPTARG | cut -f2 -d ",")
 	;;
       i)
-	is_flagged
+	is_mutual_exclusive
 	let flag_internal_network=1
 	;;
       h)
-	is_flagged
+	is_mutual_exclusive
 	let flag_host_only=1
 	cidr=$OPTARG
 	;;
@@ -66,7 +68,8 @@ main() {
     esac
   done
   shift $((OPTIND -1))
-  local bridge_id="br$(genpw.sh -a 4)"
+
+  local bridge_id="br$(pwgen.py -c 1 -a 4)"
   [[ -n $1 ]] && bridge_id=$1
   local -r bridge_log_path="${bridge_log_path}_$bridge_id"
   local -r bridge_log_file="${bridge_log_path}/$bridge_id"
@@ -74,14 +77,18 @@ main() {
   if (($flag_remove_bridge == 1));then 
     remove_bridge "$1"
   else
-    sanity_check
+    check_state
     start_bridge "$bridge_id"
   fi
 }
+
+
 prepare() {
   mkdir -p "$bridge_log_path"
   touch "$bridge_log_file"
 }
+
+
 cleanup() {
   if ! bridge_exists "$bridge_id"; then
     rm "$bridge_log_file"
@@ -89,20 +96,31 @@ cleanup() {
   fi
 }
 
-sanity_check() {
-  # check if no flag was set
-  if [[ $(id -u) != 0 ]] || [ -z "$bridge_id" ] || ((flagged == 0)); then
+
+check_state() {
+  if (($UID != 0)); then
+    error_exit 1 "Must be run with root permissions."
+  fi
+  if [[ -z "$bridge_id" ]]; then
     usage
+    error_exit 1 "No bridge has been set."
+  fi
+  if ((mutual_exclusive == 0)); then
+    usage
+    error_exit 1 "No mode has been set."
   fi
 }
 
-is_flagged() {
-  if ((flagged == 1)); then
+
+is_mutual_exclusive() {
+  if ((mutual_exclusive == 1)); then
     usage
   else
-    let flagged=1
+    let mutual_exclusive=1
   fi
 }
+
+
 remove_attached_devices() {
   local -r bridge_id=${1:?"No bridge id supplied to remove attached devices."}
   local -r bridge_log_file="${bridge_log_path}/$bridge_id"
@@ -111,6 +129,7 @@ remove_attached_devices() {
     net_tuntap.sh -r "$bridge_id" "$tapdev"
   done < "$bridge_log_file"
 }
+
 
 remove_bridge() {
   set -e
@@ -130,17 +149,20 @@ remove_bridge() {
   set +e
 }
 
+
 bridge_is_up() {
   local -r path_to_bridge="/sys/class/net/$bridge_id/operstate"
   [ -e $path_to_bridge ] \
     && [ $(cat $path_to_bridge) != "down" ]
 }
 
+
 bridge_exists() {
   local -r bridge_id=$1
   [ ! -z $bridge_id ] \
     && [ -e /sys/devices/virtual/net/"$bridge_id" ]
 }
+
 
 create_bridge() {
   local -r bridge_id=$1
@@ -152,12 +174,13 @@ create_bridge() {
     # theres no need to check for flag, since 
     # the bridge needs to get an addr with both modes
     create_host_only_networking "$bridge_id" "$cidr" 
-    # attach to eth dev only if flagged
+    # attach to eth dev only if mutual_exclusive
     if (($flag_bridged_network== 1)); then
       create_bridged_networking "$bridge_id" "$dev_eth" 
     fi
   fi
 }
+
 
 create_internal_networking() {
   # if iptables rules are set to accept need to add rule to reject packets
@@ -165,17 +188,20 @@ create_internal_networking() {
   :
 }
 
+
 create_host_only_networking() {
   local -r bridge_id=$1
   local -r cidr=$2
   ip addr add "$cidr" dev "$bridge_id"
 }
 
+
 create_bridged_networking() {
   local -r bridge_id=$1
   local -r dev_eth=$2
   ip link set $dev_eth master $bridge_id
 }
+
 
 start_bridge() {
   local -r bridge_id=$1
@@ -187,13 +213,19 @@ start_bridge() {
     ip link set dev "$bridge_id" up
   fi
 }
+
+
 log() {
   echo -n "$@" | logger -s -t ${0##*/}
 }
+
+
 error_exit() {
   exit_code=${1:-0}
   shift
   log "$@"
   exit $exit_code
 }
+
+
 main "$@"
