@@ -16,9 +16,11 @@ OPTIONS:
   -v    verbose
   -q    quiet
   -d    debug
-  -a,--append  Append basename to given <git remote url>
+  -b,--basename Append basename to given <git remote url>
+  -a,--all Push all - branches, tags to remote
   -n,--name <repository name>  Name of the git remote repository
-  -p,--push  Push the repository and set master branch as upstream
+  -p,--push  Push to the upstream branch 
+  -u,--upstream-branch Set the upstream branch - match to local branch name
 EOF
 }
 
@@ -27,6 +29,9 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
+  local -i flag_push_all=0
+  local -i enable_push=0
+  local -i flag_append_basename=0
 
   local -a options
   local -a args
@@ -34,9 +39,7 @@ main() {
   local remote_path=""
   local path="."
   local remote_name="${REPOSITORY_UPSTREAM:-upstream}"
-  local enable_push=0
-
-  local flag_append_basename=0
+  local upstream_branch="dev"
 
   check_dependencies
   # parse input args 
@@ -167,13 +170,20 @@ parse_options() {
         enable_quiet=1
         ;;
       -p|--push)
-        enable_push=1
+        let enable_push=1
         ;;
-      -a|--append)
-        flag_append_basename=1
+      -a|--all)
+        let flag_push_all=1
+        ;;
+      -b|--basename)
+        let flag_append_basename=1
         ;;
       -n|--name)
         remote_name=$2
+        shift
+        ;;
+      -u|--upstream-branch)
+        upstream_branch=$2
         shift
         ;;
       -h|--help)
@@ -247,12 +257,21 @@ _example_command() {
 git_init_remote_origin() {
   # add default remotes to repository
   local -r active_branch=$(get_active_branch)
-  if [[ $active_branch != "master" ]]; then
-    git checkout master
-  fi
   git remote add "$remote_name" "$remote_path"
-  (($enable_push)) && git push --set-upstream "$remote_name" master
+  (($enable_push)) && git_push_upstream
   git checkout "$active_branch"
+}
+
+git_push_upstream() {
+  if [[ $active_branch != "$upstream_branch" ]]; then
+    git checkout "$upstream_branch" || git checkout -b "$upstream_branch"
+  fi
+  if (($flag_push_all)); then
+    git push --all --set-upstream 
+    git push --tags
+  else
+    git push --set-upstream "$remote_name" "$upstream_branch"
+  fi
 }
 
 #-------------------------------------------------------------------------------
