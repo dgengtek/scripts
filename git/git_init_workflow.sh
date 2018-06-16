@@ -1,17 +1,16 @@
 #!/bin/env bash
 # ------------------------------------------------------------------------------
-# init branches
-  # master is only merged by ci on successfull tests
-  # only release will be merged to master and also to develop
-  # development only onto develop branch, releases ready tags are merged into
-  #   release branch and then merged into master if successfull
-  # hotfixed are created from master tags and merged into dev and master
-# ------------------------------------------------------------------------------
-# 
 
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] [<git repo path>] [-- [EXTRA]]
+
+init branches
+ * master is only merged by ci on successfull tests
+ * only release will be merged to master and also to develop
+ * development only onto develop branch, releases ready tags are merged into
+   release branch and then merged into master if successfull
+ * hotfixed are created from master tags and merged into dev and master
 
 OPTIONS:
   -h			  help

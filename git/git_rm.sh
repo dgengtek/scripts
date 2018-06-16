@@ -1,12 +1,9 @@
 #!/bin/env bash
-# ------------------------------------------------------------------------------
-# description
-# ------------------------------------------------------------------------------
-# 
-
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] <path of file>
+
+remove file completly from git repository
 
 OPTIONS:
   -r			  recursive

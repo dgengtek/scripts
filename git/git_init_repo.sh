@@ -10,7 +10,7 @@ Usage:	${0##*/} [<options>] <destination>
 Init a git repo with TODO.wiki, README.adoc, LICENCE and a 'dev,release,stage' branch.
   
 options:
-  -r                    add a remote repo to gogs
+  -r                    add a remote repo
   -b                    do not add branches(release, stage) based on master
   -h			help
   -n                    no commit
