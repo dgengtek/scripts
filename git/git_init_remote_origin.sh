@@ -267,8 +267,8 @@ git_push_upstream() {
     git checkout "$upstream_branch" || git checkout -b "$upstream_branch"
   fi
   if (($flag_push_all)); then
-    git push --all --set-upstream 
-    git push --tags
+    git push --all --set-upstream "$remote_name"
+    git push --tags "$remote_name"
   else
     git push --set-upstream "$remote_name" "$upstream_branch"
   fi
