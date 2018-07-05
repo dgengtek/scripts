@@ -1,0 +1,81 @@
+resource_types:
+- name: email
+  type: docker-image
+  source:
+    repository: pcfseceng/email-resource
+
+- name: git-workflow
+  type: docker-image
+  source:
+    repository: {{source_repository_git_workflow_image}}
+    tag: v1
+
+resources:
+- name: r-scripts-dev
+  type: git-workflow
+  source:
+    uri: {{source_uri}}
+    branch: dev
+    private_key: ((r-git-ssh.private_key))
+
+- name: send-email
+  type: email
+  source:
+    smtp:
+      host: {{smtp_host}}
+      port: "587" # this must be a string
+      username: ((r-email.username))
+      password: ((r-email.password))
+    from: {{smtp_from}}
+    to: 
+      - {{smtp_to}}
+
+jobs:
+- name: j-test
+  public: true
+  plan:
+    - get: r-scripts-dev
+      trigger: True
+
+    - task: show content
+      on_failure:
+        put: send-email
+        params:
+          subject_text: "Build failed: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
+          body_text: "Failed task: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source: 
+            repository: {{repository_task_image}}
+            tag: v1
+        inputs:
+          - name: r-scripts-dev
+
+        run:
+          path: bash
+          args:
+            - r-scripts-dev/install.sh
+
+    - put: send-email
+      params:
+        subject_text: "Build finished: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
+        body_text: "${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+
+- name: j-merge-ff
+  plan:
+    - get: r-scripts-dev
+      trigger: True
+      params:
+        fetch:
+          - release
+      passed:
+        - j-test
+
+    - put: r-scripts-dev
+      params:
+        merge_to:
+          - branch: release
+            ff_only: True
+        repository: r-scripts-dev
