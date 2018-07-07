@@ -18,6 +18,12 @@ resources:
     branch: dev
     private_key: ((r-git-ssh.private_key))
 
+- name: r-docker-image-build-scripts
+  type: docker-image
+  source: 
+    repository: {{repository_build_image}}
+    tag: v1
+
 - name: send-email
   type: email
   source:
@@ -31,13 +37,38 @@ resources:
       - {{smtp_to}}
 
 jobs:
-- name: j-test
+- name: j-build-image
   public: true
   plan:
     - get: r-scripts-dev
       trigger: True
 
+    - put: r-docker-image-build-scripts
+      params:
+        build: r-scripts-dev
+        build_args: 
+          http_proxy: "http://proxy.intranet.dgeng.eu:3128"
+      on_failure:
+        put: send-email
+        params:
+          subject_text: "Build failed: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
+          body_text: "Docker image build failed: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+
+- name: j-run-tests
+  public: true
+  plan:
+    - aggregate:
+      - get: r-scripts-dev
+        trigger: True
+        passed:
+          - j-build-image
+      - get: r-docker-image-build-scripts
+        trigger: True
+        passed:
+          - j-build-image
+
     - task: show content
+      image: r-docker-image-build-scripts
       on_failure:
         put: send-email
         params:
@@ -45,11 +76,6 @@ jobs:
           body_text: "Failed task: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
       config:
         platform: linux
-        image_resource:
-          type: docker-image
-          source: 
-            repository: {{repository_task_image}}
-            tag: v1
         inputs:
           - name: r-scripts-dev
 
@@ -71,7 +97,7 @@ jobs:
         fetch:
           - release
       passed:
-        - j-test
+        - j-run-tests
 
     - put: r-scripts-dev
       params:
