@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # Install scripts
 export PATH="$PATH:$HOME/.local/bin/:$HOME/.bin/"
 export PATH_USER_LIB="$HOME/.local/lib/"
