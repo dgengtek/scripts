@@ -1,0 +1,6 @@
+source_repository_git_workflow_image: "docker.domain.tld/concourse/resource/git-workflow"
+source_uri: "git@git.domain.tld:scripts/common" 
+smtp_host: "smtp.domain.tld" 
+smtp_from: "concourse-build@domain.tld" 
+smtp_to: "build@domain.tld" 
+repository_build_image: "docker.domain.tld/build/etc/scripts-common"
