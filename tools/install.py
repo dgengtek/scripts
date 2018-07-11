@@ -6,33 +6,54 @@ used to parse configuration for deployment of directory structure
 from configparser import ConfigParser
 import os
 import sys
+import subprocess
 
-# TODO improve logging
 import logging
 from pathlib import Path
 
-# TODO use glob(from pathlib with Path("path/to/dir").glob("ew*"), and pathlib
-# for linux and nt
-
-import pathlib
-
 from argparse import ArgumentParser
-from functools import reduce
+
 _keys = {
-  "path", 
+  "path",
   "pkgs",
   "exclude",
   "directory",
   }
-_logger = logging.getLogger(sys.argv[0])
-_logger.setLevel(logging.INFO)
-_ch = logging.StreamHandler()
-_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-_ch.setFormatter(_formatter)
-_logger.addHandler(_ch)
+
 _cmd = "stow"
 # default config filename
-_config_filename = { "setup.ini", }
+_config_filename = {"setup.ini", }
+
+journalhandler = None
+try:
+    from systemd.journal import JournaldLogHandler
+    journalhandler = JournaldLogHandler()
+except ImportError:
+    pass
+
+
+class Logger:
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    format_string = "%(asctime)s %(module)s %(name)s: [%(levelname)s] %(message)s"
+    formatter = logging.Formatter(format_string)
+    stream_handler.setFormatter(formatter)
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def get_logger(self, level=logging.WARNING):
+        logger = logging.getLogger(__name__)
+        logger.setLevel(level)
+        logger.addHandler(self.stream_handler)
+        if journalhandler:
+            logger.addHandler(journalhandler)
+        return logger
+
+
+logger = Logger.get_logger()
+
 
 def main():
     global _cmd
@@ -41,42 +62,43 @@ def main():
     parser = ConfigParser()
 
     global _config_filename
-    main.config=""
+    main.config = ""
 
     input_args = parse_argv(sys.argv[1:])
-    main.config = input_args.get("config",_config_filename)
+    main.config = input_args.get("config", _config_filename)
     main.config = Path(main.config)
     if not main.config.is_file():
-        print("No configuration file found")
-        usage()
+        logger.info("No configuration file found")
 
     if not parser.read(str(main.config)):
-        printexit("Configuration: {} not found.".format(config))
+        printexit("Configuration: {} not found.".format(main.config))
 
+    logger.debug("Parsing configuration file {}".format(main.config))
     sections = parser.sections()
     for section in sections:
-        values = get_values(parser[section],_keys)
+        values = get_values(parser[section], _keys)
         path = Path(values.get("path"))
-        values.update({"path":path})
+        values.update({"path": path})
         args = build_args(values, **input_args)
         run(_cmd, args)
-    os.wait()
+    logger.debug("Done")
 
-def usage():
-    global _cmd
-    cmd = get_cmd_path(_cmd)
-    os.execv(cmd,["-h"])
-    sys.exit(1)
 
 def parse_argv(argv):
     argparser = get_argparser()
     namespace = argparser.parse_args(argv)
 
+    if namespace.debug:
+        logger.setLevel(logging.DEBUG)
+    elif namespace.verbose:
+        logger.setLevel(logging.INFO)
+
     # get dictionary of values
     return vars(namespace)
 
+
 def get_argparser():
-    summary="""
+    summary = """
     stow installer wrap
 
     """
@@ -84,49 +106,55 @@ def get_argparser():
     argparser = ArgumentParser(description=summary)
 
     argparser.add_argument("config", help="Ini configuration file")
-    argparser.add_argument('args', nargs=REMAINDER, 
-        help="use remainder arguments to pass to stow")
+    argparser.add_argument("-d", "--debug", action="store_true", help="verbose output")
+    argparser.add_argument("-v", "--verbose", action="store_true", help="Debugging")
+    argparser.add_argument(
+            'args',
+            nargs=REMAINDER,
+            help="use remainder arguments to pass to stow")
     return argparser
 
+
 def get_cmd_path(cmd):
-    # if on local path return 
+    # if on local path return
     cmd = Path(cmd)
     if cmd_exists(cmd):
         return cmd
     # try in tools
     elif cmd_exists(Path("tools", cmd)):
-        return Path("tools/",cmd)
+        return Path("tools/", cmd)
 
     path = os.environ["PATH"].split(os.pathsep)
     for p in path:
-        ex = Path(p ,cmd)
+        ex = Path(p, cmd)
         if ex.is_file():
-          return ex
+            return ex
     printexit("{} not found in PATH".format(cmd))
+
 
 def cmd_exists(cmd):
     cmd = str(cmd)
     return os.path.isfile(cmd) and os.access(cmd, os.X_OK)
 
-def printerr(string):
-    _logger.warning(string)
 
 def printexit(string):
-    _logger.error(string)
+    logger.error(string)
     sys.exit(1)
 
+
 def get_values(section, keys):
-    d=dict()
+    d = dict()
     for key in keys:
         value = section.get(key)
-        d.update({key:value})
+        d.update({key: value})
     return d
 
 
 def filter_packages(pkgs=None, exclude=None):
     if len(pkgs) is 0:
         raise RuntimeError("No packages supplied")
-    return filter(lambda x:x not in exclude, pkgs)
+    return filter(lambda x: x not in exclude, pkgs)
+
 
 def _get_absolute_path(path):
     path = path.expanduser()
@@ -135,9 +163,8 @@ def _get_absolute_path(path):
         path = path.parent
     return str(path)
 
-def build_args(values, filter_pkgs=filter_packages, **kwargs):
-    global _cmd
 
+def build_args(values, filter_pkgs=filter_packages, **kwargs):
     directory = values.get("directory", None)
     path = values.get("path")
     path = _get_absolute_path(path)
@@ -148,8 +175,7 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
     os.chdir(source)
 
     args = list()
-    args.append(_cmd)
-    args.extend(kwargs.get("args",[]))
+    args.extend(kwargs.get("args", []))
     if directory:
         args.extend(["-d", directory])
     args.extend(["-t", path])
@@ -157,14 +183,14 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
     # get all packages
     pkgs = values.get("pkgs", "")
     if not pkgs or pkgs.startswith("*"):
-      pkgs = os.listdir(source)
+        pkgs = os.listdir(source)
     else:
-      pkgs = [ x.strip() for x in pkgs.split(",") ]
+        pkgs = [x.strip() for x in pkgs.split(",")]
 
     # filter excluded
     excluded_packages = values.get("exclude", [])
     if excluded_packages:
-        excluded_packages = [ x.strip() for x in excluded_packages.split(",") ]
+        excluded_packages = [x.strip() for x in excluded_packages.split(",")]
     else:
         excluded_packages = list()
 
@@ -176,16 +202,21 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
     for p in pkgs:
         # only stow directories
         if not os.path.isdir(p):
-          continue
+            continue
         args.extend(["-p", p])
     return args
+
 
 def run(cmd, args):
     if isinstance(cmd, Path):
         cmd = str(cmd)
-    pid = os.fork()
-    if pid == 0:
-        os.execv(cmd ,args)
+    logger.debug("Running: {} {}".format(cmd, " ".join(args)))
+    proc = subprocess.Popen([cmd] + args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc.wait()
+    if proc.stdout.peek():
+        logger.info("\n".join(proc.stdout.readlines()))
+    if proc.returncode > 0:
+        logger.error("\n".join(proc.stderr.readlines()))
 
 
 if __name__ == "__main__":
