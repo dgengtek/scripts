@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 from pathlib import Path
 import subprocess
 import logging

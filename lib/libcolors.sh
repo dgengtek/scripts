@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # reset color
 COLOR_NONE="\033[0m"

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 ord() { printf "%d" "'$1"; }
 chr() { printf \\$(printf '%03o' $1); }
 

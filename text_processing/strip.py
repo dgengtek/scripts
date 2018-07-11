@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 import sys
 data_input = ""
 if len(sys.argv) == 1:

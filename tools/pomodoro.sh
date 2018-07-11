@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # ------------------------------------------------------------------------------
 # track time via pomodoro
 # use taskwarrior for flagging task

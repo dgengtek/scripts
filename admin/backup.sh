@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # TODO use fifos to synchronize ordered output or write to temporary files and
 # merge when finished to output

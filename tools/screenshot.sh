@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # ------------------------------------------------------------------------------
 # wrapper script
 # screenshot with maim for awesome wm

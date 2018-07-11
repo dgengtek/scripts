@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 usage() {
   cat << EOF
 Usage: ${0##*/} [OPTIONS] image [options for qemu]

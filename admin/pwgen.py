@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # generate passwords
 
 # TODO: generate passwords first then build aligned output table format

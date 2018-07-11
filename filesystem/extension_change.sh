@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 #change extension of files
 
 oldext=$1

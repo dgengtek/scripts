@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # TODO add different output type
 # TODO filter to only use specific input file types
 # TODO fix race condition counting by using fifos

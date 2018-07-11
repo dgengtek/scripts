@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # Use as post-commit or post-merge script for development
 # Automatically merges dev branch into master branch with fast forward only.
 # If possible, will try to push updates from master branch to remotes mentioned

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 usage() {
   echo "usage:  $0 db owner"

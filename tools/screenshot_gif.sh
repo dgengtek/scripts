@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 declare -i break_loop=0
 catch_signal() {
   let break_loop=1

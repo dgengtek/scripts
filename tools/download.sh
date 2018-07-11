@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [OPTIONS] (FILENAME | URL...)

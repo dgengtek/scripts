@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # need to start pavucontrol after running to change recording device to monitor
 # to record audio
 filename=""

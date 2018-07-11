@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 declare branch_active=
 declare development_branches=(
 "dev"

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # force objects in repo to be dereferenced and garbage collected
 set -e
 git for-each-ref --format='delete %(refname)' refs/original \

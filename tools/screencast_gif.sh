@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 mkvfilename=$(mktemp -u /tmp/tmp.XXXXXXXXX.mkv)
 sh screencast.sh "$mkvfilename"
 # make frames

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 main() {
   if ! hash pacmd 2>/dev/null; then
     echo asexit

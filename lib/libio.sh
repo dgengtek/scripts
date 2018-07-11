@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 eat_pipe() {
   local -r pipe=$1
 #  echo "eating pipe $pipe"

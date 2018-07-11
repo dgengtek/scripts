@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 device=$1
 ip link set dev "$device" down
 macchanger -r "$device"

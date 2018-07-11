@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # first three octet identify organization
 # organizationally unique identifier(OUI)
 

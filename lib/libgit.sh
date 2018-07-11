@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 get_active_branch() { git branch | awk '/^\*/ {print $2}'; }
 

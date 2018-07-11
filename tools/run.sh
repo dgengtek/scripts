@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # TODO: use coproc for buffering logs
 usage() {
   cat >&2 << EOF

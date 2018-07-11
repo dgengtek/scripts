@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # TODO add cleanup
 # TODO add signal handler
 usage() {
