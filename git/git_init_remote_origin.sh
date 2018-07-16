@@ -8,8 +8,8 @@ usage() {
   cat >&2 << EOF
 Usage: ${0##*/} [OPTIONS] [<git repository path> [<git remote url>]]
 
-* Remote name defaults to environment variable \$REPOSITORY_USER or the userid if not set
-* Remote url defaults to \$REPOSITORY_REMOTE_URL else must be passed to the script
+* Remote name defaults to environment variable REPOSITORY_USER='${REPOSITORY_USER:-"not set"}' or the userid if not set
+* Remote url defaults to REPOSITORY_REMOTE_URL='${REPOSITORY_REMOTE_URL:-"not set"}' else must be passed to the script
 
 OPTIONS:
   -h    help
