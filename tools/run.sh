@@ -10,6 +10,7 @@ OPTIONS:
   -d, --debug
   -v, --verbose 
   -q, --quiet
+  -c, --comment <comment>  comment for notification
   -l, --log           log command output
   -m, --mail          mail result
   -o, --output        mail cmd output
@@ -38,6 +39,7 @@ main() {
   local recipient="notification"
   local sender="runsh+script"
   local logfile="/dev/null"
+  local comment=
   local -a commands=
   parse_options "$@"
   set -- ${commands[@]}
@@ -87,7 +89,8 @@ run() {
 run_commands() {
   time "$@"
 
-  local -r subject="$?[$USER@$HOSTNAME]$ run.sh"
+  local subject="$?[$USER@$HOSTNAME]$ run.sh"
+  [[ -n $comment ]] && subject+=" # $comment"
   local -r message=$@
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
@@ -136,6 +139,10 @@ parse_options() {
         ;;
       -s|--silent)
         enable_notifications=0
+        ;;
+      -c|--comment)
+        comment=$2
+        do_shift=2
         ;;
       -o|--output)
         enable_mail_cmd_output=1
