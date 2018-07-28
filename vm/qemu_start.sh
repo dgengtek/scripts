@@ -183,7 +183,7 @@ connect_bridges() {
 connect_tapdevs() {
   local -r id=$1
   local -r tapdev=$2
-  local -r mac=${mac:-$(generate_mac.py -u)}
+  local -r mac=${mac:-$(mac_generate.py -l -o kvm)}
 
   options+=("-netdev tap,id=t$id,ifname=$tapdev,script=no,downscript=no \
     -device e1000,netdev=t$id,id=nic$id,mac=$mac")
