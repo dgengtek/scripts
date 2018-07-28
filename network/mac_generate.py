@@ -49,7 +49,7 @@ import click
 @click.option(
     "-o", "--oui",
     type=click.Choice([
-        "xen", "openvz", "vmware",
+        "xen", "openvz", "vmware", "lxc", "lxd",
         "qemu", "kvm", "private", "none"]),
     default="none",
     help="Choose MAC OUI. \
@@ -87,6 +87,8 @@ import click
 def main(oui, gl, um, bits, separator, dryrun, verbose):
     oui_mapping = {
         "xen": MACXen,
+        "lxc": MACXen,
+        "lxd": MACXen,
         "openvz": MACOpenVZ,
         "vmware": MACVMware,
         "qemu": MACKVM,
