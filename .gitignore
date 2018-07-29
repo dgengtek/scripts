@@ -5,3 +5,4 @@ commit.txt
 *.swp
 .cache
 .pytest_cache
+ciparams.yml
