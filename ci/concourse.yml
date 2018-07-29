@@ -13,6 +13,7 @@ resource_types:
 resources:
 - name: r-scripts-dev
   type: git-workflow
+  check_every: 1h
   source:
     uri: {{source_uri}}
     branch: dev
