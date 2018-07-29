@@ -48,7 +48,7 @@ jobs:
       params:
         build: r-scripts-dev
         build_args: 
-          http_proxy: "{{http_proxy}}"
+          http_proxy: "((http_proxy))"
       on_failure:
         put: send-email
         params:
