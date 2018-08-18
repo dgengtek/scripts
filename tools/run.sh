@@ -42,10 +42,10 @@ main() {
   local comment=
   local -a commands=
   parse_options "$@"
-  set -- ${commands[@]}
+  set -- "${commands[@]}"
   unset -v commands
 
-  if [[ $# < 1 ]]; then
+  if [[ $# -lt 1 ]]; then
     usage
     error_exit 1 "No commands."
   fi
@@ -60,11 +60,11 @@ main() {
 run() {
   if (($enable_logging)) || (($enable_mail)); then
     logfile=$(mktemp -u /tmp/runXXXXXX.log)
-    echo -e "$@\n" > "$logfile"
+    echo -e "$*\\n" > "$logfile"
   fi
 
   if (($run_as_sudo)); then
-    set -- sudo $@
+    set -- sudo "$@"
     command sudo -v
   fi 
   exec 3>&1
@@ -91,7 +91,7 @@ run_commands() {
 
   local subject="$?[$USER@$HOSTNAME]$ run.sh"
   [[ -n $comment ]] && subject+=" # $comment"
-  local -r message=$@
+  local -r message=$*
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
     notify-send "$subject" "'$message'"
@@ -104,7 +104,7 @@ To: $recipient
 
 Subject: $subject
 
-$(cat $logfile)
+$(cat "$logfile")
 EOF
   fi
   cleanup
