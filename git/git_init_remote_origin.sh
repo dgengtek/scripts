@@ -16,11 +16,11 @@ OPTIONS:
   -v    verbose
   -q    quiet
   -d    debug
-  -b,--basename Append basename to given <git remote url>
-  -a,--all Push all - branches, tags to remote
+  -b,--basename  Append basename to given <git remote url>
+  -a,--all  Push all - branches, tags to remote, implicitly pushes
   -n,--name <repository name>  Name of the git remote repository
   -p,--push  Push to the upstream branch 
-  -u,--upstream-branch Set the upstream branch - match to local branch name
+  -u,--upstream-branch <branch>  Set the upstream branch to use
 EOF
 }
 
@@ -174,6 +174,7 @@ parse_options() {
         ;;
       -a|--all)
         let flag_push_all=1
+        let enable_push=1
         ;;
       -b|--basename)
         let flag_append_basename=1
