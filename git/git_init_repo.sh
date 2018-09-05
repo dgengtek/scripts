@@ -17,6 +17,7 @@ options:
   -d                    debug
   --mit                 add MIT licence
   -a, --author name     add author to licence
+  -x,--exclude  do not add any files
   -h			  help
   -v			  verbose
   -q			  quiet
@@ -38,6 +39,7 @@ main() {
   local -r optlist="rp:"
   local author="github.com/dgengtek"
   local add_mit_licence=0
+  local add_files=1
   local minimal_branches=0
   local -i commit=1
 
@@ -170,6 +172,9 @@ parse_options() {
       -n)
         commit=0
         ;;
+      -x|--exclude)
+        add_files=0
+        ;;
       -a|--author)
         author=$2
         shift
@@ -251,8 +256,8 @@ git_init_repo() {
   mkdir -p "$path"
   pushd "$path" >/dev/null 2>&1 || error 1 "$path push failed."
   git init || error 1 "Git repo init failed."
-  touch TODO.wiki
-  cat > README.adoc << EOF
+  (($add_files)) && touch TODO.wiki
+  (($add_files)) && cat > README.adoc << EOF
 = Inititial repository commit for $(basename $path)
 $author
 v.0.0.1, $(date +%F)
@@ -261,11 +266,8 @@ EOF
 *.swp
 EOF
 
-  if (($add_mit_licence)); then
-    _gen_licence_mit
-  else
-    touch LICENSE
-  fi
+  (($add_files)) && _gen_licence
+
   git add .
   (($commit)) && git commit -m "Initial commit of $base"
   if ! (($minimal_branches)); then
@@ -276,6 +278,14 @@ EOF
   fi
   popd >/dev/null 2>&1
 
+}
+
+_gen_licence() {
+  if (($add_mit_licence)); then
+    _gen_licence_mit
+  else
+    touch LICENSE
+  fi
 }
 
 _gen_licence_mit() {
