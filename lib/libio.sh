@@ -2,7 +2,7 @@
 eat_pipe() {
   local -r pipe=$1
 #  echo "eating pipe $pipe"
-  if ! [[ -p "$pipe"]]; then
+  if ! [[ -p "$pipe" ]]; then
     return
   fi
   printf "" > $pipe &
