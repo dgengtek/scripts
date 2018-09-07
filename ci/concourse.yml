@@ -33,6 +33,7 @@ resources:
       port: "587" # this must be a string
       username: ((r-email.username))
       password: ((r-email.password))
+      host_origin: ((smtp_host))
     from: {{smtp_from}}
     to: 
       - {{smtp_to}}
