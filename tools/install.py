@@ -214,9 +214,11 @@ def run(cmd, args):
     proc = subprocess.Popen([cmd] + args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     proc.wait()
     if proc.stdout.peek():
+        out = [x.decode("UTF-8") for x in proc.stdout.readlines()]
         logger.info("\n".join(proc.stdout.readlines()))
     if proc.returncode > 0:
-        logger.error("\n".join(proc.stderr.readlines()))
+        out = [x.decode("UTF-8") for x in proc.stderr.readlines()]
+        logger.error("\n".join(out))
 
 
 if __name__ == "__main__":
