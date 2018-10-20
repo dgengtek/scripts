@@ -6,7 +6,7 @@
 
 usage() {
 cat >&2 << EOF
-Usage: ${0##*/} [OPTIONS]
+Usage: ${0##*/} [OPTIONS] <session name>
 
 OPTIONS:
 -h  help
@@ -133,7 +133,7 @@ parse_options() {
 
   local do_shift=0
   case $1 in
-      -d|--debug)
+      -x|--debug)
         enable_debug=1
         ;;
       -v|--verbose)
@@ -149,6 +149,9 @@ parse_options() {
       -p|--path)
         path=$2
         do_shift=2
+        ;;
+      -d|--detach)
+        tmux_detach=1
         ;;
       --)
         do_shift=3
