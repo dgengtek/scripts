@@ -7,13 +7,15 @@ import subprocess
 METADATA = "metadata-concourse.ini"
 CONCOURSE_PIPELINE = "concourse.yml"
 
+# argv 1 path to metadata + concourse
 
 def main():
     global METADATA
     global CONCOURSE_PIPELINE
 
     config = configparser.ConfigParser()
-    relative_path = os.path.dirname(sys.argv[0])
+    if len(sys.argv) > 1:
+        relative_path = os.path.dirname(sys.argv[1])
     if relative_path:
         os.chdir(relative_path)
     with open(METADATA) as f:
