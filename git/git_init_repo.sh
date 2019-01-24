@@ -253,6 +253,7 @@ git_init_repo() {
     error 1 "$path is not valid."
   fi
   local -r base=$(basename "$path")
+  local -r version_date=$(date +%Y.%m)
   mkdir -p "$path"
   pushd "$path" >/dev/null 2>&1 || error 1 "$path push failed."
   git init || error 1 "Git repo init failed."
@@ -260,7 +261,7 @@ git_init_repo() {
   (($add_files)) && cat > README.adoc << EOF
 = Inititial repository commit for $(basename $path)
 $author
-v.0.0.1, $(date +%F)
+$version_date
 EOF
   ! [[ -f .gitignore ]] && cat > .gitignore << EOF
 *.swp
