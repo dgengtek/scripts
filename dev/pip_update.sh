@@ -8,7 +8,7 @@ EOF
 }
 
 main() { 
-  pip install --user -U $(pip list | awk '{print $1;}')
+  pip install --user -U $(pip list --user | awk 'NR>2 {print $1;}')
 }
 
 main "$@"
