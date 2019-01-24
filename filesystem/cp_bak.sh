@@ -11,11 +11,6 @@ EOF
 }
 
 main() {
-}
-
-main "$@"
-
-main() {
   # flags
   local -i enable_verbose=0
   local -i enable_quiet=0
@@ -47,7 +42,11 @@ main() {
 ################################################################################
 
 run() {
-  _bak
+  if (($restore)); then
+    _restore "$@"
+  else
+    _bak "$@"
+  fi
 }
 
 _bak() {
