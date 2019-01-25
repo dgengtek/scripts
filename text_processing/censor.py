@@ -27,6 +27,11 @@ import string
         is_flag=True,
         help="Replace characters with '*'")
 @click.option(
+        '-s',
+        '--substring',
+        is_flag=True,
+        help="Replace only characters within quotes ['\"]")
+@click.option(
         '-g',
         '--graph',
         'mode',
@@ -57,7 +62,7 @@ import string
         'mode',
         flag_value='letters',
         help="censor mode: letters")
-def main(input_string, character_filter, random_censor, hidden, mode):
+def main(input_string, character_filter, random_censor, hidden, substring, mode):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
@@ -85,7 +90,7 @@ def main(input_string, character_filter, random_censor, hidden, mode):
 
     character_pool = character_pool.difference(character_filter)
     character_pool = "".join(character_pool)
-    pool = CensorPool(character_pool, random_censor, hidden)
+    pool = CensorPool(character_pool, random_censor, hidden, substring)
 
     if not input_string:
         input_string = sys.stdin.readlines()
@@ -100,12 +105,25 @@ def main(input_string, character_filter, random_censor, hidden, mode):
 
 
 class CensorPool():
-    def __init__(self, character_pool, random_censor=False, hidden=False):
+    quotes = {'"', "'"}
+
+    def __init__(self,
+            character_pool,
+            random_censor=False,
+            hidden=False,
+            substring=False):
         self.character_pool = character_pool
         self.random_censor = random_censor
         self.hidden = hidden
+        self.substring = substring
 
     def censor(self, input_string):
+        if self.substring:
+            return self.__censor_substring(input_string)
+        else:
+            return self.__censor_string(input_string)
+
+    def __censor_string(self, input_string):
         output = []
         for c in input_string:
             new_char = c
@@ -121,6 +139,34 @@ class CensorPool():
 
         return "".join(output)
 
+    def __censor_substring(self, input_string):
+        stack = list(reversed(input_string))
+        output = []
+        while len(stack) > 0:
+            c = stack.pop()
+            if c in CensorPool.quotes:
+                index = self.__find_quoted_substring(stack, c)
+                if index is -1:
+                    output.extend("{}{}".format(c, self.__censor_string(reversed(stack))))
+                    break
+                # make sure to include quote
+                index += 1
+
+                # exclude the quote from substring
+                substring = stack[-index+1:]
+                substring = "{}{}{}".format(c, self.__censor_string(substring), c)
+                substring = reversed(substring)
+                output.extend(substring)
+                del stack[-index:]
+                continue
+            output.append(c)
+
+        return "".join(output)
+
+    def __find_quoted_substring(self, substring, quotation):
+        res = "".join(reversed(substring))
+        return res.find(quotation)
+
     def censor_character(self, input_character):
         if len(input_character) > 1:
             raise Exception("String to long to handle")
@@ -135,7 +181,7 @@ class CensorPool():
 
 
 def test_censorpool():
-    pool = CensorPool(("a", "A", "b", "B", "0", "1", "2"))
+    pool = CensorPool({"a", "A", "b", "B", "0", "1", "2"})
     data = [
             ("AABB", "AAAA"),
             ("B", "A"),
@@ -174,6 +220,20 @@ def test_censorpool_hidden():
             ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) != input_string
+
+
+def test_censorpool_substring():
+    pool = CensorPool(("a", "A", "b", "B", "0", "1", "2", "\"", "'", ":"), substring=True)
+    data = [
+            ("ok \"AB\" y", "ok \"AA\" y"),
+            ("ok 'AB' y", "ok 'AA' y"),
+            ("ok1 \"C3B1\" y", "ok1 \"C3A0\" y"),
+            (" \"test1a\": \"AB\" ", " \"test0A\": \"AA\" "),
+            ("ok '\"AB' y", "ok '*AA' y"),
+            ("ok '\"'AB' y", "ok '*'AB' y"),
+            ]
+    for input_string, censored_string in data:
+        assert pool.censor(input_string) == censored_string
 
 
 def test_string_censor():
