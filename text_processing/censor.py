@@ -62,7 +62,13 @@ import string
         'mode',
         flag_value='letters',
         help="censor mode: letters")
-def main(input_string, character_filter, random_censor, hidden, substring, mode):
+def main(
+        input_string,
+        character_filter,
+        random_censor,
+        hidden,
+        substring,
+        mode):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
@@ -106,12 +112,16 @@ def main(input_string, character_filter, random_censor, hidden, substring, mode)
 
 class CensorPool():
     quotes = {'"', "'"}
+    printable = string.printable.replace(string.whitespace, "")
+    digits = string.digits
+    alnum = string.ascii_letters + string.digits
+    printable = string.printable
 
     def __init__(self,
-            character_pool,
-            random_censor=False,
-            hidden=False,
-            substring=False):
+                 character_pool,
+                 random_censor=False,
+                 hidden=False,
+                 substring=False):
         self.character_pool = character_pool
         self.random_censor = random_censor
         self.hidden = hidden
@@ -130,7 +140,7 @@ class CensorPool():
             if c in self.character_pool:
                 if self.random_censor:
                     while True:
-                        new_char = random.choice(self.character_pool)
+                        new_char = self.__random_char(c)
                         if new_char != c:
                             break
                 else:
@@ -138,6 +148,19 @@ class CensorPool():
             output.append(new_char)
 
         return "".join(output)
+
+    def __random_char(self, character):
+        if len(character) > 1:
+            raise Exception("String to long to handle")
+
+        selected_pool = CensorPool.printable
+        if character.isdigit():
+            selected_pool = CensorPool.digits
+        elif character.isalpha():
+            selected_pool = CensorPool.alnum
+        elif character.isprintable():
+            selected_pool = string.printable
+        return random.choice(selected_pool)
 
     def __censor_substring(self, input_string):
         stack = list(reversed(input_string))
@@ -147,14 +170,17 @@ class CensorPool():
             if c in CensorPool.quotes:
                 index = self.__find_quoted_substring(stack, c)
                 if index is -1:
-                    output.extend("{}{}".format(c, self.__censor_string(reversed(stack))))
+                    output.extend(
+                            "{}{}".format(
+                                c, self.__censor_string(reversed(stack))))
                     break
                 # make sure to include quote
                 index += 1
 
                 # exclude the quote from substring
                 substring = stack[-index+1:]
-                substring = "{}{}{}".format(c, self.__censor_string(substring), c)
+                substring = "{}{}{}".format(
+                        c, self.__censor_string(substring), c)
                 substring = reversed(substring)
                 output.extend(substring)
                 del stack[-index:]
@@ -223,7 +249,9 @@ def test_censorpool_hidden():
 
 
 def test_censorpool_substring():
-    pool = CensorPool(("a", "A", "b", "B", "0", "1", "2", "\"", "'", ":"), substring=True)
+    pool = CensorPool(
+            ("a", "A", "b", "B", "0", "1", "2", "\"", "'", ":"),
+            substring=True)
     data = [
             ("ok \"AB\" y", "ok \"AA\" y"),
             ("ok 'AB' y", "ok 'AA' y"),
