@@ -11,7 +11,7 @@ Init a git repo with TODO.wiki, README.adoc, LICENCE and a 'dev,release,stage' b
   
 options:
   -r                    add a remote repo
-  -b                    do not add branches(release, stage) based on master
+  -g                    add branches(release, stage) based on master
   -h			help
   -n                    no commit
   -d                    debug
@@ -40,7 +40,7 @@ main() {
   local author="github.com/dgengtek"
   local add_mit_licence=0
   local add_files=1
-  local minimal_branches=0
+  local add_git_workflow=0
   local -i commit=1
 
   check_dependencies
@@ -163,8 +163,8 @@ parse_options() {
       -r)
         init_remote=1
 	;;
-      -b)
-        minimal_branches=1
+      -g)
+        add_git_workflow=1
 	;;
       --MIT|--mit)
         add_mit_licence=1
@@ -271,14 +271,20 @@ EOF
 
   git add .
   (($commit)) && git commit -m "Initial commit of $base"
-  if ! (($minimal_branches)); then
+  if (($add_git_workflow)); then
     git_init_workflow.sh
+  else
+    git_init_branches
   fi
   if (($init_remote == 1)); then
     git_init_remote_origin.sh
   fi
   popd >/dev/null 2>&1
 
+}
+
+git_init_branches() {
+  git checkout -b dev || git checkout dev
 }
 
 _gen_licence() {

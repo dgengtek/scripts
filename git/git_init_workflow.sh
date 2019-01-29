@@ -216,7 +216,6 @@ git_init_workflow() {
   if [[ $active_branch != "master" ]]; then
     git checkout master
   fi
-  git tag "$(date +%Y.%M)"
   # hotfix only from master branch tags, merged into dev and master
   git branch hotfix
   # develop
