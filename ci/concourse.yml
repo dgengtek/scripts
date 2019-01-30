@@ -97,13 +97,13 @@ jobs:
       trigger: True
       params:
         fetch:
-          - release
+          - master
       passed:
         - j-run-tests
 
     - put: r-scripts-dev
       params:
         merge_to:
-          - branch: release
+          - branch: master
             ff_only: True
         repository: r-scripts-dev
