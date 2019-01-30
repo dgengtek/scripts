@@ -107,3 +107,8 @@ jobs:
           - branch: master
             ff_only: True
         repository: r-scripts-dev
+      on_failure:
+        put: send-email
+        params:
+          subject_text: "Build failed: ${BUILD_PIPELINE_NAME}/${BUILD_JOB_NAME}/${BUILD_NAME}"
+          body_text: "Failed task: ${ATC_EXTERNAL_URL}/teams/main/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
