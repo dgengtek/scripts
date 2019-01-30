@@ -40,7 +40,7 @@ main() {
   local sender="runsh+script"
   local logfile="/dev/null"
   local comment=
-  local -a commands=
+  local -a commands=()
   parse_options "$@"
   set -- "${commands[@]}"
   unset -v commands
@@ -60,7 +60,8 @@ main() {
 run() {
   if (($enable_logging)) || (($enable_mail)); then
     logfile=$(mktemp -u /tmp/runXXXXXX.log)
-    echo -e "$*\\n" > "$logfile"
+    echo "$*" > "$logfile"
+    echo >> "$logfile"
   fi
 
   if (($run_as_sudo)); then
@@ -91,10 +92,11 @@ run_commands() {
 
   local subject="$?[$USER@$HOSTNAME]$ run.sh"
   [[ -n $comment ]] && subject+=" # $comment"
-  local -r message=$*
+  local -r message="$*"
+
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
-    notify-send "$subject" "'$message'"
+    notify-send "$subject" "$message"
   fi
 
   if (($enable_mail)); then
