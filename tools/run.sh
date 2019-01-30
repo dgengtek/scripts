@@ -65,7 +65,6 @@ run() {
   fi
 
   if (($run_as_sudo)); then
-    set -- sudo "bash -c '$*'"
     command sudo -v
   fi 
   exec 3>&1
@@ -88,7 +87,11 @@ run() {
 }
 
 run_commands() {
-  time bash -c "$*"
+  if (($run_as_sudo)); then
+    time sudo setsid bash -c "$*"
+  else
+    time setsid bash -c "$*"
+  fi
 
   local subject="$?[$USER@$HOSTNAME]$ run.sh"
   [[ -n $comment ]] && subject+=" # $comment"
