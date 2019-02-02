@@ -2,29 +2,20 @@
 # ------------------------------------------------------------------------------
 # script is intended to be run by a service manager or cron
 # ------------------------------------------------------------------------------
-# 
-# TODO teste ob sqlite3 installiert ist
 
 
 readonly LOG_TAG="${0##/*}"
-readonly ERROR_LOCK_RELEASE_FAILED=2
 
 
 usage() {
   echo "usage: ${0##*/}"
-  exit 1
 }
 
 
 main() {
-  local -r protocol_lock="/tmp/protocolling_${UID}.lock"
   local -r date_added="$(date +%Y%m%dT%H%M)"
   # Freigabe, somit wann das Protokoll eingefügt wurde
   local date_released=""
-
-  if release_lock "$protocol_lock"; then
-    log "$protocol_lock released"
-  fi
 
   local protocol_dir="protocolling"
   local -r protocol_path="$HOME/vimwiki/$protocol_dir"
@@ -39,73 +30,25 @@ main() {
   set_signal_handlers
   # open editor
   protocol_tmp=$(mktemp "/tmp/protocol_XXXXXXX_$date_added")
-  urxvt -e vim "$protocol_tmp" &
-  local -i editor_pid
-  editor_pid=$!
-
-  update_lockfile "$protocol_lock" "$editor_pid"
-  if ! update_database "$database" "$protocol_lock" "$protocol_tmp" "$date_added"; then
+  urxvt -e $EDITOR "$protocol_tmp"
+  if ! update_database "$database" "$protocol_tmp" "$date_added"; then
     error "Failed to update database $database with $protocol_tmp"
   fi
   unset_signal_handlers
 }
 
 
-update_lockfile() {
-  local -r protocol_lock=$1
-  local -r editor_pid=$2
-  shift 2
-  echo "$editor_pid" > "$protocol_lock"
-  log "updated $protocol_lock"
-}
-
-
-release_lock() {
-  local -r protocol_lock=$1
-  # get pid
-  local -i editor_pid
-  if ! [[ -e $protocol_lock ]]; then
-    return $ERROR_LOCK_RELEASE_FAILED
-  fi
-  local -r editor_pid=$(cat "$protocol_lock")
-  if editor_running "$editor_pid"; then
-    kill "$editor_pid"
-    log "killed editor with pid:$editor_pid"
-    while editor_running "$editor_pid"; do
-      sleep 1
-    done
-  fi
-}
-
-
 update_database() {
   local -r db=$1
-  local -r protocol_lock=$2
-  local -r protocol_tmp=$3
-  local -r date_added=$4
+  local -r protocol_tmp=$2
+  local -r date_added=$3
 
-  local -r pid=$(cat "$protocol_lock")
-  while editor_running "$pid"; do
-    sleep 1
-  done
   log "updating database $db"
   local -r date_released="$(date +%Y%m%dT%H%M)"
 
   insert_entry "$db" "$protocol_tmp" "$date_added" "$date_released"
 
-  sigh_cleanup "$protocol_lock" "$protocol_tmp"
-}
-
-
-cleanup() {
-  local -r lock_file=$1
-  local -r protocol_tmp=$2
-  log "running cleanup"
-
-  rm "$lock_file"
-  log "removed $lock_file"
-  rm "$protocol_tmp"
-  log "removed $protocol_tmp"
+  sigh_cleanup "$protocol_tmp"
 }
 
 
@@ -113,7 +56,7 @@ editor_running() {
   local -r pid=$1
   # if editor is stil open with the entry
   if [[ -e "/proc/$pid" ]] \
-    && ps -p $pid -o args --no-headers | grep -q '^vim /tmp/protocol_.*'; then
+    && ps -p $pid -o args --no-headers | grep -q "^$EDITOR /tmp/protocol_.*"; then
     return 0
   fi
   return 1
@@ -176,7 +119,7 @@ set_signal_handlers() {
   trap sigh_cont SIGCONT
   trap sigh_usr1 SIGUSR1
   trap sigh_usr2 SIGUSR2
-  trap "sigh_cleanup '$protocol_lock' '$protocol_tmp'" SIGINT SIGQUIT SIGTERM EXIT
+  trap "sigh_cleanup '$protocol_tmp'" SIGINT SIGQUIT SIGTERM EXIT
 }
 
 
@@ -223,12 +166,9 @@ sigh_usr2() {
 
 
 sigh_cleanup() {
-  local -r lock_file=$1
-  local -r protocol_tmp=$2
+  local -r protocol_tmp=$1
   log "running cleanup"
 
-  rm "$lock_file"
-  log "removed $lock_file"
   rm "$protocol_tmp"
   log "removed $protocol_tmp"
 
