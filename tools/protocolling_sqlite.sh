@@ -14,6 +14,7 @@ usage() {
 
 main() {
   local -r date_added="$(date +%Y%m%dT%H%M)"
+  local -r EDITOR=${EDITOR:-vim}
   # Freigabe, somit wann das Protokoll eingefügt wurde
   local date_released=""
 
