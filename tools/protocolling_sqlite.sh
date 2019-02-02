@@ -30,9 +30,13 @@ main() {
   set_signal_handlers
   # open editor
   protocol_tmp=$(mktemp "/tmp/protocol_XXXXXXX_$date_added")
-  urxvt -e $EDITOR "$protocol_tmp"
+  if ! urxvt -e $EDITOR "$protocol_tmp"; then
+    error "Failed to run $EDITOR on $protocol_tmp"
+    exit 1
+  fi
   if ! update_database "$database" "$protocol_tmp" "$date_added"; then
     error "Failed to update database $database with $protocol_tmp"
+    exit 1
   fi
   unset_signal_handlers
 }
