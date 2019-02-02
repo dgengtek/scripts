@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # TODO: use coproc for buffering logs
+
+
 usage() {
   cat >&2 << EOF
 Usage: ${0##*/} [OPTIONS] CMD...
@@ -14,13 +16,15 @@ OPTIONS:
   -l, --log           log command output
   -m, --mail          mail result
   -o, --output        mail cmd output
-  -s, --silent        disable notifications
+  -n, --silent        disable notifications
   -f, --foreground    run in foreground
   -p, --print-process print process regardless
   -r, --sudo          run with sudo
   -h                  help
 EOF
 }
+
+
 main() {
   local -i enable_logging=0
   local -i enable_mail=0
@@ -57,6 +61,7 @@ main() {
 
 }
 
+
 run() {
   if (($enable_logging)) || (($enable_mail)); then
     logfile=$(mktemp -u /tmp/runXXXXXX.log)
@@ -86,6 +91,7 @@ run() {
   fi
 }
 
+
 run_commands() {
   if (($run_as_sudo)); then
     time sudo setsid bash -c "$*"
@@ -114,6 +120,8 @@ EOF
   fi
   cleanup
 }
+
+
 parse_options() {
   # exit if no options left
   [[ -z $1 ]] && return 0
@@ -142,7 +150,7 @@ parse_options() {
       -f|--foreground)
         enable_foreground=1
         ;;
-      -s|--silent)
+      -n|--silent)
         enable_notifications=0
         ;;
       -c|--comment)
@@ -180,9 +188,11 @@ parse_options() {
   parse_options "$@"
 }
 
+
 log() {
   echo -n "$@" | logger -s -t ${0##*/}
 }
+
 
 error_exit() {
   local -r error_code=${1}
@@ -191,9 +201,11 @@ error_exit() {
   exit $error_code
 }
 
+
 prepare_env() {
   set_descriptors
 }
+
 
 prepare() {
   export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
@@ -205,10 +217,12 @@ prepare() {
   set_descriptors
 }
 
+
 source_libs() {
   source "${PATH_USER_LIB}libutils.sh"
   source "${PATH_USER_LIB}libcolors.sh"
 }
+
 
 set_descriptors() {
   if (($enable_verbose)); then
@@ -224,6 +238,7 @@ set_descriptors() {
   fi
 }
 
+
 set_signal_handlers() {
   trap sigh_abort SIGABRT
   trap sigh_alarm SIGALRM
@@ -234,6 +249,7 @@ set_signal_handlers() {
   trap sigh_cleanup SIGINT SIGQUIT SIGTERM EXIT
 }
 
+
 unset_signal_handlers() {
   trap - SIGABRT
   trap - SIGALRM
@@ -243,29 +259,37 @@ unset_signal_handlers() {
   trap - SIGUSR2
   trap - SIGINT SIGQUIT SIGTERM EXIT
 }
+
+
 sigh_abort() {
   trap - SIGABRT
 }
+
 
 sigh_alarm() {
   trap - SIGALRM
 }
 
+
 sigh_hup() {
   trap - SIGHUP
 }
+
 
 sigh_cont() {
   trap - SIGCONT
 }
 
+
 sigh_usr1() {
   trap - SIGUSR1
 }
 
+
 sigh_usr2() {
   trap - SIGUSR2
 }
+
 
 sigh_cleanup() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
@@ -279,9 +303,11 @@ sigh_cleanup() {
   done
 }
 
+
 cleanup() {
   [[ -f $logfile ]] && rm "$logfile"
 }
+
 
 prepare
 main "$@"
