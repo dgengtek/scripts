@@ -75,6 +75,10 @@ insert_entry() {
   local -r date_released=$4
 
   local -r text=$(cat "$protocol_tmp")
+  if [[ -z "$text" ]]; then
+    log "Skip insert. Entry empty"
+    return
+  fi
   log "running sql insert"
   sqlite3 "$db" << EOF
 INSERT INTO protocol(
