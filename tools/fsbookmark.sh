@@ -68,6 +68,7 @@ main() {
 run() {
   subcommand=$1
   shift
+  [[ -z $1 ]] && return
   cmd_${subcommand} "$@"
   local -r rc=$?
   if (($rc == 127)); then
