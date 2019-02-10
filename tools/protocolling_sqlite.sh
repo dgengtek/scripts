@@ -199,7 +199,7 @@ log() {
 
 error() {
   log "==> ERROR: " "$@"
-} >&2
+}
 
 
 check_dependencies() {
