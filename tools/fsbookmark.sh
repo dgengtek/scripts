@@ -123,6 +123,10 @@ set_descriptors() {
   else
     exec {fddebug}>/dev/null
   fi
+  if (($enable_quiet)); then
+    exec >/dev/null
+    exec 2>/dev/null
+  fi
 }
 
 set_signal_handlers() {
