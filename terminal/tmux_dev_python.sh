@@ -3,16 +3,17 @@
 # description
 # ------------------------------------------------------------------------------
 # 
+set -e
 
 usage() {
-cat >&2 << EOF
+  cat >&2 << EOF
 Usage: ${0##*/}
 spawn windows for python workspace
 EOF
 }
 
 main() {
-  local CWD=$PWD
+  local -r CWD=$PWD
   local tests_dir=$CWD
   local src_dir=$CWD
   if [[ -d $CWD/tests ]]; then
