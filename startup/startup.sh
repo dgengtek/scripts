@@ -19,7 +19,7 @@ main() {
   run.sh -n -q -- urxvtc -e 'mosh baha'
 
   # wait until tmux server is up
-  while ! tmux has-session; do sleep 1; done
+  while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
   tmux send-keys -t mutt 'mutt' ENTER
   tmux send-keys -t salt 'lxc exec salt bash' ENTER
 }
