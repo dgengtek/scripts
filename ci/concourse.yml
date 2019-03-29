@@ -13,7 +13,8 @@ resource_types:
 resources:
 - name: r-scripts-dev
   type: git-workflow
-  check_every: 1h
+  webhook_token: ((webhook_token))
+  check_every: 168h
   source:
     uri: {{source_uri}}
     branch: dev
