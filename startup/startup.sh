@@ -10,12 +10,12 @@ main() {
 
   run.sh -n -q -- firefox
   #run.sh keepassx 
-  run.sh -n -q -- urxvtc -e 'tmuxp load ~/.tmuxp/wiki.yaml'
-  run.sh -n -q -- urxvtc -e 'tmux new -s mutt'
-  run.sh -n -q -- urxvtc -e 'tmuxp load ~/.tmuxp/irc.yaml'
-  run.sh -n -q -- urxvtc -e 'tmux new -s salt'
-  run.sh -n -q -- urxvtc -e 'tmux new -s ci'
-  run.sh -n -q -- urxvtc -e 'mosh baha -- sudo -u admin -i'
+  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
+  run.sh -n -q -- alacritty -e 'tmux new -s mutt'
+  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
+  run.sh -n -q -- alacritty -e 'tmux new -s salt'
+  run.sh -n -q -- alacritty -e 'tmux new -s ci'
+  run.sh -n -q -- alacritty -e 'mosh baha -- sudo -u admin -i'
 
   # wait until tmux server is up
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
