@@ -20,7 +20,9 @@ from docopt import docopt
 # TODO check ssh path exists
 # TODO add unit tests
 # TODO add bash prompt coloring
-#       research: import PS1 from current invoked interactive bash session?
+#       Update PS1 command use output from PROMPT_COMMAND
+# TODO does not work after current bash rework
+#   Fri Apr 12 01:39:15 CEST 2019
 
 used_keys = []
 
