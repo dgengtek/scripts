@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+readonly FIFO="/tmp/fifo$RANDOM"
+readonly FIFOLOCK="/tmp/lock$RANDOM"
+
 usage() {
   cat << EOF
 Usage:	${0##*/} [OPTIONS] command
@@ -31,8 +34,6 @@ main() {
   local -r prompt_symbol="> "
 
   cmd_exists "$command_prefix"
-  local -r fifo="/tmp/fifo$RANDOM"
-  local -r fifolock="/tmp/lock$RANDOM"
 
   local -i enable_verbose=0
   local -i enable_debug=0
@@ -45,7 +46,7 @@ along()
 {
   local prefix="$command_prefix $@"
   local prompt="$prefix $prompt_symbol"
-  while pipe_exists "$fifo"; do 
+  while pipe_exists "$FIFO"; do 
     echo "inside along loop" >&$fddebug
     run_interpreter "$prefix" &
     run_prompt "$command_prefix"
@@ -73,8 +74,12 @@ setup() {
   else
     exec {fddebug}>/dev/null
   fi
-  mkfifo "$fifo" || error_exit 1 "Failed to create $fifo"
-  mkfifo "$fifolock" || error_exit 1 "Failed to create $fifo"
+  if ! pipe_exists "$FIFO"; then
+    mkfifo "$FIFO" || error_exit 1 "Failed to create $FIFO"
+  fi
+  if ! pipe_exists "$FIFOLOCK"; then
+    mkfifo "$FIFOLOCK" || error_exit 1 "Failed to create $FIFLOCK"
+  fi
 }
 
 run_prompt() {
@@ -82,10 +87,10 @@ run_prompt() {
   echo "inside prompt" >&$fddebug
   if ! read -e -r -p "$prompt" args; then
     echo "exiting prompt" >&$fddebug
-    printf "%s" "\q" > "$fifo"
+    printf "%s" "\q" > "$FIFO"
     error_exit 1
   fi
-  printf "%s" "$args" > "$fifo"
+  printf "%s" "$args" > "$FIFO"
   mutex
   echo "ending prompt" >&$fddebug
 }
@@ -102,7 +107,7 @@ run_interpreter() {
   trap "" SIGINT
 
   echo "inside interpreter" >&$fddebug
-  local input=$(cat < "$fifo")
+  local input=$(cat < "$FIFO")
   if ! parse "$input"; then
     echo "parsing failed" >&$fddebug
     return 1
@@ -174,14 +179,14 @@ issue_instruction() {
 mutex() {
   local -r cmd=$1
   if [[ $cmd == "sync" ]]; then
-    local -r input=$(cat "$fifolock")
+    local -r input=$(cat "$FIFOLOCK")
     if [[ $input == "sync" ]]; then
       return 0
     else
       return 1
     fi
   fi
-  echo "sync" > "$fifolock"
+  echo "sync" > "$FIFOLOCK"
 }
 
 update_prompt() {
@@ -212,8 +217,8 @@ eat_pipe() {
 
 cleanup() {
   trap - SIGKILL SIGTERM SIGABRT EXIT
-  eat_pipe "$fifo"
-  eat_pipe "$fifolock"
+  eat_pipe "$FIFO"
+  eat_pipe "$FIFOLOCK"
 }
 
 ord() {
@@ -224,4 +229,6 @@ chr() {
   printf \\$(printf '%03o' $1)
 }
 
+set -x
+setup
 main "$@"
