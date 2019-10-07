@@ -78,15 +78,13 @@ run() {
   fi
 
   local branch_dev=$(get_valid_branch "${development_branches[@]}")
-  local branch_prod=$(get_valid_branch "${production_branches[@]}")
   [[ -z $branch_dev ]] && die "No development branch found."
-  [[ -z $branch_prod ]] && die "No production branch found."
 
-  if check_merge_allowed "$branch_prod"; then
+  if check_merge_allowed "$branch_dev"; then
   {
-  git checkout -q "$branch_master" && git merge -q --ff-only "$branch_prod"
-  } 2>/dev/null || die "Merge of '$branch_prod' on $branch_master failed."
-  msg "Merged '$branch_prod' to '$branch_master'" 2>&$fdverbose
+  git checkout -q "$branch_master" && git merge -q --ff-only "$branch_dev"
+  } 2>/dev/null || die "Merge of '$branch_dev' on $branch_master failed."
+  msg "Merged '$branch_dev' to '$branch_master'" 2>&$fdverbose
   fi
   for remote in $(git remote); do
     {
