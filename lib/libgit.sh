@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-get_active_branch() { git branch | awk '/^\*/ {print $2}'; }
+get_active_branch() { git rev-parse --abbrev-ref HEAD; }
 
 get_branches() { git branch | sed 's/^[* ]*//'; }
 
