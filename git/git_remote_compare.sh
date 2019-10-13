@@ -13,14 +13,17 @@ fi
 
 branch=$(\git rev-parse --abbrev-ref HEAD)
 if [[ -z "$branch" ]]; then
+  echo "No branch found" >&2
   exit 1
 fi
 remote="$(\git config --get branch.${branch}.remote 2>/dev/null)"
 if [[ -z "$remote" ]]; then
+  echo "No tracked remote found for branch $branch" >&2
   exit 1
 fi
 remote_branch="$(\git config --get branch.${branch}.merge)"
 if [[ -z "$remote_branch" ]]; then
+  echo "No remote branch to merge found for branch $branch" >&2
   exit 1
 fi
 remote_branch=${remote_branch/refs\/heads/refs\/remotes\/$remote}
