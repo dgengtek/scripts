@@ -31,4 +31,4 @@ if ((commit_ahead==0)) && ((commit_behind==0)); then
 else
   synced=0
 fi
-printf "{\"branch\": \"$branch\", \"tracking\": \"$remote\", \"ahead\": $commit_ahead, \"behind\": $commit_behind, \"synced\": $synced}\n"
+printf "{\"branch\": \"$branch\", \"tracking\": \"$remote\", \"ahead\": $commit_ahead, \"behind\": $commit_behind, \"is_synced\": $synced}\n"
