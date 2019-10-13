@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+"""
+output some git relevant states as json
+"""
 import logging
 import json
 import subprocess
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +18,23 @@ def run_cmd(command, delimiter=" "):
 
 
 def main():
+    is_git_repo = run_cmd("git rev-parse --show-toplevel").returncode
+    if bool(is_git_repo):
+        print("Not a git repository.", file=sys.stderr)
+        print("{}")
+        sys.exit(is_git_repo)
+
     result = {}
-    git_remote_state = json.loads(
-        run_cmd("git_remote_compare.sh").stdout.read())
+    git_remote_state = run_cmd("git_remote_compare.sh").stdout.read()
+    if not git_remote_state:
+        git_remote_state = {}
+    else:
+        git_remote_state = json.loads(git_remote_state)
+
     git_has_unstaged_items = int(
         not bool(
             run_cmd("git diff --exit-code --quiet").returncode))
+
     git_has_untracked_items = run_cmd(
         "git ls-files --other --exclude-standard --directory").stdout.read()
     git_has_untracked_items = int(bool(git_has_untracked_items))
