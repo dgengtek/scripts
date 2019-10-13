@@ -35,7 +35,7 @@ def main():
         run_cmd("git diff --exit-code --quiet").returncode))
 
     git_has_untracked_items = run_cmd(
-        "git ls-files --other --exclude-standard --directory").stdout.read()
+        "git ls-files --other --exclude-standard --directory --no-empty-directory").stdout.read()
     git_has_untracked_items = int(bool(git_has_untracked_items))
 
     result.update(git_remote_state)
