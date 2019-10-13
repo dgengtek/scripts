@@ -31,9 +31,8 @@ def main():
     else:
         git_remote_state = json.loads(git_remote_state)
 
-    git_has_unstaged_items = int(
-        not bool(
-            run_cmd("git diff --exit-code --quiet").returncode))
+    git_has_unstaged_items = int(bool(
+        run_cmd("git diff --exit-code --quiet").returncode))
 
     git_has_untracked_items = run_cmd(
         "git ls-files --other --exclude-standard --directory").stdout.read()
