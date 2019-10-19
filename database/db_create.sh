@@ -38,6 +38,8 @@ ALTER DATABASE $db SET search_path = $db;
 ALTER ROLE $user_admin SET search_path = $db;
 GRANT $grants_schema ON SCHEMA $db TO $user_admin;
 GRANT CONNECT on DATABASE $db TO $user_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA $grants_schema GRANT ALL ON TABLES TO $user_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA $grants_schema GRANT ALL ON SEQUENCES TO $user_admin;
 
 COMMIT;
 EOF
