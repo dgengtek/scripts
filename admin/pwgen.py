@@ -67,9 +67,6 @@ def main(length, character_filter, count, inverse, bits, mode):
     set_printable = set(string.printable)
     set_whitespace = set(string.whitespace)
 
-    if bits:
-        length = 256 // 8
-
     character_pool = None
     if mode == "graph":
         character_pool = set_printable - set_whitespace
@@ -93,9 +90,16 @@ def main(length, character_filter, count, inverse, bits, mode):
     character_pool = character_pool.difference(character_filter)
     character_pool = "".join(character_pool)
 
-    passwords = [
-        generate_password(character_pool, length)
-        for i in range(0, count)]
+    if bits:
+        passwords = [
+            random.getrandbits(length)
+            for i in range(0, count)
+            ]
+    else:
+        passwords = [
+            generate_password(character_pool, length)
+            for i in range(0, count)
+            ]
     print_passwords(passwords)
 
 
