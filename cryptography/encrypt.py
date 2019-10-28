@@ -9,7 +9,7 @@ Options:
     --sha256
     --md5
     --crypt
-    -r, --rounds <count>  rounds[default: 1000]
+    -r, --rounds <count>  rounds[default: 100000]
 """
 
 import sys
