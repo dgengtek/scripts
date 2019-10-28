@@ -23,23 +23,24 @@ from docopt import docopt
 default_flag = "--sha512"
 
 methods = {
-        "--sha512" : {
+        "--sha512": {
             "method": crypt.METHOD_SHA512,
             "id": "6",
             },
-        "--sha256" : {
+        "--sha256": {
             "method": crypt.METHOD_SHA256,
             "id": "5",
             },
-        "--md5" : {
+        "--md5": {
             "method": crypt.METHOD_MD5,
             "id": "1",
             },
-        "--crypt" : {
+        "--crypt": {
             "method": crypt.METHOD_CRYPT,
             "id": "",
             },
         }
+
 
 def get_method(opt, default=default_flag):
     for key in methods.keys():
@@ -55,13 +56,15 @@ def main():
     methods = get_method(opt)
     method = methods.get("method")
     id_prefix = methods.get("id")
-    
 
     salt = opt.get("<salt>")
     if not salt:
         salt = crypt.mksalt(method)
-    else:
-        salt = "${}$rounds={}${}$".format(id_prefix, rounds, salt)
+        salt = salt.split("$")
+        id_prefix = salt[1]
+        salt = salt[2]
+    salt = "${}$rounds={}${}$".format(
+        id_prefix, rounds, salt)
 
     password = ""
     if not sys.stdin.isatty():
@@ -74,8 +77,10 @@ def main():
     shadow = crypt.crypt(password, salt)
     print(shadow)
 
+
 def usage():
     pass
+
 
 if __name__ == "__main__":
     main()
