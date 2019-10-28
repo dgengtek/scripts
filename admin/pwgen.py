@@ -44,6 +44,11 @@ import string
         flag_value='alnum',
         help="mode: letters + digits")
 @click.option(
+        '--salt-crypt',
+        'mode',
+        flag_value='salt_crypt',
+        help="mode: salt with character set [a-zA-Z0-9./] for crypt - length 16")
+@click.option(
         '-d',
         '--digits',
         'mode',
@@ -78,6 +83,9 @@ def main(length, character_filter, count, inverse, bits, mode):
         character_pool = set_digits
     elif mode == "printable":
         character_pool = set_printable
+    elif mode == "salt_crypt":
+        character_pool = set_alpha.union(set_digits).union({".", "/"})
+        length = 16
     else:
         print("Invalid pool mode set.", file=sys.stderr)
         sys.exit(1)
