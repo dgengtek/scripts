@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# use trunk based development instead! do not use this
+# only commit to trunk
+# short lived branches
+# never break build on trunk
 # ------------------------------------------------------------------------------
 
 usage() {

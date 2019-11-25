@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------------------
 # init git repo
+# trunk based development only!
 # ------------------------------------------------------------------------------
 # 
 usage() {
   cat >&2 << EOF
 Usage:	${0##*/} [<options>] <destination>
 
-Init a git repo with TODO.wiki, README.adoc, LICENCE and a 'dev,release,stage' branch.
+Init a git repo with TODO.wiki, README.adoc, LICENCE
   
 options:
   -r                    add a remote repo
   -g                    add branches(release, stage) based on master
+                          (github workflow, init github workflow)
   -h			help
   -n                    no commit
   -d                    debug
@@ -273,18 +275,12 @@ EOF
   (($commit)) && git commit -m "Initial commit of $base"
   if (($add_git_workflow)); then
     git_init_workflow.sh
-  else
-    git_init_branches
   fi
   if (($init_remote == 1)); then
     git_init_remote_origin.sh
   fi
   popd >/dev/null 2>&1
 
-}
-
-git_init_branches() {
-  git checkout -b dev || git checkout dev
 }
 
 _gen_licence() {
