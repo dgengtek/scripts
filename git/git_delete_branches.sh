@@ -90,7 +90,7 @@ run() {
     fi
   elif (($remove_all)); then
     run_delete_all_remote
-    run_delete_remote_branch
+    run_delete_all_local
     return
   fi
   set -u
