@@ -117,6 +117,7 @@ run_delete_all_local() {
 run_delete_all_remote() {
   while read branch; do
     branch=$(echo "$branch" | tr -d '\n ')
+    branch=${branch##*/}
     if [[ $branch == "$GIT_TRUNK" ]]; then
       continue
     fi
@@ -131,7 +132,7 @@ run_delete_local_branch() {
 
 
 run_delete_remote_branch() {
-  git push origin --delete "${1##*/}"
+  git push origin --delete "$1"
 }
 
 
