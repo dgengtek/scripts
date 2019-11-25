@@ -63,8 +63,12 @@ def main():
         salt = salt.split("$")
         id_prefix = salt[1]
         salt = salt[2]
-    salt = "${}$rounds={}${}$".format(
-        id_prefix, rounds, salt)
+    if rounds:
+        salt = "${}$rounds={}${}$".format(
+            id_prefix, rounds, salt)
+    else:
+        salt = "${}${}$".format(
+            id_prefix, rounds, salt)
 
     password = ""
     if not sys.stdin.isatty():
