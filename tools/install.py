@@ -151,7 +151,7 @@ def get_values(section, keys):
 
 
 def filter_packages(pkgs=None, exclude=None):
-    if len(pkgs) is 0:
+    if len(pkgs) == 0:
         raise RuntimeError("No packages supplied")
     return filter(lambda x: x not in exclude, pkgs)
 
