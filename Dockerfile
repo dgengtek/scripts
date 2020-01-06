@@ -12,7 +12,7 @@ LABEL description="scripts container"
 RUN set -x \
   && useradd -m uscripts \
   && apt-get update \
-  && apt-get install -y bash stow git make
+  && apt-get install -y bash stow make
 
 ADD . /scripts/
 

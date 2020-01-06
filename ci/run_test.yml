@@ -1,0 +1,25 @@
+platform: linux
+
+image_resource:
+  source:
+    repository: docker.p.intranet.dgeng.eu/python
+    tag: pip-3.8-slim-buster
+  type: docker-image
+
+params:
+  SOME_PARAM: some-default-value
+
+inputs:
+- name: repo
+
+run:
+  path: bash
+  args:
+  - -euxc
+  - |
+    env
+    apt-get update
+    apt-get install -y bash stow make
+
+    cd repo
+    make ci
