@@ -8,6 +8,7 @@ main() {
     exit 1
   fi
 
+  systemctl --user start redshift dunst
   run.sh -n -q -- firefox
   run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
   run.sh -n -q -- alacritty -e 'tmux new -s mutt'
