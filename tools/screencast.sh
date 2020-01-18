@@ -8,7 +8,7 @@ else
   filename=$1
 fi
 dates=$(date +%d%m%H%M)
-screen_dev="DVI-0"
+screen_dev="DisplayPort-2"
 time_limit="-t hh:mm::ss"
 res=$(xrandr | grep $screen_dev | cut -f 4 -d " " | cut -f 1 -d "+")
 screen=":0.0+0,0"

@@ -73,7 +73,7 @@ run() {
   local -a maim_args=("--format=png")
   (($capture_window)) && maim_args+=("-i $(xdotool getactivewindow)")
   if (($move_screenshot)); then
-    maim_args+=("$HOME/me/pictures/screenshots/$(date +%Y%m%d_%H%M%S.png)")
+    maim_args+=("/mnt/nfs/homes/dgeng/screenshots/$(date +%Y%m%d_%H%M%S.png)")
   else
     maim_args+=("$HOME/$(date +%Y%m%d_%H%M%S.png)")
   fi
