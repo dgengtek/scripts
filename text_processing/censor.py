@@ -169,7 +169,7 @@ class CensorPool():
             c = stack.pop()
             if c in CensorPool.quotes:
                 index = self.__find_quoted_substring(stack, c)
-                if index is -1:
+                if index == -1:
                     output.extend(
                             "{}{}".format(
                                 c, self.__censor_string(reversed(stack))))
