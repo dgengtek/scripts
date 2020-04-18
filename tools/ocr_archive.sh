@@ -67,6 +67,7 @@ main() {
   local -a args
   local -i enable_preview_image=0
   local -i enable_scan=0
+  local -i enable_date_prefix=0
 
   local input_date=$(date '+%F')
 
@@ -137,8 +138,14 @@ run() {
       --output-type "$OCRMYPDF_OUTPUT_TYPE" \
       -l "$OCRMYPDF_LANGUAGE" \
       "/output/${input_filename}" "/output/${output_filename}.pdf"
-  mv -v "${volume_dir}/${output_filename}.pdf" "./${output_filename}.pdf"
-  mv -v "${volume_dir}/${output_filename}.txt" "./${output_filename}.txt"
+
+  if (($enable_date_prefix)); then
+    mv -v "${volume_dir}/${output_filename}.pdf" "./${input_date}_${output_filename}.pdf"
+    mv -v "${volume_dir}/${output_filename}.txt" "./${input_date}_${output_filename}.txt"
+  else
+    mv -v "${volume_dir}/${output_filename}.pdf" "./${output_filename}.pdf"
+    mv -v "${volume_dir}/${output_filename}.txt" "./${output_filename}.txt"
+  fi
   tmsu tag "./${output_filename}.pdf" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
     scanned pdf ocr document unsorted "$@"
@@ -234,9 +241,12 @@ parse_options() {
       -s|--scan)
         enable_scan=1
         ;;
-      -d|--date)
+      --date)
         input_date=$2
         do_shift=2
+        ;;
+      --prefix-date)
+        enable_date_prefix=1
         ;;
       --)
         do_shift=3
