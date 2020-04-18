@@ -27,20 +27,23 @@ readonly OCRMYPDF_OUTPUT_TYPE="pdfa"
 readonly DOCKER_IMAGE_NAME="ocrmypdf"
 readonly DOCKER_CONTAINER_NAME="ocr"
 
-  # scanimage -p --resolution 300 --format=png --mode color > filename.png
-  # sudo docker run --rm -v $(pwd)/test:/test --name ocr ocrmypdf --sidecar /test/order1.txt --image-dpi 300 --remove-background --deskew --clean --output-type pdfa -l deu /test/order1 /test/order1.pdf
-
 readonly __SCRIPT_NAME="${BASH_SOURCE[0]##*/}"
 
 usage() {
   cat >&2 << EOF
-Usage: ${0##*/} [OPTIONS] <output filename> [-- [EXTRA]]
+Usage: ${0##*/} [OPTIONS] <output filename> <title> <subject> <author> [<keywords>...] [-- [EXTRA]]
+Usage with scan: ${0##*/} [OPTIONS] <input filename> <output filename> <title> <subject> <author> [<keywords>...] [-- [EXTRA]]
 
 command
   run a custom function defined as _command
 
 arguments
-  <output filename>  without extension
+  <input filename>  full path to input filename
+  <output filename>  name of output file without extension
+  <title>  document title
+  <subject>  document subject
+  <author>  document author
+  <keywords>...  document keywords and tags to apply to file
 
   
 OPTIONS:
@@ -48,6 +51,8 @@ OPTIONS:
   -v  verbose
   -q  quiet
   -d  debug
+  -s,--scan  scan an image beforehand
+  -p,--preview-image  preview image before converting after scanning
   -p,--path <directory>  some directory
 
 
@@ -60,6 +65,8 @@ EOF
 main() {
   local -a options
   local -a args
+  local -i enable_preview_image=0
+  local -i enable_scan=0
 
   local input_date=$(date '+%F')
 
@@ -72,8 +79,19 @@ main() {
   unset -v args
   check_input_args "$@"
 
+  if ! (($enable_scan)); then
+    local path_input_file=${1:?"Input filename is required since scan is not enabled"}
+    if ! [[ -f "$path_input_file" ]]; then
+      log_err "Input filename is not a file"
+      exit 1
+    fi
+    shift
+  fi
   local output_filename=${1:?"Output filename is required"}
-  shift
+  local title=${2:?"Document title not given"}
+  local subject=${3:?"Document subject not given"}
+  local author=${4:?"Document author not given"}
+  shift 4
 
   set_signal_handlers
   prepare_env
@@ -91,31 +109,45 @@ main() {
 run() {
   local -r volume_dir=$(mktemp -d "${VOLUME_TMP}/tmp.XXXXXXXXXX")
   local -a arr_date=(${input_date//-/ })
-  local -r scan_output="input_image.png"
+  trap "sigh_cleanup_scan $volume_dir" SIGINT SIGQUIT SIGTERM EXIT
 
-  set -e
-  set -x
-  sudo -v
-  scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${scan_output}"
+  if (($enable_scan)); then
+    input_filename="input_image.png"
+    sudo -v
+    scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
+    if (($enable_preview_image)); then
+      gpicview "${volume_dir}/${input_filename}" 
+      read -p "Continue conversion? Press any key or abort now"
+    fi
+  else
+    input_filename=$(basename "$path_input_file")
+    cp "$path_input_file" "${volume_dir}/"
+  fi
+
   sudo docker run \
     --rm -v $volume_dir:/output \
     --name "$DOCKER_CONTAINER_NAME" "$DOCKER_IMAGE_NAME" \
       --sidecar "/output/${output_filename}.txt" \
+      --title "$title" \
+      --subject "$subject" \
+      --author "$author" \
+      --keywords "$*" \
       --image-dpi $SCAN_DPI \
       --remove-background --deskew --clean \
       --output-type "$OCRMYPDF_OUTPUT_TYPE" \
       -l "$OCRMYPDF_LANGUAGE" \
-      "/output/${scan_output}" "/output/${output_filename}.pdf"
+      "/output/${input_filename}" "/output/${output_filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.pdf" "./${output_filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.txt" "./${output_filename}.txt"
   tmsu tag "./${output_filename}.pdf" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scanned pdf ocr document unsorted
+    scanned pdf ocr document unsorted "$@"
   tmsu tag "./${output_filename}.txt" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scanned txt ocr document unsorted
+    scanned txt ocr document unsorted "$@"
+
+  trap - SIGINT SIGQUIT SIGTERM EXIT
   rm -vrf "$volume_dir"
-  set +e
 }
 
 
@@ -141,13 +173,7 @@ prepare_env() {
 
 prepare() {
   export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
-
-  set -e
-  source_libs
-  set +e
-
   set_descriptors
-  set -u
 }
 
 
@@ -202,9 +228,11 @@ parse_options() {
         usage
         exit 0
         ;;
-      -p|--path)
-        path=$2
-        do_shift=2
+      -p|--preview-image)
+        enable_preview_image=1
+        ;;
+      -s|--scan)
+        enable_scan=1
         ;;
       -d|--date)
         input_date=$2
@@ -301,6 +329,21 @@ sigh_cleanup() {
     fi
   done
 }
+
+
+sigh_cleanup_scan() {
+  trap - SIGINT SIGQUIT SIGTERM EXIT
+  local active_jobs=$(jobs -p)
+  for p in $active_jobs; do
+    if [[ -e "/proc/$p" ]]; then
+      kill "$p" >/dev/null 2>&1
+      wait "$p"
+    fi
+  done
+  rm -vrf "$volume_dir"
+  exit 130
+}
+
 
 log() {
   logger -s -t "$__SCRIPT_NAME" "$@"
