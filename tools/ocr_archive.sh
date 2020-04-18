@@ -51,7 +51,8 @@ OPTIONS:
   -v  verbose
   -q  quiet
   -d  debug
-  -s,--scan  scan an image beforehand
+  --disable-scan  disable scanning an image beforehand
+  --disable-date-prefix  do not prefix date to output filename
   -p,--preview-image  preview image before converting after scanning
   -p,--path <directory>  some directory
 
@@ -65,9 +66,9 @@ EOF
 main() {
   local -a options
   local -a args
-  local -i enable_preview_image=0
-  local -i enable_scan=0
-  local -i enable_date_prefix=0
+  local -i enable_preview_image=1
+  local -i enable_scan=1
+  local -i enable_date_prefix=1
 
   local input_date=$(date '+%F')
 
@@ -235,18 +236,18 @@ parse_options() {
         usage
         exit 0
         ;;
-      -p|--preview-image)
-        enable_preview_image=1
+      --disable-image-preview)
+        enable_preview_image=0
         ;;
-      -s|--scan)
-        enable_scan=1
+      --disable-scan)
+        enable_scan=0
         ;;
       --date)
         input_date=$2
         do_shift=2
         ;;
-      --prefix-date)
-        enable_date_prefix=1
+      --disable-date-prefix)
+        enable_date_prefix=0
         ;;
       --)
         do_shift=3
