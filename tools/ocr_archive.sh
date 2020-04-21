@@ -69,6 +69,7 @@ main() {
   local -i enable_preview_image=1
   local -i enable_scan=1
   local -i enable_date_prefix=1
+  local -i delete_original_scan=0
 
   local input_date=$(date '+%F')
 
@@ -141,18 +142,24 @@ run() {
       "/output/${input_filename}" "/output/${output_filename}.pdf"
 
   if (($enable_date_prefix)); then
-    mv -v "${volume_dir}/${output_filename}.pdf" "./${input_date}_${output_filename}.pdf"
-    mv -v "${volume_dir}/${output_filename}.txt" "./${input_date}_${output_filename}.txt"
+    filename="${input_date}_${output_filename}"
   else
-    mv -v "${volume_dir}/${output_filename}.pdf" "./${output_filename}.pdf"
-    mv -v "${volume_dir}/${output_filename}.txt" "./${output_filename}.txt"
+    filename="$output_filename"
   fi
-  tmsu tag "./${output_filename}.pdf" \
+  if ! (($delete_original_scan)); then
+    cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
+    tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
+      year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+      original scan image ${SCAN_FORMAT} document unsorted "$@"
+  fi
+  mv -v "${volume_dir}/${output_filename}.pdf" "./${filename}.pdf"
+  mv -v "${volume_dir}/${output_filename}.txt" "./${filename}.txt"
+  tmsu tag "./${filename}.pdf" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scanned pdf ocr document unsorted "$@"
-  tmsu tag "./${output_filename}.txt" \
+    scan pdf ocr document unsorted "$@"
+  tmsu tag "./${filename}.txt" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scanned txt ocr document unsorted "$@"
+    scan txt ocr document unsorted "$@"
 
   trap - SIGINT SIGQUIT SIGTERM EXIT
   rm -vrf "$volume_dir"
@@ -241,6 +248,9 @@ parse_options() {
         ;;
       --disable-scan)
         enable_scan=0
+        ;;
+      --delete-original-scan)
+        delete_original_scan=0
         ;;
       --date)
         input_date=$2
