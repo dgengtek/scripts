@@ -53,12 +53,10 @@ OPTIONS:
   -d  debug
   --disable-scan  disable scanning an image beforehand
   --disable-date-prefix  do not prefix date to output filename
-  -p,--preview-image  preview image before converting after scanning
+  --disable-image-preview  disable image preview before converting after scanning
+  --delete-original-scan  do not keep the original scan image
+  --date  date prefixed and tagged for the archive
   -p,--path <directory>  some directory
-
-
-EXTRA
-  Additional options passed for other purposes. Accessable via \$options array variable
 EOF
 }
 
