@@ -6,6 +6,7 @@ import sys
 import random
 import click
 import string
+import binascii
 
 
 @click.command("pwgen.py")
@@ -73,16 +74,22 @@ def main(length, character_filter, count, inverse, bits, mode):
     set_whitespace = set(string.whitespace)
 
     character_pool = None
+    bit_mode = noop
     if mode == "graph":
         character_pool = set_printable - set_whitespace
+        bit_mode = b2hex
     elif mode == "alnum":
         character_pool = set_alpha.union(set_digits)
+        bit_mode = b2hex
     elif mode == "letters":
         character_pool = set_alpha
+        bit_mode = b2hex
     elif mode == "digits":
         character_pool = set_digits
+        bit_mode = noop
     elif mode == "printable":
         character_pool = set_printable
+        bit_mode = b2hex
     elif mode == "salt_crypt":
         character_pool = set_alpha.union(set_digits).union({".", "/"})
         length = 16
@@ -100,7 +107,7 @@ def main(length, character_filter, count, inverse, bits, mode):
 
     if bits:
         passwords = [
-            random.getrandbits(length)
+            bit_mode(random.getrandbits(length))
             for i in range(0, count)
             ]
     else:
@@ -109,6 +116,14 @@ def main(length, character_filter, count, inverse, bits, mode):
             for i in range(0, count)
             ]
     print_passwords(passwords)
+
+
+def noop(i):
+    return i
+
+
+def b2hex(i):
+    return binascii.b2a_hex(bigint_to_bytes(i)).decode("UTF-8").strip()
 
 
 def print_passwords(passwords):
@@ -125,6 +140,14 @@ def print_passwords(passwords):
 
 def generate_password(pool, size):
     return "".join([random.choice(pool) for x in range(size)])
+
+
+def bigint_to_bytes(i):
+    ba = bytearray()
+    while i:
+        ba.append(i & 0xFF)
+        i >>= 8
+    return ba
 
 
 if __name__ == "__main__":
