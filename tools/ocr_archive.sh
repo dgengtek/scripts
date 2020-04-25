@@ -20,7 +20,7 @@ declare -i ENABLE_DEBUG=0
 
 declare -ir SCAN_DPI=300
 readonly SCAN_MODE="color"
-readonly SCAN_FORMAT="png"
+readonly SCAN_FORMAT="tiff"
 readonly VOLUME_TMP="/tmp"  # where temporary volume directory will be created
 readonly OCRMYPDF_LANGUAGE="deu"
 readonly OCRMYPDF_OUTPUT_TYPE="pdfa"
@@ -51,6 +51,7 @@ OPTIONS:
   -v  verbose
   -q  quiet
   -d  debug
+  --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
@@ -68,6 +69,7 @@ main() {
   local -i enable_scan=1
   local -i enable_date_prefix=1
   local -i delete_original_scan=0
+  local -i batch_count=0
 
   local input_date=$(date '+%F')
 
@@ -110,15 +112,34 @@ main() {
 run() {
   local -r volume_dir=$(mktemp -d "${VOLUME_TMP}/tmp.XXXXXXXXXX")
   local -a arr_date=(${input_date//-/ })
+  local image_batch_name_prefix="input_image_batch-"
   trap "sigh_cleanup_scan $volume_dir" SIGINT SIGQUIT SIGTERM EXIT
 
   if (($enable_scan)); then
-    input_filename="input_image.png"
+    input_filename="input_image.${SCAN_FORMAT}"
     sudo -v
-    scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
+    if (($batch_count > 0)); then
+      input_filename="input_image.pdf"
+      for c in $(seq $batch_count); do
+        image_batch_name="${image_batch_name_prefix}${c}.${SCAN_FORMAT}"
+        read -p "Scanning in batches - $c of $batch_count. Press RETURN or abort now"
+        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
+        if (($enable_preview_image)); then
+          gpicview "${volume_dir}/${image_batch_name}" 
+        fi
+      done
+      log_info "Converting batched images to pdf"
+      convert "${volume_dir}"/${image_batch_name_prefix}*.${SCAN_FORMAT} "${volume_dir}/${input_filename}"
+      log_info "Done with batch scanning"
+    else
+      scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
+      if (($enable_preview_image)); then
+        gpicview "${volume_dir}/${input_filename}" 
+      fi
+    fi
+
     if (($enable_preview_image)); then
-      gpicview "${volume_dir}/${input_filename}" 
-      read -p "Continue conversion? Press any key or abort now"
+      read -p "Continue converting scanned images with ocr to pdf? Press RETURN or abort now"
     fi
   else
     input_filename=$(basename "$path_input_file")
@@ -145,10 +166,17 @@ run() {
     filename="$output_filename"
   fi
   if ! (($delete_original_scan)); then
-    cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
-    tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
-      year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-      original scan image ${SCAN_FORMAT} document unsorted "$@"
+    if (($batch_count)); then
+      cp -v "${volume_dir}/${input_filename}" "./${filename}-original.pdf"
+      tmsu tag "./${filename}-original.pdf" \
+        year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+        original scan image pdf ${SCAN_FORMAT} document unsorted "$@"
+    else
+      cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
+      tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
+        year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+        original scan image ${SCAN_FORMAT} document unsorted "$@"
+    fi
   fi
   mv -v "${volume_dir}/${output_filename}.pdf" "./${filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.txt" "./${filename}.txt"
@@ -168,6 +196,7 @@ check_dependencies() {
   hash scanimage
   hash docker
   hash tmsu  # tagging
+  hash convert  # ImageMagick
 }
 
 
@@ -243,6 +272,10 @@ parse_options() {
         ;;
       --disable-image-preview)
         enable_preview_image=0
+        ;;
+      --batch-count)
+        batch_count=$2
+        do_shift=2
         ;;
       --disable-scan)
         enable_scan=0
