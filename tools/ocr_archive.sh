@@ -216,15 +216,15 @@ check_dependencies() {
 check_input_args() {
   local -i exit_usage=0
   if [[ -z ${title:-""} ]]; then
-    echo "Title is required" >&2
+    log_err "Title is required"
     exit_usage=1
   fi
   if [[ -z ${subject:-""} ]]; then
-    echo "Subject is required" >&2
+    log_err "Subject is required"
     exit_usage=1
   fi
   if [[ -z ${author:-""} ]]; then
-    echo "Author is required" >&2
+    log_err "Author is required"
     exit_usage=1
   fi
 
@@ -300,6 +300,18 @@ parse_options() {
         ;;
       --disable-image-preview)
         enable_preview_image=0
+        ;;
+      --title)
+        title=$2
+        do_shift=2
+        ;;
+      --subject)
+        subject=$2
+        do_shift=2
+        ;;
+      --author)
+        author=$2
+        do_shift=2
         ;;
       --enable-tagging)
         enable_tagging=1
