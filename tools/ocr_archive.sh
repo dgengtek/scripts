@@ -53,6 +53,7 @@ OPTIONS:
   -d  debug
   --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
+  --enable-tagging  enable tagging via tsmu
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
   --delete-original-scan  do not keep the original scan image
@@ -67,6 +68,7 @@ main() {
   local -a args
   local -i enable_preview_image=1
   local -i enable_scan=1
+  local -i enable_tagging=0
   local -i enable_date_prefix=1
   local -i delete_original_scan=0
   local -i batch_count=0
@@ -168,24 +170,30 @@ run() {
   if ! (($delete_original_scan)); then
     if (($batch_count)); then
       cp -v "${volume_dir}/${input_filename}" "./${filename}-original.pdf"
-      tmsu tag "./${filename}-original.pdf" \
-        year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-        original scan image pdf ${SCAN_FORMAT} document unsorted "$@"
+      if (($enable_tagging)); then
+        tmsu tag "./${filename}-original.pdf" \
+          year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+          original scan image pdf ${SCAN_FORMAT} document unsorted "$@"
+      fi
     else
       cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
-      tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
-        year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-        original scan image ${SCAN_FORMAT} document unsorted "$@"
+      if (($enable_tagging)); then
+        tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
+          year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+          original scan image ${SCAN_FORMAT} document unsorted "$@"
+      fi
     fi
   fi
   mv -v "${volume_dir}/${output_filename}.pdf" "./${filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.txt" "./${filename}.txt"
+  if (($enable_tagging)); then
   tmsu tag "./${filename}.pdf" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
     scan pdf ocr document unsorted "$@"
   tmsu tag "./${filename}.txt" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
     scan txt ocr document unsorted "$@"
+  fi
 
   trap - SIGINT SIGQUIT SIGTERM EXIT
   rm -vrf "$volume_dir"
@@ -272,6 +280,9 @@ parse_options() {
         ;;
       --disable-image-preview)
         enable_preview_image=0
+        ;;
+      --enable-tagging)
+        enable_tagging=1
         ;;
       --batch-count)
         batch_count=$2
