@@ -14,7 +14,7 @@ main() {
     tags+=("+$t ")
   done
 
-  task add +read +bookmark +link "${tags[*]}" -- "$title - $url" 
+  task add project:"$(task _project | fzf)" +read +bookmark +link "${tags[*]}" -- "$title - $url" 
 }
 
 set -e
