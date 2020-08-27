@@ -31,8 +31,8 @@ readonly __SCRIPT_NAME="${BASH_SOURCE[0]##*/}"
 
 usage() {
   cat >&2 << EOF
-Usage: ${0##*/} [OPTIONS] <output filename> <title> <subject> <author> [<keywords>...] [-- [EXTRA]]
-Usage with scan: ${0##*/} [OPTIONS] <input filename> <output filename> <title> <subject> <author> [<keywords>...] [-- [EXTRA]]
+Usage: ${0##*/} [OPTIONS] <output filename> [<keywords>...] [-- [EXTRA]]
+Usage with scan: ${0##*/} [OPTIONS] <input filename> <output filename> [<keywords>...] [-- [EXTRA]]
 
 command
   run a custom function defined as _command
@@ -51,6 +51,11 @@ OPTIONS:
   -v  verbose
   -q  quiet
   -d  debug
+
+  --title <title>  required
+  --subject <subject>  required
+  --author <author>  required
+
   --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
   --enable-tagging  enable tagging via tsmu
@@ -72,6 +77,9 @@ main() {
   local -i enable_date_prefix=1
   local -i delete_original_scan=0
   local -i batch_count=0
+  local title=""
+  local subject=""
+  local author=""
 
   local input_date=$(date '+%F')
 
@@ -93,10 +101,7 @@ main() {
     shift
   fi
   local output_filename=${1:?"Output filename is required"}
-  local title=${2:?"Document title not given"}
-  local subject=${3:?"Document subject not given"}
-  local author=${4:?"Document author not given"}
-  shift 4
+  shift
 
   set_signal_handlers
   prepare_env
@@ -209,10 +214,25 @@ check_dependencies() {
 
 
 check_input_args() {
-  if [[ -z ${1:-""} ]]; then
+  local -i exit_usage=0
+  if [[ -z ${title:-""} ]]; then
+    echo "Title is required" >&2
+    exit_usage=1
+  fi
+  if [[ -z ${subject:-""} ]]; then
+    echo "Subject is required" >&2
+    exit_usage=1
+  fi
+  if [[ -z ${author:-""} ]]; then
+    echo "Author is required" >&2
+    exit_usage=1
+  fi
+
+  if (($exit_usage)); then
     usage
     exit 1
   fi
+
 }
 
 
