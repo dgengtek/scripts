@@ -13,15 +13,22 @@ main() {
   run.sh -n -q -- freeplane
   run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
   run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/private.yaml'
+  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/monitor.yaml'
   run.sh -n -q -- alacritty -e 'tmux new -s mutt'
   # run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
   run.sh -n -q -- alacritty -e 'tmux new -s ci'
+  # create run session
+  if ! tmux has-session -t "run" 2>/dev/null; then
+    tmux new-session -d -s "run" -n 0
+  fi
 
   # wait until tmux server is up
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t mutt >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t ci >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t private >/dev/null 2>&1; do sleep 1; done
+  while ! tmux has-session -t monitor >/dev/null 2>&1; do sleep 1; done
+
   tmux send-keys -t mutt 'mutt' ENTER
   tmux send-keys -t ci 'fly -t intranet login && watch fly -t intranet builds' ENTER
   # TODO: wait for pinentry to successfully close
