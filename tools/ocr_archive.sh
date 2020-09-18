@@ -59,6 +59,7 @@ OPTIONS:
   --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
   --enable-tagging  enable tagging via tsmu
+  --enable-batch-scan  enable scanning in batches until aborted
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
   --delete-original-scan  do not keep the original scan image
@@ -71,6 +72,7 @@ EOF
 main() {
   local -a options
   local -a args
+  local -i enable_batch_scan=0
   local -i enable_preview_image=1
   local -i enable_scan=1
   local -i enable_tagging=0
@@ -125,11 +127,34 @@ run() {
   if (($enable_scan)); then
     input_filename="input_image.${SCAN_FORMAT}"
     sudo -v
-    if (($batch_count > 0)); then
+    if (($enable_batch_scan)); then
       input_filename="input_image.pdf"
-      for c in $(seq $batch_count); do
-        image_batch_name="${image_batch_name_prefix}${c}.${SCAN_FORMAT}"
-        read -p "Scanning in batches - $c of $batch_count. Press RETURN or abort now"
+      local -i counter=1
+      while true; do
+        image_batch_name="${image_batch_name_prefix}${counter}.${SCAN_FORMAT}"
+        read -p "Scanning in batches - $counter. Press RETURN to scan or enter [n|no|nein] to stop with scanning and continue with processing" read_input
+        if [[ "$read_input" =~ ^(n|no|nein)$ ]]; then
+          break
+        fi
+        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
+        if (($enable_preview_image)); then
+          gpicview "${volume_dir}/${image_batch_name}" 
+        fi
+        read -p "Do you want to rescan this batch? Press RETURN to continue with scanning or enter [y|yes|j|ja] to rescan this batch" read_input
+        if [[ "$read_input" =~ ^(y|yes|j|ja)$ ]]; then
+          continue
+        fi
+        let counter+=1
+      done
+      log_info "Converting batched images to pdf"
+      convert "${volume_dir}"/${image_batch_name_prefix}*.${SCAN_FORMAT} "${volume_dir}/${input_filename}"
+      log_info "Done with batch scanning"
+
+    elif (($batch_count > 0)); then
+      input_filename="input_image.pdf"
+      for i in $(seq $batch_count); do
+        image_batch_name="${image_batch_name_prefix}${i}.${SCAN_FORMAT}"
+        read -p "Scanning in batches - $i of $batch_count. Press RETURN or abort now"
         scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
           gpicview "${volume_dir}/${image_batch_name}" 
@@ -138,11 +163,13 @@ run() {
       log_info "Converting batched images to pdf"
       convert "${volume_dir}"/${image_batch_name_prefix}*.${SCAN_FORMAT} "${volume_dir}/${input_filename}"
       log_info "Done with batch scanning"
+
     else
       scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
       if (($enable_preview_image)); then
         gpicview "${volume_dir}/${input_filename}" 
       fi
+
     fi
 
     if (($enable_preview_image)); then
@@ -173,7 +200,7 @@ run() {
     filename="$output_filename"
   fi
   if ! (($delete_original_scan)); then
-    if (($batch_count)); then
+    if (($batch_count)) || (($enable_batch_scan)); then
       cp -v "${volume_dir}/${input_filename}" "./${filename}-original.pdf"
       if (($enable_tagging)); then
         tmsu tag "./${filename}-original.pdf" \
@@ -313,8 +340,11 @@ parse_options() {
         author=$2
         do_shift=2
         ;;
-      --enable-tagging)
-        enable_tagging=1
+      --disable-tagging)
+        disable_tagging=1
+        ;;
+      --enable-batch-scan)
+        enable_batch_scan=1
         ;;
       --batch-count)
         batch_count=$2
