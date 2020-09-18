@@ -129,6 +129,7 @@ run() {
     sudo -v
     if (($enable_batch_scan)); then
       input_filename="input_image.pdf"
+      local -a batch_files
       local -i counter=1
       while true; do
         image_batch_name="${image_batch_name_prefix}${counter}.${SCAN_FORMAT}"
@@ -138,20 +139,22 @@ run() {
         fi
         scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
-          gpicview "${volume_dir}/${image_batch_name}" 
+          gpicview "${volume_dir}/${image_batch_name}"
         fi
         read -p "Do you want to rescan this batch? Press RETURN to continue with scanning or enter [y|yes|j|ja] to rescan this batch" read_input
         if [[ "$read_input" =~ ^(y|yes|j|ja)$ ]]; then
           continue
         fi
+        batch_files+=("${volume_dir}/${image_batch_name}")
         let counter+=1
       done
       log_info "Converting batched images to pdf"
-      convert "${volume_dir}"/${image_batch_name_prefix}*.${SCAN_FORMAT} "${volume_dir}/${input_filename}"
+      convert "${batch_files[@]}" "${volume_dir}/${input_filename}"
       log_info "Done with batch scanning"
 
     elif (($batch_count > 0)); then
       input_filename="input_image.pdf"
+      local -a batch_files
       for i in $(seq $batch_count); do
         image_batch_name="${image_batch_name_prefix}${i}.${SCAN_FORMAT}"
         read -p "Scanning in batches - $i of $batch_count. Press RETURN or abort now"
@@ -159,9 +162,10 @@ run() {
         if (($enable_preview_image)); then
           gpicview "${volume_dir}/${image_batch_name}" 
         fi
+        batch_files+=("${volume_dir}/${image_batch_name}")
       done
       log_info "Converting batched images to pdf"
-      convert "${volume_dir}"/${image_batch_name_prefix}*.${SCAN_FORMAT} "${volume_dir}/${input_filename}"
+      convert "${batch_files[@]}" "${volume_dir}/${input_filename}"
       log_info "Done with batch scanning"
 
     else
