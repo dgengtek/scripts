@@ -75,7 +75,7 @@ main() {
   local -i enable_batch_scan=0
   local -i enable_preview_image=1
   local -i enable_scan=1
-  local -i enable_tagging=0
+  local -i disable_tagging=0
   local -i enable_date_prefix=1
   local -i delete_original_scan=0
   local -i batch_count=0
@@ -202,14 +202,14 @@ run() {
   if ! (($delete_original_scan)); then
     if (($batch_count)) || (($enable_batch_scan)); then
       cp -v "${volume_dir}/${input_filename}" "./${filename}-original.pdf"
-      if (($enable_tagging)); then
+      if ! (($disable_tagging)); then
         tmsu tag "./${filename}-original.pdf" \
           year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
           original scan image pdf ${SCAN_FORMAT} document unsorted "$@"
       fi
     else
       cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
-      if (($enable_tagging)); then
+      if ! (($disable_tagging)); then
         tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
           year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
           original scan image ${SCAN_FORMAT} document unsorted "$@"
@@ -218,7 +218,7 @@ run() {
   fi
   mv -v "${volume_dir}/${output_filename}.pdf" "./${filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.txt" "./${filename}.txt"
-  if (($enable_tagging)); then
+  if ! (($disable_tagging)); then
   tmsu tag "./${filename}.pdf" \
     year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
     scan pdf ocr document unsorted "$@"
