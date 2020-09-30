@@ -8,6 +8,9 @@ main() {
     exit 1
   fi
 
+  xrandr --output DisplayPort-2 --mode 1920x1080 --rate 144 --left-of DVI-D-0 --primary;
+  xrandr --output DVI-D-0 --mode 1920x1080 --rate 60 --pos 1920x0
+
   systemctl --user start redshift dunst
   run.sh -n -q -- firefox
   run.sh -n -q -- freeplane
