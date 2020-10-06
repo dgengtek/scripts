@@ -60,6 +60,7 @@ OPTIONS:
   --disable-scan  disable scanning an image beforehand
   --enable-tagging  enable tagging via tsmu
   --enable-batch-scan  enable scanning in batches until aborted
+  --disable-canonize-filename  do not canonize output filename
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
   --delete-original-scan  do not keep the original scan image
@@ -76,6 +77,7 @@ main() {
   local -i enable_preview_image=1
   local -i enable_scan=1
   local -i disable_tagging=0
+  local -i disable_canonize_filename=0
   local -i enable_date_prefix=1
   local -i delete_original_scan=0
   local -i batch_count=0
@@ -103,6 +105,9 @@ main() {
     shift
   fi
   local output_filename=${1:?"Output filename is required"}
+  if ! (($disable_canonize_filename)); then
+    output_filename=$(filename_canonize.py -ln "$output_filename")
+  fi
   shift
 
   set_signal_handlers
@@ -241,6 +246,7 @@ check_dependencies() {
   hash docker
   hash tmsu  # tagging
   hash convert  # ImageMagick
+  hash filename_canonize.py
 }
 
 
@@ -346,6 +352,9 @@ parse_options() {
         ;;
       --disable-tagging)
         disable_tagging=1
+        ;;
+      --disable-canonize-filename)
+        disable_canonize_filename=1
         ;;
       --enable-batch-scan)
         enable_batch_scan=1
