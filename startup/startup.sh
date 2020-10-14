@@ -37,8 +37,8 @@ main() {
   tmux send-keys -t mutt 'mutt' ENTER
   tmux send-keys -t ci 'fly -t intranet login && watch fly -t intranet builds' ENTER
   # TODO: wait for pinentry to successfully close
-  run.sh -n -q -- urxvt -e 'ssh baha -- sudo -u admin -i'
-  # run.sh -n -q -- alacritty -e 'mosh -p 60000 baha -- sudo -u admin -i'
+  # run.sh -n -q -- urxvt -e 'ssh baha'
+  run.sh -n -q -- alacritty -e 'mosh -p 60000 baha'
 }
 
 main "$@"
