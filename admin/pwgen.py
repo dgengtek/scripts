@@ -17,6 +17,17 @@ import binascii
         "--filter",
         help="Filter characters from the given string")
 @click.option(
+        "single_line",
+        "--single-line",
+        is_flag=True,
+        help="print one per line")
+@click.option(
+        "separator",
+        "-s",
+        "--separator",
+        default="--",
+        help="Only added when printing single lines. Add a separator line between each line")
+@click.option(
         "-c",
         "--count",
         default=30,
@@ -30,44 +41,66 @@ import binascii
         '-b',
         '--bits',
         is_flag=True,
-        help="Use bits instead of length to determine password length")
+        help="Use bits instead of length to determine password length. Hex representation where suitable by default.")
 @click.option(
         '-g',
-        '--graph',
+        '--mode-graph',
         'mode',
         flag_value='graph',
         default=True,
         help="mode: [default] All printable characters except whitespace")
 @click.option(
         '-a',
-        '--alnum',
+        '--mode-alnum',
         'mode',
         flag_value='alnum',
         help="mode: letters + digits")
 @click.option(
-        '--salt-crypt',
+        '--mode-salt-crypt',
         'mode',
         flag_value='salt_crypt',
         help="mode: salt with character set [a-zA-Z0-9./] for crypt - length 16")
 @click.option(
         '-d',
-        '--digits',
+        '--mode-digits',
         'mode',
         flag_value='digits',
         help="mode: digits")
 @click.option(
-        '-p',
-        '--printable',
-        'mode',
-        flag_value='printable',
-        help="mode: All printable characters")
-@click.option(
         '-l',
-        '--letters',
+        '--mode-letters',
         'mode',
         flag_value='letters',
         help="mode: letters")
-def main(length, character_filter, count, inverse, bits, mode):
+@click.option(
+        '-p',
+        '--mode-printable',
+        'mode',
+        flag_value='printable',
+        help="mode: All printable characters")
+
+@click.option(
+        '--print-hex',
+        'representation',
+        flag_value='hex',
+        default=True,
+        help="repr: [default] display as hex")
+@click.option(
+        '--print-binary',
+        'representation',
+        flag_value='binary',
+        help="repr: binary representation")
+@click.option(
+        '--print-base64',
+        'representation',
+        flag_value='base64',
+        help="repr: base64")
+@click.option(
+        '--print-qp',
+        'representation',
+        flag_value='qp',
+        help="repr: qp")
+def main(length, character_filter, single_line, separator, count, inverse, bits, mode, representation):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
@@ -77,25 +110,29 @@ def main(length, character_filter, count, inverse, bits, mode):
     bit_mode = noop
     if mode == "graph":
         character_pool = set_printable - set_whitespace
-        bit_mode = b2hex
     elif mode == "alnum":
         character_pool = set_alpha.union(set_digits)
-        bit_mode = b2hex
     elif mode == "letters":
         character_pool = set_alpha
-        bit_mode = b2hex
     elif mode == "digits":
         character_pool = set_digits
-        bit_mode = noop
     elif mode == "printable":
         character_pool = set_printable
-        bit_mode = b2hex
     elif mode == "salt_crypt":
         character_pool = set_alpha.union(set_digits).union({".", "/"})
         length = 16
     else:
         print("Invalid pool mode set.", file=sys.stderr)
         sys.exit(1)
+
+    if representation == "hex":
+        bit_mode = b2hex
+    elif representation == "binary":
+        bit_mode = b2binary
+    elif representation == "qp":
+        bit_mode = b2qp
+    elif representation == "base64":
+        bit_mode = b2base64
 
     if not character_filter:
         character_filter = set()
@@ -115,24 +152,44 @@ def main(length, character_filter, count, inverse, bits, mode):
             generate_password(character_pool, length)
             for i in range(0, count)
             ]
-    print_passwords(passwords)
+    print_passwords(passwords, separator, single_line)
 
 
 def noop(i):
     return i
 
 
+def b2binary(i):
+    return bin(i)[2:]
+
+
 def b2hex(i):
     return binascii.b2a_hex(bigint_to_bytes(i)).decode("UTF-8").strip()
 
 
-def print_passwords(passwords):
+def b2base64(i):
+    return binascii.b2a_base64(bigint_to_bytes(i)).decode("UTF-8").strip()
+
+
+def b2qp(i):
+    """
+    printable characters
+    """
+    return binascii.b2a_qp(bigint_to_bytes(i)).decode("UTF-8").strip()
+
+
+def print_passwords(passwords, separator, single_line):
     if len(passwords) == 1:
         password = passwords[0]
         print(password, end="")
         return
 
     for i, password in enumerate(passwords, 1):
+        if single_line:
+            print(password)
+            print(separator)
+            continue
+
         print(password, end="\t")
         if i % 3 == 0:
             print()
