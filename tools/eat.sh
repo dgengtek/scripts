@@ -229,6 +229,5 @@ chr() {
   printf \\$(printf '%03o' $1)
 }
 
-set -x
 setup
 main "$@"

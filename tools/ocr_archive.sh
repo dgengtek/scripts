@@ -58,14 +58,13 @@ OPTIONS:
 
   --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
-  --disable-tagging  enable tagging via tsmu
+  --disable-tagging  disable tagging via tsmu
   --enable-batch-scan  enable scanning in batches until aborted
   --disable-canonize-filename  do not canonize output filename
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
   --delete-original-scan  do not keep the original scan image
   --date  date prefixed and tagged for the archive
-  -p,--path <directory>  some directory
 EOF
 }
 
