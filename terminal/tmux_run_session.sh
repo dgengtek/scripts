@@ -10,6 +10,7 @@ EOF
 main() {
   local -r session=run
   local -r window_name="window$RANDOM"
+  local -r cwd="$PWD"
   if ! hash run.sh; then
     echo "Could not find run.sh in path." >&2
     exit 1
@@ -17,10 +18,15 @@ main() {
   if ! tmux has-session -t "$session" 2>/dev/null; then
     tmux new-session -d -s "$session" -n 0
   fi
-  tmux send-keys -t "${session}:0" "tmux neww -d -n '$window_name' \"\
-    run.sh -m -f -- '$*';\
-    printf '[%s] exited, ^D to exit.\\n' '$*';\
-    cat>/dev/null\"" ENTER
+  local -r command=$(quotify.py "$*")
+  local -a commands
+  commands+=("cd '$cwd';")
+  commands+=("run.sh -m -f -- '$command';")
+  commands+=("echo -e '[$command] exited, ^D to exit.\\n' ;")
+  commands+=("cat>/dev/null;")
+
+  local -r command_string=$(quotify.py "${commands[*]}")
+  tmux send-keys -t "${session}:0" "tmux neww -d -n '$window_name' $command_string" ENTER
 
 }
 
