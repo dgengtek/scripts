@@ -21,13 +21,11 @@ main() {
   # run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
   run.sh -n -q -- alacritty -e 'tmux new -s ci'
   run.sh -n -q -- alacritty -e 'tmux new -s admin'
-  # create run session
-  if ! tmux has-session -t "run" 2>/dev/null; then
-    tmux new-session -d -s "run" -n 0
-  fi
+  run.sh -n -q -- alacritty -e 'tmux new -s run'
 
   # wait until tmux server is up
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
+  while ! tmux has-session -t run >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t mutt >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t ci >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t private >/dev/null 2>&1; do sleep 1; done
