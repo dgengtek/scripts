@@ -366,7 +366,7 @@ parse_options() {
         enable_scan=0
         ;;
       --delete-original-scan)
-        delete_original_scan=0
+        delete_original_scan=1
         ;;
       --date)
         input_date=$2
