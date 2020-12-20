@@ -3,16 +3,21 @@
 # create a new tmux session if none exists
 # ------------------------------------------------------------------------------
 # 
+readonly STARTUP_SHELL=alacritty
 
 usage() {
 cat >&2 << EOF
-Usage: ${0##*/} [OPTIONS] <session name>
+Usage: ${0##*/} [OPTIONS] [<session name>]
+
+will start session in a new shell if the the creation errors first
 
 OPTIONS:
+-p,--path <directory>  start session in <directory>
+-d,--detach  detach session
+-n,--never-new-shell  never start session in a new shell
 -h  help
 -v  verbose
 -q  quiet
--d,--detach
 EOF
 }
 
@@ -21,7 +26,9 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
+  local -i disable_startup_shell=0
   local -i tmux_detach=0
+  local tmux_start_directory=""
 
   local -a options
   local -a args
@@ -48,18 +55,47 @@ main() {
 ################################################################################
 
 run() {
-  local session=${1-$(basename "$PWD")}
+  local session=$1
+  shift 1
+  local -r directory="$tmux_start_directory"
+  if [[ -n "$directory" ]]; then
+    if [[ -d "$directory" ]]; then
+      cd "$directory"
+    else
+      echo "Not a directory: $directory" >&2
+      exit 1
+    fi
+  fi
+
+  if [[ -z "$session" ]]; then
+    session=$(basename "$PWD")
+  fi
+
   local -a tmux_options=()
-  shift
-  if tmux has-session -t "$session" 2>/dev/null; then
-    session="${session}${RANDOM}"
+  if tmux has-session -t "$session"; then
+    echo "Session $session already exists." >&2
+    exit 1
   fi
   (($tmux_detach)) && tmux_options+=("-d")
-  tmux new-session -s "$session" "${tmux_options[@]}" "$@"
+  local -r command="tmux new-session -s $session ${tmux_options[*]} $*"
+  if [[ -z "$TMUX" ]]; then
+    $command
+  else
+    if (($disable_startup_shell)); then
+      echo "Startup in a new shell is disabled and command is being run in a TMUX session already." >&2
+      exit 1
+    fi
+    run.sh -n -q \
+      -- $STARTUP_SHELL -e "$command"
+  fi
+
 }
 
 check_dependencies() {
-  :
+  if ! hash $STARTUP_SHELL >&/dev/null; then
+    echo "$STARTUP_SHELL not found." >&2
+    exit 1
+  fi
 }
 
 check_input_args() {
@@ -142,13 +178,16 @@ parse_options() {
       -q|--quiet)
         enable_quiet=1
         ;;
+      -n|--never-new-shell)
+        disable_startup_shell=1
+        ;;
+      -p|--path)
+        tmux_start_directory=$2
+        do_shift=2
+        ;;
       -h|--help)
         usage
         exit 0
-        ;;
-      -p|--path)
-        path=$2
-        do_shift=2
         ;;
       -d|--detach)
         tmux_detach=1
