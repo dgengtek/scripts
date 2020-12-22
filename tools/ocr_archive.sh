@@ -108,6 +108,7 @@ main() {
     output_filename=$(filename_canonize.py -ln "$output_filename")
   fi
   shift
+  echo "<<< Output filename: ${output_filename}.{pdf,txt} >>>" >&2
 
   set_signal_handlers
   prepare_env
