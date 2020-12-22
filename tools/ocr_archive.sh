@@ -173,6 +173,7 @@ run() {
       log_info "Done with batch scanning"
 
     else
+      read -p "Scanning once now. Press RETURN or abort now"
       scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
       if (($enable_preview_image)); then
         gpicview "${volume_dir}/${input_filename}" 
