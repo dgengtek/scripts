@@ -72,7 +72,7 @@ run() {
   fi
 
   local -a tmux_options=()
-  if tmux has-session -t "$session"; then
+  if tmux has-session -t "$session" >&/dev/null; then
     echo "Session $session already exists." >&2
     exit 1
   fi
