@@ -12,16 +12,16 @@ main() {
   xrandr --output DVI-D-0 --mode 1920x1080 --rate 60 --pos 1920x0
 
   systemctl --user start redshift dunst
-  run.sh -n -q -- firefox
-  run.sh -n -q -- freeplane
-  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
-  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/private.yaml'
-  run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/monitor.yaml'
-  run.sh -n -q -- alacritty -e 'tmux new -s mutt'
-  # run.sh -n -q -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
-  run.sh -n -q -- alacritty -e 'tmux new -s ci'
-  run.sh -n -q -- alacritty -e 'tmux new -s admin'
-  run.sh -n -q -- alacritty -e 'tmux new -s run'
+  run.sh -n -- firefox
+  run.sh -n -- freeplane
+  run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
+  run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/private.yaml'
+  run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/monitor.yaml'
+  run.sh -n -- alacritty -e 'tmux new -s mutt'
+  # run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
+  run.sh -n -- alacritty -e 'tmux new -s ci'
+  run.sh -n -- alacritty -e 'tmux new -s admin'
+  run.sh -n -- alacritty -e 'tmux new -s run'
 
   # wait until tmux server is up
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
