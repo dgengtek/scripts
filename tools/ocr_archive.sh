@@ -63,6 +63,7 @@ OPTIONS:
   --disable-canonize-filename  do not canonize output filename
   --disable-date-prefix  do not prefix date to output filename
   --disable-image-preview  disable image preview before converting after scanning
+  --disable-pdf-preview  disable pdf preview after conversion finished
   --delete-original-scan  do not keep the original scan image
   --date  date prefixed and tagged for the archive
 EOF
@@ -74,6 +75,7 @@ main() {
   local -a args
   local -i enable_batch_scan=0
   local -i enable_preview_image=1
+  local -i enable_preview_pdf=1
   local -i enable_scan=1
   local -i disable_tagging=0
   local -i disable_canonize_filename=0
@@ -144,6 +146,7 @@ run() {
         fi
         scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
+          echo "scanned image: '${volume_dir}/${image_batch_name}'" >&2
           gpicview "${volume_dir}/${image_batch_name}"
         fi
         read -p "Do you want to rescan this batch? Press RETURN to continue with scanning or enter [y|yes|j|ja] to rescan this batch" read_input
@@ -165,6 +168,7 @@ run() {
         read -p "Scanning in batches - $i of $batch_count. Press RETURN or abort now"
         scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
+          echo "scanned image: '${volume_dir}/${image_batch_name}'" >&2
           gpicview "${volume_dir}/${image_batch_name}" 
         fi
         batch_files+=("${volume_dir}/${image_batch_name}")
@@ -177,6 +181,7 @@ run() {
       read -p "Scanning once now. Press RETURN or abort now"
       scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
       if (($enable_preview_image)); then
+        echo "scanned image: '${volume_dir}/${input_filename}'" >&2
         gpicview "${volume_dir}/${input_filename}" 
       fi
 
@@ -203,6 +208,11 @@ run() {
       --output-type "$OCRMYPDF_OUTPUT_TYPE" \
       -l "$OCRMYPDF_LANGUAGE" \
       "/output/${input_filename}" "/output/${output_filename}.pdf"
+
+  if (($enable_preview_pdf)); then
+    zathura "${volume_dir}/${output_filename}.pdf"
+    read -p "Continue moving results to current directory? Press RETURN or abort now"
+  fi
 
   if (($enable_date_prefix)); then
     filename="${input_date}_${output_filename}"
@@ -338,6 +348,9 @@ parse_options() {
         ;;
       --disable-image-preview)
         enable_preview_image=0
+        ;;
+      --disable-pdf-preview)
+        enable_preview_pdf=0
         ;;
       --title)
         title=$2
