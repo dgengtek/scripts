@@ -15,6 +15,9 @@ sudo docker run \
 ,source="$HOME/.config/beets/config.yaml"\
 ,destination=/home/beetu/.config/beets/config.yaml,readonly \
   --mount type=bind\
+,source="$HOME/.config/beets/state.pickle"\
+,destination=/home/beetu/.config/beets/state.pickle \
+  --mount type=bind\
 ,source="$config_plugins"\
 ,destination=/home/beetu/.config/beets/plugins_config.yaml,readonly \
   --mount type=bind\
