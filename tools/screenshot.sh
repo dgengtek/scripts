@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------------------
 # wrapper script
-# screenshot with maim for awesome wm
+# screenshot with maim
 # ------------------------------------------------------------------------------
 
 usage() {
@@ -10,6 +10,9 @@ Usage:	${0##*/}
   
 OPTIONS:
   -h			  help
+  -m,--move  move screenshot to directory
+  -s,--select  selection region to screenshot
+  -w,--window  select window to screenshot
 EOF
 }
 
@@ -23,6 +26,7 @@ main() {
   #
   local -i capture_window=0
   local -i move_screenshot=0
+  local -i select_region=0
 
   local -a options
   local -a args
@@ -36,6 +40,7 @@ main() {
 
   setup
   run "$@"
+  trap - SIGHUP SIGINT SIGTERM EXIT
 }
 
 check_dependencies() {
@@ -45,7 +50,10 @@ check_dependencies() {
 }
 
 check_input_args() {
-  :
+  if (($select_region)) && (($capture_window)); then
+    echo "Cannot select region and window." >&2
+    exit 1
+  fi
 }
 
 prepare() {
@@ -70,12 +78,22 @@ setup() {
 }
 
 run() {
+  local -r date_iso="date +%Y%m%dT%H%M%S%z"
   local -a maim_args=("--format=png")
-  (($capture_window)) && maim_args+=("-i $(xdotool getactivewindow)")
-  if (($move_screenshot)); then
-    maim_args+=("/mnt/nfs/homes/dgeng/screenshots/$(date +%Y%m%d_%H%M%S.png)")
+  if (($select_region)); then
+    maim_args+=("-s")
   else
-    maim_args+=("$HOME/$(date +%Y%m%d_%H%M%S.png)")
+    # sleep if no manually selection
+    sleep 1
+  fi
+  if (($capture_window)); then
+    maim_args+=("--window=$(xdotool getactivewindow)")
+  fi
+
+  if (($move_screenshot)); then
+    maim_args+=("/mnt/nfs/homes/dgeng/screenshots/$($date_iso).png")
+  else
+    maim_args+=("$HOME/$($date_iso).png")
   fi
   maim "${maim_args[@]}"
 }
@@ -96,6 +114,9 @@ parse_options() {
         ;;
       -w|--window)
 	capture_window=1
+	;;
+      -s|--select)
+	select_region=1
 	;;
       -m|--move)
         move_screenshot=1
