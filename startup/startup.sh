@@ -2,6 +2,9 @@
 # exec 2>&1
 # exec 1>/dev/null
 
+# lock created from mail session during startup
+readonly STARTUP_GPG_LOCK="/tmp/startup_gpg2_lock"
+
 main() {
   if ! hash run.sh; then
     echo "Could not find run.sh in path." >&2
@@ -34,8 +37,10 @@ main() {
   while ! tmux has-session -t admin >/dev/null 2>&1; do sleep 1; done
 
   # run.sh -n -q -- urxvt -e 'ssh baha'
-  # wait for gpg2 to close in other session
-  while ! [[ -z "$(pgrep gpg2)" ]]; do
+  sleep 10 # wait for startup of other sessions to create lock file
+  # wait for lock to release
+  while [[ -d "$STARTUP_GPG_LOCK" ]]; do
+    echo "waiting for lock($STARTUP_GPG_LOCK) to release" >&2
     sleep 1
   done
   run.sh -n -q -- alacritty -e 'mosh -p 60000 baha'
