@@ -36,7 +36,7 @@ main() {
   # flags
   local PATH_BOOKMARKS=${PATH_BOOKMARKS:-"${HOME}/.local/share/"}
   local TMP=${TMP:-"/tmp/"}
-  local -r FSBOOKMARKS="${PATH_BOOKMARKS}fsbookmarks.db.txt"
+  local -r FSBOOKMARKS=${FSBOOKMARKS:-"${PATH_BOOKMARKS}fsbookmarks.db.txt"}
   local -r tmp_bookmarks="$(mktemp --dry-run $TMP/fsbookmarks.XXXXXXXXtmp.db.txt)"
   local -i enable_verbose=0
   local -i enable_quiet=0
@@ -66,9 +66,9 @@ main() {
 ################################################################################
 
 run() {
+  [[ -z $1 ]] && return
   subcommand=$1
   shift
-  [[ -z $1 ]] && return
   cmd_${subcommand} "$@"
   local -r rc=$?
   if (($rc == 127)); then
@@ -261,7 +261,7 @@ cmd_add() {
 }
 
 cmd_check() {
-  cat "$FSBOOKMARKS" | xargs -I {} sh -c "if ! test -d {}; then echo '{}';fi"
+  cat "$FSBOOKMARKS" | xargs -I {} sh -c "if ! test -d '{}'; then echo '{}';fi"
 }
 
 cmd_clear() {
@@ -276,14 +276,9 @@ cmd_clear() {
 }
 
 cmd_del() {
-  local input=
-  if read -t 0; then
-    input=$(cat)
-  else
-    input="$@"
-  fi
+  local input="$@"
   [[ -z "$input" ]] && error_exit 1 "No input."
-  input=$(realpath "$input")
+  input=$(realpath -m "$input")
   info "input: $input"  2>&$fdverbose
   local line_number=
   if ! line_number=$(grep -n -F -x "$input" "$FSBOOKMARKS"); then
