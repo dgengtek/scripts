@@ -12,11 +12,6 @@ STOCK_KEYS = [
     "postMarketPrice",
     ]
 
-# symbols to watch
-SYMBOLS = [
-        "GME",
-        ]
-
 
 def main():
     args = parse_args()
@@ -26,7 +21,18 @@ def main():
         api_url = STOCK_API_URL.format(symbol=symbol)
     else:
         api_url = api_url.format(symbol=symbol)
-    
+
+    limits = args.alert_range.split("-")
+    if len(limits) != 2:
+        print(
+            "Alert range must be noted within a single '-' \
+like 15-45. Input: {}".format(args.alert_range),
+            file=sys.stderr)
+        sys.exit(1)
+
+    lower_limit = limits[0]
+    upper_limit = limits[1]
+
     while True:
         r = requests.get(api_url)
         data = r.json().get("quoteResponse")
@@ -42,8 +48,8 @@ def main():
                 if value == "":
                     continue
 
-                if value >= args.alert_range:
-                    print("{} reached alarm limit @{} {}".format(
+                if value <= lower_limit or value >= upper_limit:
+                    print("{} reached alert limit @{} {}".format(
                         r.get("longName"),
                         value,
                         k), file=sys.stderr)
@@ -72,9 +78,8 @@ def parse_args():
     # required
     parser.add_argument(
             "--alert-range",
-            help="required value store",
+            help="range to alert eg. 30-80, exit if <=30 and >=80",
             required=True,
-            type=int,
             action="store")
 
     # optional arguments
