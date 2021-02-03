@@ -2,6 +2,7 @@
 import requests
 import sys
 import time
+from fractions import Decimal
 
 # symbols sep by ','
 STOCK_API_URL = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols={symbol}"
@@ -30,8 +31,8 @@ like 15-45. Input: {}".format(args.alert_range),
             file=sys.stderr)
         sys.exit(1)
 
-    lower_limit = limits[0]
-    upper_limit = limits[1]
+    lower_limit = Decimal(limits[0])
+    upper_limit = Decimal(limits[1])
 
     while True:
         r = requests.get(api_url)
