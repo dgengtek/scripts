@@ -7,6 +7,7 @@ import time
 STOCK_API_URL = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols={symbol}"
 
 STOCK_KEYS = [
+    "preMarketPrice",
     "regularMarketPrice",
     "postMarketPrice",
     ]
@@ -37,7 +38,10 @@ def main():
         send_alarm = False
         for r in data:
             for k in STOCK_KEYS:
-                value = r.get(k)
+                value = r.get(k, "")
+                if value == "":
+                    continue
+
                 if value >= args.alert_range:
                     print("{} reached alarm limit @{} {}".format(
                         r.get("longName"),
