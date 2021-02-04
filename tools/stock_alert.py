@@ -34,12 +34,28 @@ like 15-45. Input: {}".format(args.alert_range),
     lower_limit = Decimal(limits[0])
     upper_limit = Decimal(limits[1])
 
+    retries = 0
+    max_retries = 10
+
     while True:
-        r = requests.get(api_url)
+        if max_retries >= 10:
+            print("Maximum retries reached. Aborting now.", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            r = requests.get(api_url)
+        except (OSError, requests.ConnectionError, requests.ConnectTimeout):
+            retries += 1
+            time.sleep(3)
+
+        retries = 0
+
         data = r.json().get("quoteResponse")
         response_error = data.get("error")
         if response_error:
-            print("Error in response: {}".format(response_error))
+            print(
+                "Error in response: {}".format(response_error),
+                file=sys.stderr)
             sys.exit(1)
         data = data.get("result")
         send_alarm = False
