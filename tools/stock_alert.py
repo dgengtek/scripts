@@ -38,7 +38,7 @@ like 15-45. Input: {}".format(args.alert_range),
     max_retries = 10
 
     while True:
-        if max_retries >= 10:
+        if retries >= max_retries:
             print("Maximum retries reached. Aborting now.", file=sys.stderr)
             sys.exit(1)
 
