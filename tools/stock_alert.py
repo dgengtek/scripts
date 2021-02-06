@@ -47,16 +47,21 @@ like 15-45. Input: {}".format(args.alert_range),
         except (OSError, requests.ConnectionError, requests.ConnectTimeout):
             retries += 1
             time.sleep(3)
+            continue
 
-        retries = 0
 
-        data = r.json().get("quoteResponse")
-        response_error = data.get("error")
-        if response_error:
+        data = r.json().get("quoteResponse", "")
+        response_error = data.get("error", "")
+        if response_error or not data:
             print(
                 "Error in response: {}".format(response_error),
                 file=sys.stderr)
-            sys.exit(1)
+            retries += 1
+            time.sleep(3)
+            continue
+
+        retries = 0
+
         data = data.get("result")
         send_alarm = False
         for r in data:
