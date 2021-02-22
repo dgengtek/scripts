@@ -34,6 +34,7 @@ main() {
   while ! tmux has-session -t private >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t monitor >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t admin >/dev/null 2>&1; do sleep 1; done
+  while ! tmux has-session -t wiki >/dev/null 2>&1; do sleep 1; done
 
   # run.sh -n -q -- urxvt -e 'ssh baha'
   sleep 10 # wait for startup of other sessions to create lock file
