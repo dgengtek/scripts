@@ -146,12 +146,12 @@ like 15-45. Input: {}".format(args.alert_range),
                 if use_average:
                     rate_of_change_over_items = \
                         get_average_rate_of_change_over_x(last_items, value)
-                    rate_string.append("avgroc{}@{}".format(
+                    rate_string.append("avgroc{}@{}%".format(
                         requested_items, round(rate_of_change_over_items, 2)))
                 else:
                     rate_of_change_over_items = \
                         get_rate_of_change_over_x(last_items, value)
-                    rate_string.append("roc{}@{}".format(
+                    rate_string.append("roc{}@{}%".format(
                         requested_items, round(rate_of_change_over_items, 2)))
                 if alert_on_limit_range(
                         rate_of_change_over_items,
@@ -162,7 +162,7 @@ like 15-45. Input: {}".format(args.alert_range),
 
             print("{} @{} {}".format(
                 stock_name,
-                value,
+                round(value, 2),
                 " ".join(rate_string)), file=sys.stderr)
 
             if send_alarm:
