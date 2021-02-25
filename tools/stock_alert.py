@@ -31,6 +31,8 @@ def main():
 
     max_memory_required = 0
 
+    if not args.roc:
+        args.roc = list()
     for roc in args.roc:
         roc_split = roc.split("=")
 
