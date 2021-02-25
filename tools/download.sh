@@ -17,7 +17,7 @@ main() {
   local -i enable_quiet=0
   local -i enable_debug=0
 
-  local timeout=30
+  local timeout=300
 
   trap cleanup SIGINT SIGTERM
   prepare
