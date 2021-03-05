@@ -42,6 +42,8 @@ def main(filename, mode, lowercase, hidden, dryrun, verbose):
     but will not recurse into sub directories.
 
     FILENAME can also be a directory.
+
+    If FILENAME is '-' then read from stdin.
     """
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
