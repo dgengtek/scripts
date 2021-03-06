@@ -23,8 +23,8 @@ main() {
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/mail.yaml'
   # run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/ci.yaml'
+  run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/run.yaml'
   run.sh -n -- alacritty -e 'tmux new -s admin'
-  run.sh -n -- alacritty -e 'tmux new -s run'
 
   # wait until tmux server is up and sessions are running
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
