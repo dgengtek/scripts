@@ -34,7 +34,7 @@ main() {
     exit 1
   fi
   if ! sudo mount "/dev/mapper/$crypt_device_name" "$mount_path"; then
-    sudo cryptsetup close "$cryptsetup"
+    sudo cryptsetup close "$crypt_device_name"
     sudo losetup -d "$loop_device" 
   fi
 
