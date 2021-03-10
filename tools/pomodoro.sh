@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# install from own project pycount
 # ------------------------------------------------------------------------------
 # track time via pomodoro
 # use taskwarrior for flagging task

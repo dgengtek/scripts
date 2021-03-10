@@ -6,7 +6,7 @@
 
 usage() {
   cat >&2 << EOF
-Usage: ${0##*/} <mac> [<mac separator>] [<mac separator replacement>]
+Usage: ${0##*/} <mac> [<mac separator> [<mac separator replacement>]]
 
 <mac separator> default is :
 <mac separator replacement> default is ''

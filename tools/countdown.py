@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+Not used anymore. Install from own pycount project
+
 Usage:
     countdown.py [options] [<unit>]
 

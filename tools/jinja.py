@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+render a file from a jinja template
+"""
 import argparse
 import sys
 import yaml
