@@ -18,7 +18,7 @@ declare -i ENABLE_VERBOSE=0
 declare -i ENABLE_QUIET=0
 declare -i ENABLE_DEBUG=0
 
-declare -ir SCAN_DPI=300
+declare -ir SCAN_DPI=${SCAN_DPI:-300}
 readonly SCAN_MODE="color"
 readonly SCAN_FORMAT="tiff"
 readonly VOLUME_TMP="/tmp"  # where temporary volume directory will be created
