@@ -19,7 +19,6 @@ main() {
   run.sh -n -- freeplane
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/wiki.yaml'
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/private.yaml'
-  run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/monitor.yaml'
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/mail.yaml'
   # run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
   run.sh -n -- alacritty -e 'tmuxp load ~/.tmuxp/ci.yaml'
@@ -32,7 +31,6 @@ main() {
   while ! tmux has-session -t mail >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t ci >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t private >/dev/null 2>&1; do sleep 1; done
-  while ! tmux has-session -t monitor >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t admin >/dev/null 2>&1; do sleep 1; done
   while ! tmux has-session -t wiki >/dev/null 2>&1; do sleep 1; done
 
