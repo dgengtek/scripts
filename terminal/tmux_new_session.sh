@@ -94,7 +94,6 @@ run() {
 check_dependencies() {
   if ! hash $STARTUP_SHELL >&/dev/null; then
     echo "$STARTUP_SHELL not found." >&2
-    exit 1
   fi
 }
 
