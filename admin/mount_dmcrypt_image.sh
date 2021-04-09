@@ -47,9 +47,11 @@ main() {
   sudo tee "${path_systemd_transient_service}/${service_umount}" >&/dev/null << EOF
 [Unit]
 Description=Cleanup encrypted mounted file for $USER
-Before=shutdown.target multi-user.target
-Conflicts=shutdown.target
-Requires=sysinit.target
+# in a dependency between units if one is shutdown and the other is started up
+#   then the shutdown of a unit is always ordered before the startup of a unit
+# here umount.target is started and this unit will stop before
+Before=umount.target systemd-user-sessions.service
+Conflicts=umount.target
 After=network.target nfs-client.target remote-fs.target local-fs.target sysinit.target $systemd_image_mountpoint $systemd_device_mountpoint
 DefaultDependencies=no
 
@@ -59,9 +61,6 @@ ExecStop=umount /dev/mapper/$crypt_device_name
 ExecStop=cryptsetup close $crypt_device_name
 ExecStop=losetup -d $loop_device
 RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
