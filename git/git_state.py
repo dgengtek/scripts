@@ -25,96 +25,49 @@ def main():
         sys.exit(is_git_repo)
 
     result = {}
-    git_remote_state = run_cmd("git_remote_compare.sh").stdout.read()
-    if not git_remote_state:
-        git_remote_state = {}
-    else:
-        git_remote_state = json.loads(git_remote_state)
+
+    branch = run_cmd("git rev-parse --abbrev-ref HEAD")\
+        .stdout.read().decode("utf-8").strip()
+    remote = run_cmd("git config --get branch.{}.remote".format(
+        branch)).stdout.read().decode("utf-8").strip()
+    remote_branch = run_cmd("git config --get branch.{}.merge".format(
+        branch)).stdout.read().decode("utf-8").strip()
+
+    remote_branch.replace("refs/heads", "refs/remotes/{}".format(
+        remote))
+    commit_ahead = run_cmd("git rev-list --count {}..HEAD".format(
+        remote_branch)).stdout.read().decode("utf-8").strip()
+    commit_ahead = int(bool(commit_ahead))
+    commit_behind = run_cmd("git rev-list --count HEAD..{}".format(
+        remote_branch)).stdout.read().decode("utf-8").strip()
+    commit_behind = int(bool(commit_behind))
 
     git_has_unstaged_items = int(bool(
         run_cmd("git diff --exit-code --quiet").returncode))
 
     git_has_untracked_items = run_cmd(
-        "git ls-files --other --exclude-standard --directory --no-empty-directory").stdout.read()
+        "git ls-files \
+--other \
+--exclude-standard \
+--directory \
+--no-empty-directory").stdout.read().decode("utf-8").strip()
     git_has_untracked_items = int(bool(git_has_untracked_items))
 
-    result.update(git_remote_state)
+    if not commit_ahead and not commit_behind:
+        synced = True
+    else:
+        synced = False
+
+    result.update({"branch": branch})
+    result.update({"tracking": remote})
+    result.update({"ahead": commit_ahead})
+    result.update({"commit_behind": commit_behind})
+    result.update({"synced": synced})
     result.update({"has_unstaged_items": git_has_unstaged_items})
     result.update({"has_untracked_items": git_has_untracked_items})
 
     print(json.dumps(result))
 
-
-def usage():
-    pass
-
-
-def parse_args():
-    import argparse
-    parser = argparse.ArgumentParser(
-            description="Program description.",
-            epilog="Epilog of program.",
-            add_help=True
-            )
-    # positional arguments
-    parser.add_argument("target", help="target directory")
-    parser.add_argument("destination", help="destination directory")
-
-    # required
-    parser.add_argument("--require",
-            help="required value store",
-            action="store")
-    #optional arguments
-    parser.add_argument("--optional",
-            help="optional value with different metavar",
-            metavar="METAVAROPTIONAL")
-    parser.add_argument("--stored",
-            help="store with different key in namespace of result",
-            dest="newkeystored")
-    # store boolean
-    parser.add_argument("-v","--verbosity", 
-            help="increase output verbosity",
-            type=int,
-            choices=[0,1,2])
-    parser.add_argument("-k",
-            help="k store true",
-            action="store_true")
-    # store value
-    parser.add_argument("-l",
-            action="store") # default action
-    # store const value
-    parser.add_argument("-t",
-            help="store constant value when set",
-            action="store_const", 
-            const="stored const value")
-    # append to a list, allow multiple uses of arg
-    parser.add_argument("-a",
-            help="append to a list",
-            action="append")
-    # count, count occurences of keyword argument, -uuu
-    parser.add_argument("-u",
-            help="count occurences of arg used",
-            action="count")
-    # use nargs with, N, ?, *, +, argparse.REMAINDER - catches all remaining args
-    # arguments gathered into list, -c value1 value2
-    parser.add_argument("-c",
-            help="use different count args required to pass to a key",
-            nargs=2)
-
-    import sys
-    # optional input
-    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'),
-            default=sys.stdin)
-    # optional output
-    parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'),
-            default=sys.stdout)
-
-    # mutual exclusive, either foo or bar
-    exclusive_group = parser.add_mutually_exclusive_group()
-    exclusive_group.add_argument('--foo', action='store_true')
-    exclusive_group.add_argument('--bar', action='store_false')
-
-    return parser.parse_args()
 
 if __name__ == "__main__":
     main()
