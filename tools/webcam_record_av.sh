@@ -62,6 +62,8 @@ if [[ -z "$1" ]]; then
   exit 1
 fi
 
+readonly filename="${1}_$(date '+%Y%m%dT%H%M%S')"
+
 ffmpeg -f v4l2 -input_format mjpeg -thread_queue_size 32 \
   -i /dev/video0 \
   -f alsa -i sysdefault:CARD=Camcra \
@@ -70,4 +72,4 @@ ffmpeg -f v4l2 -input_format mjpeg -thread_queue_size 32 \
   -ac 2 -ab 32k -ar 44100 \
   -maxrate 1800k -bufsize 1800k \
   -c copy \
-  "${1}.mkv"
+  "${filename}.mkv"
