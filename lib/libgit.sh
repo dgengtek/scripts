@@ -2,7 +2,7 @@
 
 get_active_branch() { git rev-parse --abbrev-ref HEAD; }
 
-get_branches() { git branch | sed 's/^[* ]*//'; }
+get_branches() { git branch | awk '{print $NF}'; }
 
 stash_items() {
   stashing_required || return 1
