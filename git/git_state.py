@@ -24,23 +24,47 @@ def main():
         print("{}")
         sys.exit(is_git_repo)
 
-    result = {}
+    result = []
 
-    branch = run_cmd("git rev-parse --abbrev-ref HEAD")\
+    branches = run_cmd("git for-each-ref --format %(refname)")\
+        .stdout.readlines()
+
+    for branch in branches:
+        branch = branch.decode("utf-8").strip()
+        # ignore remote refs branches
+        if not branch.startswith("refs/heads/"):
+            continue
+        branch = branch.replace("refs/heads/", "")
+        result.append(get_branch_state(branch))
+
+    print(json.dumps(result))
+
+
+def get_branch_state(branch):
+    result = {}
+    branch = run_cmd("git rev-parse --abbrev-ref {}".format(
+        branch))\
         .stdout.read().decode("utf-8").strip()
     remote = run_cmd("git config --get branch.{}.remote".format(
         branch)).stdout.read().decode("utf-8").strip()
     remote_branch = run_cmd("git config --get branch.{}.merge".format(
         branch)).stdout.read().decode("utf-8").strip()
 
-    remote_branch.replace("refs/heads", "refs/remotes/{}".format(
+    remote_branch = remote_branch.replace("refs/heads", "refs/remotes/{}".format(
         remote))
-    commit_ahead = run_cmd("git rev-list --count {}..HEAD".format(
-        remote_branch)).stdout.read().decode("utf-8").strip()
-    commit_ahead = int(bool(commit_ahead))
-    commit_behind = run_cmd("git rev-list --count HEAD..{}".format(
-        remote_branch)).stdout.read().decode("utf-8").strip()
-    commit_behind = int(bool(commit_behind))
+    commit_ahead = run_cmd("git rev-list --count {}..{}".format(
+        remote_branch, branch)).stdout.read().decode("utf-8").strip()
+    commit_ahead_of_head = run_cmd("git rev-list --count HEAD..{}".format(
+        branch)).stdout.read().decode("utf-8").strip()
+    commit_ahead = int(commit_ahead)
+    commit_ahead_of_head = int(commit_ahead_of_head)
+
+    commit_behind = run_cmd("git rev-list --count {}..{}".format(
+        branch, remote_branch)).stdout.read().decode("utf-8").strip()
+    commit_behind_of_head = run_cmd("git rev-list --count {}..HEAD".format(
+        branch)).stdout.read().decode("utf-8").strip()
+    commit_behind = int(commit_behind)
+    commit_behind_of_head = int(commit_behind_of_head)
 
     git_has_unstaged_items = int(bool(
         run_cmd("git diff --exit-code --quiet").returncode))
@@ -61,12 +85,14 @@ def main():
     result.update({"branch": branch})
     result.update({"tracking": remote})
     result.update({"ahead": commit_ahead})
-    result.update({"commit_behind": commit_behind})
+    result.update({"behind": commit_behind})
+    result.update({"ahead_of_head": commit_ahead_of_head})
+    result.update({"behind_of_head": commit_behind_of_head})
     result.update({"synced": synced})
     result.update({"has_unstaged_items": git_has_unstaged_items})
     result.update({"has_untracked_items": git_has_untracked_items})
 
-    print(json.dumps(result))
+    return result
 
 
 if __name__ == "__main__":
