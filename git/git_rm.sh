@@ -57,13 +57,11 @@ run() {
   git filter-branch --force --index-filter \
     "$cmd_git_rm '$path'" \
     --prune-empty --tag-name-filter cat -- --all \
-  git_garbage_collect.sh
+  echo "Make sure to garbage collect afterwards" >&2
 }
 
 check_dependencies() {
-  if ! hash git_garbage_collect.sh >/dev/null 2>&1; then
-    error 1 "git_garbage_collect.sh not found"
-  fi
+  :
 }
 
 check_input_args() {
