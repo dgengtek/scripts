@@ -6,7 +6,7 @@ prompt_me() {
     echo "$@" >&2
   fi
   read -n 1 -p "Continue?[y/n] > " input
-  input=$(echo -n "$input" | tr [a-z] [A-Z])
+  input=$(echo -n "$input" | tr '[a-z]' '[A-Z]')
   echo
   case $input in
     "Y"|"YES"|"JA"|"J")
