@@ -56,7 +56,7 @@ run() {
   fi
   git filter-branch --force --index-filter \
     "$cmd_git_rm '$path'" \
-    --prune-empty --tag-name-filter cat -- --all \
+    --prune-empty --tag-name-filter cat -- --all
   echo "Make sure to garbage collect afterwards" >&2
 }
 
