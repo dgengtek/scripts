@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# TODO update options parsing
 main() {
   local dir
   if [[ -z $1 ]]; then
