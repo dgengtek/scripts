@@ -50,7 +50,7 @@ EOF
     output=$(bash -c "$*" 2>&1)
     rc=$?
     if (($rc == 0)); then
-      echo "# $i - $directory" >&2
+      echo -n "# $i - " >&2
       echo "$directory"
       [[ -n "$output" ]] && echo "$output" >&2
       echo >&2
