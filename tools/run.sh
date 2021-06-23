@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # TODO: use coproc for buffering logs
 
-set -x
-
 usage() {
   cat >&2 << EOF
 Usage: ${0##*/} [OPTIONS] CMD...
