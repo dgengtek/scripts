@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # TODO: use coproc for buffering logs
 
+set -x
 
 usage() {
   cat >&2 << EOF
@@ -16,6 +17,7 @@ OPTIONS:
   -l, --log           log command output
   -m, --mail          mail result
   -o, --output        mail cmd output
+  -e, --exec          exec command
   -n, --silent        disable notifications
   -f, --foreground    run in foreground
   -p, --print-process print process regardless
@@ -38,6 +40,7 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
+  local -i runexec=0
 
   # mail recipient
   local recipient="notification"
@@ -73,11 +76,16 @@ run() {
     command sudo -v
   fi 
   exec 3>&1
-  if (($enable_foreground)); then
+  if (($runexec)); then
+    if (($enable_foreground)); then
+      exec "$*"
+    else
+      exec "$*" &
+    fi
+  elif (($enable_foreground)); then
     local output_stream="/dev/null"
     (($enable_mail_cmd_output)) && output_stream=$logfile
     run_commands "$@" |& tee "$output_stream"
-    (($print_process)) && echo "$!"
   else
     if (($enable_mail_cmd_output)); then
       exec 1>>"$logfile"
@@ -87,8 +95,8 @@ run() {
       exec 2>>"$logfile"
     fi
     run_commands "$@" &
-    { ! (($enable_foreground)) || (($print_process)); } && echo "$!" >&3
   fi
+  (($print_process)) && echo "$!" >&3
 }
 
 
@@ -152,6 +160,9 @@ parse_options() {
         ;;
       -n|--silent)
         enable_notifications=0
+        ;;
+      -e|--exec)
+        runexec=1
         ;;
       -c|--comment)
         comment=$2
