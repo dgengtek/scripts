@@ -76,9 +76,9 @@ run() {
   exec 3>&1
   if (($runexec)); then
     if (($enable_foreground)); then
-      exec "$*"
+      exec $*
     else
-      exec "$*" &
+      exec $* &
     fi
   elif (($enable_foreground)); then
     local output_stream="/dev/null"
