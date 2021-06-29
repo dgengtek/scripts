@@ -13,7 +13,7 @@ main() {
     exit 1
   fi
   local -r window_name="window$RANDOM"
-  tmux neww -d -n "$window_name" "run.sh -m -f -- '$*'"
+  tmux neww -d -n "$window_name" "run.sh -m -f -- '$*;echo -e \"\a\"'"
   tmux setw -t "$window_name" remain-on-exit on
 }
 
