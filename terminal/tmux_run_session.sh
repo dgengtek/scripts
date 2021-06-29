@@ -22,7 +22,7 @@ main() {
   local -a commands
   commands+=("cd '$cwd';")
   commands+=("run.sh -m -f -- '$command';")
-  commands+=("echo -e '\a[$command] exited, ^D to exit.\\n' ;")
+  commands+=("echo -e '\\a[$command] exited, ^D to exit.\\n' ;")
   commands+=("cat>/dev/null;")
 
   local -r command_string=$(quotify.py "${commands[*]}")
