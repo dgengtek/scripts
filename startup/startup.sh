@@ -5,6 +5,7 @@
 # lock created from mail session during startup
 readonly STARTUP_GPG_LOCK="/tmp/startup_gpg2_lock"
 
+set -x
 main() {
   if ! hash run.sh; then
     echo "Could not find run.sh in path." >&2
@@ -16,7 +17,7 @@ main() {
   xrandr --output DVI-D-0 --mode 1920x1080 --rate 60 --pos 1920x0
 
   pgrep freeplane || i3-msg 'workspace "5:discover"; exec freeplane'
-  session_exists admin || i3-msg 'workspace "1:shells"; exec alacritty -e "tmux new -s admin"'
+  session_exists admin || i3-msg 'workspace "1:shells"; exec run.sh -e -- alacritty -e "tmux new -s admin"'
   pgrep firefox || i3-msg 'workspace "2:surf"; exec firefox'
   session_exists private || i3-msg 'workspace "3:priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
   # run.sh -e -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
@@ -46,7 +47,7 @@ main() {
   # create scratchpad
   i3-msg 'workspace "8:0"; focus parent; move scratchpad'
 
-  pgrep mosh || i3-msg 'workspace "2:ssh"; exec alacritty -e "mosh -p 60000 baha"'
+  pgrep mosh || i3-msg 'workspace "2:ssh"; exec run.sh -e -- alacritty -e "mosh -p 60000 baha"'
 
   # finish
   i3-msg 'workspace "1:shells"'
