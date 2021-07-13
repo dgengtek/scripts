@@ -84,6 +84,13 @@ like 15-45. Input: {}".format(args.alert_range),
             time.sleep(3)
             continue
 
+        if r.status_code != 200:
+            print(
+                "Response not successfull: {}".format(r.status_code),
+                file=sys.stderr)
+            time.sleep(60)
+            continue
+
         data = r.json().get("quoteResponse", "")
         response_error = data.get("error", "")
         if response_error or not data:
