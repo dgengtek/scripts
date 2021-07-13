@@ -62,7 +62,21 @@ if [[ -z "$1" ]]; then
   exit 1
 fi
 
-readonly filename="${1}_$(date '+%Y%m%dT%H%M%S')"
+get_next_filename() {
+  local filename=$1
+  local -i count=1
+  local new_filename="${filename}-${count}"
+  while ; do
+    if ! test -f "$new_filename"; then
+      break
+    fi
+    let count="$count + 1"
+    new_filename="${filename}-${count}"
+  done
+}
+
+readonly name="${1}_$(date '+%Y%m%d')"
+readonly filename=$(get_next_filename "$name")
 
 ffmpeg -f v4l2 -input_format mjpeg -thread_queue_size 32 \
   -i /dev/video0 \
