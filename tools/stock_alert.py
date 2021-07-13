@@ -69,6 +69,10 @@ like 15-45. Input: {}".format(args.alert_range),
     retries = 0
     max_retries = 10
 
+    headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+            }
+
     # keep list of last values for the current stock price
     memory = list()
     # how many should be held in the list
@@ -78,7 +82,7 @@ like 15-45. Input: {}".format(args.alert_range),
             sys.exit(1)
 
         try:
-            r = requests.get(api_url)
+            r = requests.get(api_url, headers=headers)
         except (OSError, requests.ConnectionError, requests.ConnectTimeout):
             retries += 1
             time.sleep(3)
