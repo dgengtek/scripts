@@ -14,7 +14,7 @@ will start session in a new shell if the the creation errors first
 OPTIONS:
 -p,--path <directory>  start session in <directory>
 -d,--detach  detach session
--n,--never-new-shell  never start session in a new shell
+-n,--disable-new-shell  never start session in a new shell
 -h  help
 -v  verbose
 -q  quiet
@@ -78,13 +78,10 @@ run() {
   fi
   (($tmux_detach)) && tmux_options+=("-d")
   local -r command="tmux new-session -s $session ${tmux_options[*]} $*"
-  if [[ -z "$TMUX" ]]; then
+
+  if (($disable_startup_shell)); then
     $command
   else
-    if (($disable_startup_shell)); then
-      echo "Startup in a new shell is disabled and command is being run in a TMUX session already." >&2
-      exit 1
-    fi
     run.sh -n -q \
       -- $STARTUP_SHELL -e "$command"
   fi
@@ -177,7 +174,7 @@ parse_options() {
       -q|--quiet)
         enable_quiet=1
         ;;
-      -n|--never-new-shell)
+      -n|--disable-new-shell)
         disable_startup_shell=1
         ;;
       -p|--path)
