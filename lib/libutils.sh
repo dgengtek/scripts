@@ -32,9 +32,9 @@ errorq() { log "$@" 2>/dev/null; }
 msg() { log "==>" "$@"; }
 msg2() { log "  ->" "$@"; }
 
-# generate a logging function log_* for every level
+# generate a system logging function log_* for every level
 for level in emerg err warning info debug; do
-  printf -v functext -- 'log_%s() { log -p user.%s -- "$@" ; }' "$level" "$level"
+  printf -v functext -- 'log_%s() { logger -p user.%s -t %s -- "$@" ; }' "$level" "$level" "${0##*/}"
   eval "$functext"
 done
 
