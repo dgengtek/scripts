@@ -27,7 +27,6 @@ main() {
 
   local -r command_string=$(quotify.py "${commands[*]}")
   tmux send-keys -t "${session}:1" "tmux neww -d -n '$window_name' $command_string" ENTER
-
 }
 
 main "$@"

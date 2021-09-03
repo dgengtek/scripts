@@ -8,13 +8,14 @@ main() {
   shift
 
   local title=$(url_get_title.py "$url")
+  [[ -z "$title" ]] && title="URL"
 
   local -a tags=()
   for t in "$@"; do
     tags+=("+$t ")
   done
 
-  task add project:"$(task _project | fzf)" +read +bookmark +link "${tags[*]}" -- "$title - $url" 
+  task add project:"$(task _project | fzf)" +read +bookmark +link "${tags[*]}" -- "${title}: $url" 
 }
 
 set -e
