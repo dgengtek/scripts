@@ -131,7 +131,6 @@ EOF
 parse_options() {
   # exit if no options left
   [[ -z $1 ]] && return 0
-  log "parse \$1: $1" 2>&$fddebug
 
   local do_shift=0
   case $1 in
@@ -195,11 +194,6 @@ parse_options() {
   fi
   shift
   parse_options "$@"
-}
-
-
-log() {
-  echo -n "$@" | logger -s -t ${0##*/}
 }
 
 
