@@ -64,19 +64,22 @@ fi
 
 get_next_filename() {
   local filename=$1
-  local -i count=1
-  local new_filename="${filename}-${count}"
-  while ; do
-    if ! test -f "$new_filename"; then
+  let count=1
+  local new_filename="${filename}-${count}.mkv"
+  while :; do
+    if ! test -f "${new_filename}"; then
       break
     fi
     let count="$count + 1"
-    new_filename="${filename}-${count}"
+    new_filename="${filename}-${count}.mkv"
   done
+  echo "$new_filename"
 }
 
 readonly name="${1}_$(date '+%Y%m%d')"
 readonly filename=$(get_next_filename "$name")
+
+echo "writing to \"${filename}\""
 
 ffmpeg -f v4l2 -input_format mjpeg -thread_queue_size 32 \
   -i /dev/video0 \
@@ -86,4 +89,4 @@ ffmpeg -f v4l2 -input_format mjpeg -thread_queue_size 32 \
   -ac 2 -ab 32k -ar 44100 \
   -maxrate 1800k -bufsize 1800k \
   -c copy \
-  "${filename}.mkv"
+  "${filename}"
