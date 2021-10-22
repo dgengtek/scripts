@@ -75,10 +75,11 @@ run() {
   fi 
   exec 3>&1
   if (($runexec)); then
+    log_info "exec '$*'"
     if (($enable_foreground)); then
-      exec $*
+      exec "$@"
     else
-      exec $* &
+      exec "$@" &
     fi
   elif (($enable_foreground)); then
     local output_stream="/dev/null"
@@ -99,15 +100,16 @@ run() {
 
 
 run_commands() {
+  log_info "running '$*'"
   if (($run_as_sudo)); then
-    time sudo setsid bash -c "$*"
+    time sudo setsid "$@"
   else
-    time setsid bash -c "$*"
+    time setsid "$@"
   fi
 
   local subject="$?[$USER@$HOSTNAME]$ run.sh"
   [[ -n $comment ]] && subject+=" # $comment"
-  local -r message="$*"
+  local -r message="$@"
 
   if (($enable_notifications)); then
     [[ -n $BEEP ]] && mplayer "$BEEP" > /dev/null 2>&1
