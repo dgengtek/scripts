@@ -16,17 +16,17 @@ main() {
   xrandr --output DisplayPort-2 --mode 1920x1080 --rate 144 --left-of DVI-D-0 --primary;
   xrandr --output DVI-D-0 --mode 1920x1080 --rate 60 --pos 1920x0
 
+  session_exists admin || run.sh -e -- alacritty -e "tmux new -s admin"
+  session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"
   pgrep freeplane || i3-msg 'workspace "5:discover"; exec freeplane'
-  session_exists admin || i3-msg 'workspace "1:shells"; exec run.sh -e -- alacritty -e "tmux new -s admin"'
   pgrep firefox || i3-msg 'workspace "2:surf"; exec firefox'
   session_exists private || i3-msg 'workspace "3:priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
   # run.sh -e -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
 
   # move all to container and scratchpad later
-  session_exists ci || i3-msg 'workspace "8:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"'
-  session_exists run || i3-msg 'workspace "8:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/run.yaml"'
-  session_exists wiki || i3-msg 'workspace "8:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/wiki.yaml"'
-  session_exists scratchpad || i3-msg 'workspace "8:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/scratchpad.yaml"'
+  session_exists run || i3-msg 'workspace "7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/run.yaml"'
+  session_exists wiki || i3-msg 'workspace "7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/wiki.yaml"'
+  session_exists scratchpad || i3-msg 'workspace "7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/scratchpad.yaml"'
 
   # wait until tmux server is up and sessions are running
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
@@ -45,9 +45,9 @@ main() {
     sleep 1
   done
   # create scratchpad
-  i3-msg 'workspace "8:0"; focus parent; move scratchpad'
+  i3-msg 'workspace "7:0"; focus parent; move scratchpad'
 
-  pgrep mosh || i3-msg 'workspace "2:ssh"; exec run.sh -e -- alacritty -e "mosh -p 60000 baha"'
+  pgrep mosh || i3-msg 'workspace "2:ssh"; exec alacritty -e mosh -p 60000 baha'
 
   # finish
   i3-msg 'workspace "1:shells"'
