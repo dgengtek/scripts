@@ -16,11 +16,16 @@ main() {
   xrandr --output DisplayPort-2 --mode 1920x1080 --rate 144 --left-of DVI-D-0 --primary;
   xrandr --output DVI-D-0 --mode 1920x1080 --rate 60 --pos 1920x0
 
-  session_exists admin || run.sh -e -- alacritty -e "tmux new -s admin"
+  session_exists admin || run.sh -e -- alacritty -e tmux new -s admin
+  sleep 1
   session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"
+  sleep 1
   pgrep freeplane || i3-msg 'workspace "5:discover"; exec freeplane'
+  sleep 1
   pgrep firefox || i3-msg 'workspace "2:surf"; exec firefox'
+  sleep 1
   session_exists private || i3-msg 'workspace "3:priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
+  sleep 1
   # run.sh -e -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
 
   # move all to container and scratchpad later
@@ -45,11 +50,10 @@ main() {
     sleep 1
   done
   # create scratchpad
-  i3-msg 'workspace "7:0"; focus parent; move scratchpad'
-
   pgrep mosh || i3-msg 'workspace "2:ssh"; exec alacritty -e mosh -p 60000 baha'
 
   # finish
+  sleep 1
   i3-msg 'workspace "1:shells"'
   systemctl --user start redshift dunst
 }
