@@ -82,8 +82,9 @@ run() {
   if (($disable_startup_shell)); then
     $command
   else
+    # do not quote command for alacritty
     run.sh -n -q \
-      -- $STARTUP_SHELL -e "$command"
+      -- $STARTUP_SHELL -e $command
   fi
 
 }
