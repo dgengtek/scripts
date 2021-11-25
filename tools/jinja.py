@@ -30,7 +30,7 @@ def main():
 
     template = open(args.template).read()
     template = env.from_string(template)
-    print(template.render(data))
+    print(template.render(data), end="")
 
 
 def parse_args():
@@ -54,11 +54,11 @@ def parse_args():
     exclusive_group.add_argument(
         '--json',
         help="(default) get data from json",
-        action='store_false')
+        action='store_true')
     exclusive_group.add_argument(
         '--yaml',
         help="get data from yaml",
-        action='store_false')
+        action='store_true')
 
     return parser.parse_args()
 
