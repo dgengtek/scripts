@@ -26,7 +26,7 @@ main() {
   local -i enable_verbose=0
   local -i enable_quiet=0
   local -i enable_debug=0
-  local -i disable_startup_shell=0
+  local -i disable_new_shell=0
   local -i tmux_detach=0
   local tmux_start_directory=""
 
@@ -76,10 +76,14 @@ run() {
     echo "Session $session already exists." >&2
     exit 1
   fi
-  (($tmux_detach)) && tmux_options+=("-d")
+  if (($tmux_detach)) || { in_tmux_session && (($disable_new_shell)); }; then
+    # if we are in a tmux session and spawning a shell is disabled then detach always
+    let tmux_detach=1
+    tmux_options+=("-d")
+  fi
   local -r command="tmux new-session -s $session ${tmux_options[*]} $*"
 
-  if (($disable_startup_shell)); then
+  if (($disable_new_shell == 0)) && { (($tmux_detach)) || ! in_tmux_session; }; then
     $command
   else
     # do not quote command for alacritty
@@ -87,6 +91,10 @@ run() {
       -- $STARTUP_SHELL -e $command
   fi
 
+}
+
+in_tmux_session() {
+  [[ -n $TMUX ]]
 }
 
 check_dependencies() {
@@ -176,7 +184,7 @@ parse_options() {
         enable_quiet=1
         ;;
       -n|--disable-new-shell)
-        disable_startup_shell=1
+        disable_new_shell=1
         ;;
       -p|--path)
         tmux_start_directory=$2
