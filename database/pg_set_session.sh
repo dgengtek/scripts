@@ -14,6 +14,7 @@ pg_set_session() {
   read -p "PGOPTIONS: " PGOPTIONS
   read -p "PGPORT[5432]: " PGPORT
   read -p "PGUSER[postgres]: " PGUSER
+  PGPASSWORD=$(systemd-ask-password --echo=masked -n "PGPASSWORD:")
 }
 set_defaults() {
   [[ -z $PGHOST ]] && PGHOST=localhost
