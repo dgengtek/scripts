@@ -78,10 +78,12 @@ EOF
 
 f_cmd_run() {
   local -i counts=0
+  local destination=""
   while read -d $'\0' result; do
     let counts+=1
-    echo "$CMD ${options[*]} $result $destination_path/" >&2
-    ($CMD "${options[@]}" "$result" "$destination_path/" &)
+    destination=$(find "$destination_path" -type d | fzf-tmux --height 50% --no-multi)
+    echo "$CMD ${options[*]} $result $destination/" >&2
+    ($CMD "${options[@]}" "$result" "$destination/" &)
   done < <(find "$source_path" -print0 2>/dev/null | fzf-tmux --height 50% --read0 --print0 --multi)
   if (($counts >= 1)); then
     f_cmd_run "$destination_path" "$source_path"
