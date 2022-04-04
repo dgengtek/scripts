@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 main() {
-  local -a commands=(
+  local -a oldcommands=(
   "white_balance_temperature_auto=1"
   "power_line_frequency=0"
   "exposure_auto=3"
   "exposure_auto_priority=1"
   "focus_auto=0"
+)
+  local -a commands=(
+  "auto_exposure=3"
+  "exposure_dynamic_framerate=1"
+  "focus_automatic_continuous=0"
 )
   local options_string=""
   for cmd in "${commands[@]}"; do
