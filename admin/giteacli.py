@@ -8,7 +8,7 @@ import os
 
 # https://try.gitea.io/api/swagger#/
 # or GITEA_URL/api/swagger
-GITEA_URL = "https://git/api/v1"
+GITEA_URL = "https://git"
 
 
 @click.group("template")
