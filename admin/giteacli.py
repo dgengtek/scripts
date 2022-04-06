@@ -15,7 +15,7 @@ GITEA_URL = "https://git"
 @click.option(
     "--url",
     default="",
-    help="gitea url")
+    help="gitea url, GITEA_URL")
 @click.option(
     "--user",
     help="basic auth username")
@@ -29,7 +29,7 @@ GITEA_URL = "https://git"
 @click.option(
     "-t",
     "--token",
-    help="api access token")
+    help="api access token, GITEA_TOKEN")
 @click.pass_context
 def main(ctx, url, user, password, loglevel, token):
     d = dict()
