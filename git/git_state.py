@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-output some git relevant states as json
+output some git relevant states as json for each branch
 """
 import logging
 import json
@@ -24,7 +24,7 @@ def main():
         print("{}")
         sys.exit(is_git_repo)
 
-    result = []
+    result = {}
 
     branches = run_cmd("git for-each-ref --format %(refname)")\
         .stdout.readlines()
@@ -35,7 +35,7 @@ def main():
         if not branch.startswith("refs/heads/"):
             continue
         branch = branch.replace("refs/heads/", "")
-        result.append(get_branch_state(branch))
+        result.update({branch: get_branch_state(branch)})
 
     print(json.dumps(result))
 
@@ -82,7 +82,6 @@ def get_branch_state(branch):
     else:
         synced = False
 
-    result.update({"branch": branch})
     result.update({"tracking": remote})
     result.update({"ahead": commit_ahead})
     result.update({"behind": commit_behind})
