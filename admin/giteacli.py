@@ -413,7 +413,7 @@ def repos_hook_create(d, owner, repo, target_url, deactivate, create_nonunique, 
             " to repo '{}'"
             " of owner '{}'"
             " with events '{}'").format(
-                target_url,
+                target_url.split("?")[0],
                 repo,
                 owner,
                 ", ".join(events)))
