@@ -30,12 +30,13 @@ import copy
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class Countdown:
     def __init__(self):
         self.__hour = 0
         self.__minute = 0
         self.__second = 0
-        self._seconds= 0
+        self._seconds = 0
 
     def _normalize_from_seconds(self):
         second = _get_second(self.seconds)
@@ -48,8 +49,8 @@ class Countdown:
         self.__second = second
 
     def _normalize_to_seconds(self):
-        minutes = self.__hour*60 + self.__minute
-        self.seconds = minutes*60 + self.__second
+        minutes = self.__hour * 60 + self.__minute
+        self.seconds = minutes * 60 + self.__second
 
     def sync(self):
         self._normalize_from_seconds()
@@ -107,16 +108,16 @@ class Countdown:
 
     @classmethod
     def from_minutes(cls, minutes):
-        return cls.from_seconds(minutes*60)
+        return cls.from_seconds(minutes * 60)
 
     @classmethod
     def from_hours(cls, hours):
-        return cls.from_minutes(hours*60)
+        return cls.from_minutes(hours * 60)
 
     @classmethod
     def from_timestamp(cls, hour, minute, second):
-        minutes = minute + hour*60
-        seconds = second + minutes*60
+        minutes = minute + hour * 60
+        seconds = second + minutes * 60
         return cls.from_seconds(seconds)
 
     @classmethod
@@ -126,16 +127,18 @@ class Countdown:
         """
         timestamp = string.split(":")
         return cls.from_timestamp(
-                timestamp[0],
-                timestamp[1],
-                timestamp[2],
-                )
-
+            timestamp[0],
+            timestamp[1],
+            timestamp[2],
+        )
 
     def __eq__(self, cd2):
-        return self.__hour == cd2.__hour \
-            and self.__minute == cd2.__minute \
+        return (
+            self.__hour == cd2.__hour
+            and self.__minute == cd2.__minute
             and self.__second == cd2.__second
+        )
+
 
 class Counter(threading.Thread):
     def __init__(self, countdown, delay=1, *args, **kwargs):
@@ -191,7 +194,7 @@ class Counter(threading.Thread):
             self.countdown.seconds -= counter
             self.countdown.sync()
             self._lock.release()
-        
+
         return self.finished
 
     def stop(self):
@@ -214,17 +217,21 @@ class Counter(threading.Thread):
     def __str__(self):
         pass
 
+
 def _get_second(seconds):
     "return leftover second"
     return seconds % 60
+
 
 def _get_minute(minutes):
     "return leftover minute"
     return minutes % 60
 
+
 def _get_minutes(seconds):
     "return total minutes"
     return seconds // 60
+
 
 def _get_hours(minutes):
     "return total hour"
@@ -233,7 +240,7 @@ def _get_hours(minutes):
 
 def main():
     opt = docopt(__doc__, sys.argv[1:])
-    #print(opt)
+    # print(opt)
     unit = opt.get("<unit>")
     counter = None
     if not unit:
@@ -261,23 +268,28 @@ def main():
         counter.stop()
         sys.exit(127)
 
-@pytest.mark.parametrize("seconds, expected", [
-            (1, (0,0,1)),
-            (59, (0,0,59)),
-            (61, (0,1,1)),
-            (121, (0,2,1)),
-            (299, (0,4,59)),
-            (300, (0,5,0)),
-            (301, (0,5,1)),
-            (3599, (0,59,59)),
-            (3600, (1,0,0)),
-            (3601, (1,0,1)),
-            (3661, (1,1,1)),
-            ])
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (1, (0, 0, 1)),
+        (59, (0, 0, 59)),
+        (61, (0, 1, 1)),
+        (121, (0, 2, 1)),
+        (299, (0, 4, 59)),
+        (300, (0, 5, 0)),
+        (301, (0, 5, 1)),
+        (3599, (0, 59, 59)),
+        (3600, (1, 0, 0)),
+        (3601, (1, 0, 1)),
+        (3661, (1, 1, 1)),
+    ],
+)
 def test_countdown_convert_from_seconds(seconds, expected):
     cd = Countdown.from_seconds(seconds)
     cdexpected = Countdown.from_timestamp(*expected)
     assert cd == cdexpected
+
 
 def test_countdown_timer_string():
     cd = Countdown.from_seconds(1)
@@ -290,7 +302,6 @@ def test_countdown_timer_string():
     assert str(cd) == "01:01:01"
     cd = Countdown.from_seconds(360000)
     assert str(cd) == "100:00:00"
-
 
 
 if __name__ == "__main__":

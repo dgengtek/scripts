@@ -2,6 +2,7 @@
 import sys
 import yaml
 import json
+
 data_input = ""
 if len(sys.argv) == 1:
     data_input = sys.stdin

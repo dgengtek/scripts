@@ -15,26 +15,22 @@ import click
 @click.command("filename_canonize.py")
 @click.argument("filename", nargs=-1, required=False)
 @click.option(
-    '-g', '--graph', 'mode',
-    flag_value='graph', default=True,
-    help="mode: [default] All alnum characters with some valid printables")
+    "-g",
+    "--graph",
+    "mode",
+    flag_value="graph",
+    default=True,
+    help="mode: [default] All alnum characters with some valid printables",
+)
 @click.option(
-    '-a', '--alnum', 'mode',
-    flag_value='alnum',
-    help="mode: letters + digits only")
+    "-a", "--alnum", "mode", flag_value="alnum", help="mode: letters + digits only"
+)
+@click.option("-l", "--lowercase", is_flag=True, help="Return filename as lowercase")
+@click.option("-i", "--hidden", is_flag=True, help="Include hidden files.")
 @click.option(
-    '-l', '--lowercase',
-    is_flag=True,
-    help="Return filename as lowercase")
-@click.option('-i', '--hidden', is_flag=True, help="Include hidden files.")
-@click.option(
-    '-n', '--dryrun',
-    is_flag=True,
-    help="Do not rename files. Print only the new name")
-@click.option(
-    '-v', '--verbose',
-    is_flag=True,
-    help="Output filename changes.")
+    "-n", "--dryrun", is_flag=True, help="Do not rename files. Print only the new name"
+)
+@click.option("-v", "--verbose", is_flag=True, help="Output filename changes.")
 def main(filename, mode, lowercase, hidden, dryrun, verbose):
     """
     This script canonizes filenames. If no filename has been given it will
@@ -57,7 +53,7 @@ def main(filename, mode, lowercase, hidden, dryrun, verbose):
         "Ä": "Ae",
         "Ö": "Oe",
         "Ü": "Ue",
-        }
+    }
 
     character_pool = None
     if mode == "graph":
@@ -83,8 +79,7 @@ def main(filename, mode, lowercase, hidden, dryrun, verbose):
             mapped_char = charmap.get(c, "")
 
             # check if previous character matches current character
-            if previous_char == mapped_char \
-                    or (c == previous_char and c in set_etc):
+            if previous_char == mapped_char or (c == previous_char and c in set_etc):
                 continue
 
             if mapped_char:

@@ -11,7 +11,7 @@ STOCK_KEYS = [
     "preMarketPrice",
     "regularMarketPrice",
     "postMarketPrice",
-    ]
+]
 
 
 def main():
@@ -39,39 +39,47 @@ def main():
         if len(roc_split) > 2:
             print(
                 "Rate of change must be noted within a single '=' \
-                        like 5=15:45. Input: {}".format(roc),
-                file=sys.stderr)
+                        like 5=15:45. Input: {}".format(
+                    roc
+                ),
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         rate = roc_split[0]
-        max_memory_required = max(
-                [int(rate.lstrip("avg")), max_memory_required])
+        max_memory_required = max([int(rate.lstrip("avg")), max_memory_required])
         roc_split = roc_split[1].split(":")
         if len(roc_split) > 2:
             print(
                 "Range over the rate of change must be noted within a single ':' \
-                        like 5=15:45. Input: {}".format(roc),
-                file=sys.stderr)
+                        like 5=15:45. Input: {}".format(
+                    roc
+                ),
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         rates_of_change[rate] = {
-                "lower_limit": Decimal(roc_split[0]),
-                "upper_limit": Decimal(roc_split[1]),
-                }
+            "lower_limit": Decimal(roc_split[0]),
+            "upper_limit": Decimal(roc_split[1]),
+        }
 
     if len(limits) != 2:
         print(
             "Alert range must be noted within a single '-' \
-like 15-45. Input: {}".format(args.alert_range),
-            file=sys.stderr)
+like 15-45. Input: {}".format(
+                args.alert_range
+            ),
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     retries = 0
     max_retries = 10
 
     headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
-            }
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    }
 
     # keep list of last values for the current stock price
     memory = list()
@@ -89,18 +97,14 @@ like 15-45. Input: {}".format(args.alert_range),
             continue
 
         if r.status_code != 200:
-            print(
-                "Response not successfull: {}".format(r.status_code),
-                file=sys.stderr)
+            print("Response not successfull: {}".format(r.status_code), file=sys.stderr)
             time.sleep(60)
             continue
 
         data = r.json().get("quoteResponse", "")
         response_error = data.get("error", "")
         if response_error or not data:
-            print(
-                "Error in response: {}".format(response_error),
-                file=sys.stderr)
+            print("Error in response: {}".format(response_error), file=sys.stderr)
             retries += 1
             time.sleep(3)
             continue
@@ -126,15 +130,12 @@ like 15-45. Input: {}".format(args.alert_range),
 
             # first check alert limits before checking rates
             stock_name = r.get("longName")
-            if alert_on_limit_range(
-                    value, lower_limit, upper_limit, stock_name):
+            if alert_on_limit_range(value, lower_limit, upper_limit, stock_name):
                 send_alarm = True
 
             # if no rates of change have been supplied print and skip
             if not rates_of_change:
-                print("{} @{}".format(
-                    stock_name,
-                    value), file=sys.stderr)
+                print("{} @{}".format(stock_name, value), file=sys.stderr)
                 continue
 
             if len(memory) >= max_memory_required:
@@ -155,26 +156,35 @@ like 15-45. Input: {}".format(args.alert_range),
                 rate_upper_limit = rate_options.get("upper_limit")
 
                 if use_average:
-                    rate_of_change_over_items = \
-                        get_average_rate_of_change_over_x(last_items, value)
-                    rate_string.append("avgroc{}@{}%".format(
-                        requested_items, round(rate_of_change_over_items, 2)))
+                    rate_of_change_over_items = get_average_rate_of_change_over_x(
+                        last_items, value
+                    )
+                    rate_string.append(
+                        "avgroc{}@{}%".format(
+                            requested_items, round(rate_of_change_over_items, 2)
+                        )
+                    )
                 else:
-                    rate_of_change_over_items = \
-                        get_rate_of_change_over_x(last_items, value)
-                    rate_string.append("roc{}@{}%".format(
-                        requested_items, round(rate_of_change_over_items, 2)))
+                    rate_of_change_over_items = get_rate_of_change_over_x(
+                        last_items, value
+                    )
+                    rate_string.append(
+                        "roc{}@{}%".format(
+                            requested_items, round(rate_of_change_over_items, 2)
+                        )
+                    )
                 if alert_on_limit_range(
-                        rate_of_change_over_items,
-                        rate_lower_limit,
-                        rate_upper_limit,
-                        stock_name):
+                    rate_of_change_over_items,
+                    rate_lower_limit,
+                    rate_upper_limit,
+                    stock_name,
+                ):
                     send_alarm = True
 
-            print("{} @{} {}".format(
-                stock_name,
-                round(value, 2),
-                " ".join(rate_string)), file=sys.stderr)
+            print(
+                "{} @{} {}".format(stock_name, round(value, 2), " ".join(rate_string)),
+                file=sys.stderr,
+            )
 
             if send_alarm:
                 break
@@ -188,9 +198,7 @@ like 15-45. Input: {}".format(args.alert_range),
 
 def alert_on_limit_range(value, lower_limit, upper_limit, name):
     if value <= lower_limit or value >= upper_limit:
-        print("{} reached alert limit @{}".format(
-            name,
-            value), file=sys.stderr)
+        print("{} reached alert limit @{}".format(name, value), file=sys.stderr)
         return True
     return False
 
@@ -201,8 +209,7 @@ def get_average_rate_of_change_over_x(items, new_value):
     # average rate
     memory_average = get_average(items)
     difference_of_change_over_average = new_value - memory_average
-    return (difference_of_change_over_average
-            / memory_average) * Decimal("100")
+    return (difference_of_change_over_average / memory_average) * Decimal("100")
 
 
 def get_rate_of_change_over_x(items, new_value):
@@ -215,48 +222,51 @@ def get_rate_of_change_over_x(items, new_value):
 
 
 def get_average(values):
-    return sum(values)/len(values)
+    return sum(values) / len(values)
 
 
 def parse_args():
     import argparse
+
     parser = argparse.ArgumentParser(
-            description="Stock price alert.",
-            epilog="Epilog of program.",
-            add_help=True
-            )
+        description="Stock price alert.", epilog="Epilog of program.", add_help=True
+    )
     # positional arguments
     parser.add_argument("symbol", help="stock symbol from yahoo finance")
 
     # required
     parser.add_argument(
-            "--alert-range",
-            help="range to alert eg. '30:80', exit if <=30 and >=80",
-            required=True,
-            action="store")
+        "--alert-range",
+        help="range to alert eg. '30:80', exit if <=30 and >=80",
+        required=True,
+        action="store",
+    )
 
     # allow rate of change alerts
     parser.add_argument(
-        '--roc',
+        "--roc",
         help="Rate of change example \
 '5=-3:10'  \
 or 'avg5=-3:10' for average rate \
 # use last 5 items and alert if in range of -3% to 10%",
-        nargs='*',
+        nargs="*",
     )
 
     # optional arguments
     parser.add_argument(
-            "--url",
-            nargs='?',
-            help="url to query stock prices from(expects yahoo finance)",
-            metavar="api_url")
+        "--url",
+        nargs="?",
+        help="url to query stock prices from(expects yahoo finance)",
+        metavar="api_url",
+    )
     parser.add_argument(
-            "--sleep",
-            nargs='?',
-            help="sleep time until next query",
-            default=5, type=int,
-            metavar="seconds")
+        "--sleep",
+        nargs="?",
+        help="sleep time until next query",
+        default=5,
+        type=int,
+        metavar="seconds",
+    )
 
     return parser.parse_args()
 

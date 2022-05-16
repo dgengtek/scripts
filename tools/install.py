@@ -14,19 +14,22 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 _keys = {
-  "path",
-  "pkgs",
-  "exclude",
-  "directory",
-  }
+    "path",
+    "pkgs",
+    "exclude",
+    "directory",
+}
 
 _cmd = "stow"
 # default config filename
-_config_filename = {"setup.ini", }
+_config_filename = {
+    "setup.ini",
+}
 
 journalhandler = None
 try:
     from systemd.journal import JournaldLogHandler
+
     journalhandler = JournaldLogHandler()
 except ImportError:
     pass
@@ -103,15 +106,15 @@ def get_argparser():
 
     """
     from argparse import REMAINDER
+
     argparser = ArgumentParser(description=summary)
 
     argparser.add_argument("config", help="Ini configuration file")
     argparser.add_argument("-d", "--debug", action="store_true", help="verbose output")
     argparser.add_argument("-v", "--verbose", action="store_true", help="Debugging")
     argparser.add_argument(
-            'args',
-            nargs=REMAINDER,
-            help="use remainder arguments to pass to stow")
+        "args", nargs=REMAINDER, help="use remainder arguments to pass to stow"
+    )
     return argparser
 
 
@@ -211,7 +214,9 @@ def run(cmd, args):
     if isinstance(cmd, Path):
         cmd = str(cmd)
     logger.debug("Running: {} {}".format(cmd, " ".join(args)))
-    proc = subprocess.Popen([cmd] + args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(
+        [cmd] + args, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+    )
     proc.wait()
     if proc.stdout.peek():
         out = [x.decode("UTF-8") for x in proc.stdout.readlines()]

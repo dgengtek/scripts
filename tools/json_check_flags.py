@@ -36,9 +36,7 @@ def main():
         try:
             flag = bool(json_data.get(flag))
         except KeyError:
-            print(
-                "Flag {} does not exist".format(flag),
-                file=sys.stderr)
+            print("Flag {} does not exist".format(flag), file=sys.stderr)
             sys.exit(1)
         result = comparison(result, flag)
     if invert_result:
@@ -70,34 +68,27 @@ def usage():
 
 def parse_args():
     import argparse
+
     parser = argparse.ArgumentParser(
         description="""\
 Check flags from input and return result of lags as a returncode
 """,
         epilog="",
-        add_help=True
-        )
+        add_help=True,
+    )
     # positional arguments
     # mutual exclusive, either foo or bar
     exclusive_group = parser.add_mutually_exclusive_group()
     exclusive_group.add_argument(
-        "--any",
-        help="any flag is true(default)",
-        action="store_true")
+        "--any", help="any flag is true(default)", action="store_true"
+    )
     exclusive_group.add_argument(
-        "--all",
-        help="all flags are true",
-        action="store_true")
+        "--all", help="all flags are true", action="store_true"
+    )
 
-    parser.add_argument(
-        "--invert",
-        help="invert result",
-        action="store_true")
+    parser.add_argument("--invert", help="invert result", action="store_true")
 
-    parser.add_argument(
-        "flags",
-        nargs='+',
-        help="target directory")
+    parser.add_argument("flags", nargs="+", help="target directory")
     parser.set_defaults(any=True)
 
     return parser.parse_args()

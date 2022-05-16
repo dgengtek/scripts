@@ -12,95 +12,85 @@ import binascii
 @click.command("pwgen.py")
 @click.argument("length", default=16)
 @click.option(
-        "character_filter",
-        "-f",
-        "--filter",
-        help="Filter characters from the given string")
+    "character_filter", "-f", "--filter", help="Filter characters from the given string"
+)
+@click.option("single_line", "--single-line", is_flag=True, help="print one per line")
 @click.option(
-        "single_line",
-        "--single-line",
-        is_flag=True,
-        help="print one per line")
+    "separator",
+    "-s",
+    "--separator",
+    default="--",
+    help="Only added when printing single lines. Add a separator line between each line",
+)
+@click.option("-c", "--count", default=30, help="Password count")
 @click.option(
-        "separator",
-        "-s",
-        "--separator",
-        default="--",
-        help="Only added when printing single lines. Add a separator line between each line")
+    "-i",
+    "--inverse",
+    is_flag=True,
+    help="Inverse filter. Only show characters from the given filter",
+)
 @click.option(
-        "-c",
-        "--count",
-        default=30,
-        help="Password count")
+    "-b",
+    "--bits",
+    is_flag=True,
+    help="Use bits instead of length to determine password length. Hex representation where suitable by default.",
+)
 @click.option(
-        "-i",
-        "--inverse",
-        is_flag=True,
-        help="Inverse filter. Only show characters from the given filter")
+    "-g",
+    "--mode-graph",
+    "mode",
+    flag_value="graph",
+    default=True,
+    help="mode: [default] All printable characters except whitespace",
+)
 @click.option(
-        '-b',
-        '--bits',
-        is_flag=True,
-        help="Use bits instead of length to determine password length. Hex representation where suitable by default.")
+    "-a", "--mode-alnum", "mode", flag_value="alnum", help="mode: letters + digits"
+)
 @click.option(
-        '-g',
-        '--mode-graph',
-        'mode',
-        flag_value='graph',
-        default=True,
-        help="mode: [default] All printable characters except whitespace")
+    "--mode-salt-crypt",
+    "mode",
+    flag_value="salt_crypt",
+    help="mode: salt with character set [a-zA-Z0-9./] for crypt - length 16",
+)
+@click.option("-d", "--mode-digits", "mode", flag_value="digits", help="mode: digits")
 @click.option(
-        '-a',
-        '--mode-alnum',
-        'mode',
-        flag_value='alnum',
-        help="mode: letters + digits")
+    "-l", "--mode-letters", "mode", flag_value="letters", help="mode: letters"
+)
 @click.option(
-        '--mode-salt-crypt',
-        'mode',
-        flag_value='salt_crypt',
-        help="mode: salt with character set [a-zA-Z0-9./] for crypt - length 16")
+    "-p",
+    "--mode-printable",
+    "mode",
+    flag_value="printable",
+    help="mode: All printable characters",
+)
 @click.option(
-        '-d',
-        '--mode-digits',
-        'mode',
-        flag_value='digits',
-        help="mode: digits")
+    "--print-hex",
+    "representation",
+    flag_value="hex",
+    default=True,
+    help="repr: [default] display as hex",
+)
 @click.option(
-        '-l',
-        '--mode-letters',
-        'mode',
-        flag_value='letters',
-        help="mode: letters")
+    "--print-binary",
+    "representation",
+    flag_value="binary",
+    help="repr: binary representation",
+)
 @click.option(
-        '-p',
-        '--mode-printable',
-        'mode',
-        flag_value='printable',
-        help="mode: All printable characters")
-
-@click.option(
-        '--print-hex',
-        'representation',
-        flag_value='hex',
-        default=True,
-        help="repr: [default] display as hex")
-@click.option(
-        '--print-binary',
-        'representation',
-        flag_value='binary',
-        help="repr: binary representation")
-@click.option(
-        '--print-base64',
-        'representation',
-        flag_value='base64',
-        help="repr: base64")
-@click.option(
-        '--print-qp',
-        'representation',
-        flag_value='qp',
-        help="repr: qp")
-def main(length, character_filter, single_line, separator, count, inverse, bits, mode, representation):
+    "--print-base64", "representation", flag_value="base64", help="repr: base64"
+)
+@click.option("--print-qp", "representation", flag_value="qp", help="repr: qp")
+def main(
+    length,
+    character_filter,
+    single_line,
+    separator,
+    count,
+    inverse,
+    bits,
+    mode,
+    representation,
+):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
@@ -143,15 +133,9 @@ def main(length, character_filter, single_line, separator, count, inverse, bits,
     character_pool = "".join(character_pool)
 
     if bits:
-        passwords = [
-            bit_mode(random.getrandbits(length))
-            for i in range(0, count)
-            ]
+        passwords = [bit_mode(random.getrandbits(length)) for i in range(0, count)]
     else:
-        passwords = [
-            generate_password(character_pool, length)
-            for i in range(0, count)
-            ]
+        passwords = [generate_password(character_pool, length) for i in range(0, count)]
     print_passwords(passwords, separator, single_line)
 
 

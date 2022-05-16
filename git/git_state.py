@@ -26,8 +26,7 @@ def main():
 
     result = {}
 
-    branches = run_cmd("git for-each-ref --format %(refname)")\
-        .stdout.readlines()
+    branches = run_cmd("git for-each-ref --format %(refname)").stdout.readlines()
 
     for branch in branches:
         branch = branch.decode("utf-8").strip()
@@ -42,39 +41,74 @@ def main():
 
 def get_branch_state(branch):
     result = {}
-    branch = run_cmd("git rev-parse --abbrev-ref {}".format(
-        branch))\
-        .stdout.read().decode("utf-8").strip()
-    remote = run_cmd("git config --get branch.{}.remote".format(
-        branch)).stdout.read().decode("utf-8").strip()
-    remote_branch = run_cmd("git config --get branch.{}.merge".format(
-        branch)).stdout.read().decode("utf-8").strip()
+    branch = (
+        run_cmd("git rev-parse --abbrev-ref {}".format(branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
+    remote = (
+        run_cmd("git config --get branch.{}.remote".format(branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
+    remote_branch = (
+        run_cmd("git config --get branch.{}.merge".format(branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
 
-    remote_branch = remote_branch.replace("refs/heads", "refs/remotes/{}".format(
-        remote))
-    commit_ahead = run_cmd("git rev-list --count {}..{}".format(
-        remote_branch, branch)).stdout.read().decode("utf-8").strip()
-    commit_ahead_of_head = run_cmd("git rev-list --count HEAD..{}".format(
-        branch)).stdout.read().decode("utf-8").strip()
+    remote_branch = remote_branch.replace(
+        "refs/heads", "refs/remotes/{}".format(remote)
+    )
+    commit_ahead = (
+        run_cmd("git rev-list --count {}..{}".format(remote_branch, branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
+    commit_ahead_of_head = (
+        run_cmd("git rev-list --count HEAD..{}".format(branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
     commit_ahead = int(commit_ahead)
     commit_ahead_of_head = int(commit_ahead_of_head)
 
-    commit_behind = run_cmd("git rev-list --count {}..{}".format(
-        branch, remote_branch)).stdout.read().decode("utf-8").strip()
-    commit_behind_of_head = run_cmd("git rev-list --count {}..HEAD".format(
-        branch)).stdout.read().decode("utf-8").strip()
+    commit_behind = (
+        run_cmd("git rev-list --count {}..{}".format(branch, remote_branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
+    commit_behind_of_head = (
+        run_cmd("git rev-list --count {}..HEAD".format(branch))
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
     commit_behind = int(commit_behind)
     commit_behind_of_head = int(commit_behind_of_head)
 
-    git_has_unstaged_items = int(bool(
-        run_cmd("git diff --exit-code --quiet").returncode))
+    git_has_unstaged_items = int(
+        bool(run_cmd("git diff --exit-code --quiet").returncode)
+    )
 
-    git_has_untracked_items = run_cmd(
-        "git ls-files \
+    git_has_untracked_items = (
+        run_cmd(
+            "git ls-files \
 --other \
 --exclude-standard \
 --directory \
---no-empty-directory").stdout.read().decode("utf-8").strip()
+--no-empty-directory"
+        )
+        .stdout.read()
+        .decode("utf-8")
+        .strip()
+    )
     git_has_untracked_items = int(bool(git_has_untracked_items))
 
     if not commit_ahead and not commit_behind:

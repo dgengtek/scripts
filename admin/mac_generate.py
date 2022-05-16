@@ -47,43 +47,55 @@ import click
 
 @click.command("mac_generate.py")
 @click.option(
-    "-o", "--oui",
-    type=click.Choice([
-        "xen", "openvz", "vmware", "lxc", "lxd",
-        "qemu", "kvm", "private", "none"]),
+    "-o",
+    "--oui",
+    type=click.Choice(
+        ["xen", "openvz", "vmware", "lxc", "lxd", "qemu", "kvm", "private", "none"]
+    ),
     default="none",
     help="Choose MAC OUI. \
-            none will generate a random MAC defined by gl, um, bits flags")
+            none will generate a random MAC defined by gl, um, bits flags",
+)
 @click.option(
-    '-g', '--global', 'gl',
-    flag_value='global',
-    help="for globally unique (OUI enforced) MAC")
+    "-g",
+    "--global",
+    "gl",
+    flag_value="global",
+    help="for globally unique (OUI enforced) MAC",
+)
 @click.option(
-    '-l', '--local', 'gl',
-    flag_value='local', default=True,
-    help="for locally administered MAC")
+    "-l",
+    "--local",
+    "gl",
+    flag_value="local",
+    default=True,
+    help="for locally administered MAC",
+)
 @click.option(
-    '-u', '--unicast', 'um',
-    flag_value='unicast',
-    help="for unicast transmission to collision domain")
+    "-u",
+    "--unicast",
+    "um",
+    flag_value="unicast",
+    help="for unicast transmission to collision domain",
+)
 @click.option(
-    '-m', '--multicast', 'um',
-    flag_value='multicast', default=True,
-    help="for one time multicast transmission")
+    "-m",
+    "--multicast",
+    "um",
+    flag_value="multicast",
+    default=True,
+    help="for one time multicast transmission",
+)
 @click.option(
-    "-b", "--bits",
+    "-b",
+    "--bits",
     type=click.Choice(["48", "64"]),
     default="48",
-    help="Only MAC-48 implemented")
-@click.option(
-    "-s", "--separator",
-    default=":")
-@click.option(
-    '-n', '--dryrun',
-    is_flag=True)
-@click.option(
-    '-v', '--verbose',
-    is_flag=True)
+    help="Only MAC-48 implemented",
+)
+@click.option("-s", "--separator", default=":")
+@click.option("-n", "--dryrun", is_flag=True)
+@click.option("-v", "--verbose", is_flag=True)
 def main(oui, gl, um, bits, separator, dryrun, verbose):
     oui_mapping = {
         "xen": MACXen,
@@ -95,7 +107,7 @@ def main(oui, gl, um, bits, separator, dryrun, verbose):
         "kvm": MACKVM,
         "private": MACPrivate,
         "none": MAC,
-        }
+    }
 
     local = gl
     multicast = um
@@ -112,11 +124,8 @@ def main(oui, gl, um, bits, separator, dryrun, verbose):
     print(mac)
 
 
-class MAC():
-    def __init__(
-            self, separator=":",
-            local=True, multicast=True,
-            randomize_all=True):
+class MAC:
+    def __init__(self, separator=":", local=True, multicast=True, randomize_all=True):
         self.__init_array()
         self.separator = separator
 
@@ -137,7 +146,7 @@ class MAC():
 
     def randomize_nic(self):
         for i in range(3):
-            self.__randomize_octet(i+3)
+            self.__randomize_octet(i + 3)
 
     def randomize_oui(self):
         for i in range(3):
@@ -152,8 +161,7 @@ class MAC():
         self.array = bytearray(self.records)
 
     def set_octet_bit(self, octet, bit):
-        """
-        """
+        """ """
         record = self.array[octet]
         offset = bit & 7
         mask = 1 << offset
@@ -161,8 +169,7 @@ class MAC():
         self.array[octet] = record
 
     def clear_octet_bit(self, octet, bit):
-        """
-        """
+        """ """
         record = self.array[octet]
         offset = bit & 7
         mask = ~(1 << offset)
@@ -170,7 +177,7 @@ class MAC():
         self.array[octet] = record
 
     def __randomize_octet(self, octet):
-        self.array[octet] = random.randint(0, 2**8-1)
+        self.array[octet] = random.randint(0, 2**8 - 1)
 
     def check_octet_bit(self, octet, bit):
         record = self.array[octet]
@@ -209,7 +216,7 @@ class MAC():
         hexstring = self.hex()
         output = list()
         for i in range(0, len(hexstring), 2):
-            output.append(hexstring[i:i+2])
+            output.append(hexstring[i : i + 2])
 
         return separator.join(output)
 

@@ -9,6 +9,8 @@ if len(sys.argv) != 2:
     print("URL is required.", file=sys.stderr)
     sys.exit(1)
 
-print(bs4.BeautifulSoup(
-    urllib.request.urlopen(sys.argv[1]),
-    features="html5lib").title.text)
+print(
+    bs4.BeautifulSoup(
+        urllib.request.urlopen(sys.argv[1]), features="html5lib"
+    ).title.text
+)

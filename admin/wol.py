@@ -14,7 +14,8 @@ import click
     "-i",
     "--interface",
     default="enp5s0",
-    help="Interface to send raw ethernet packet from")
+    help="Interface to send raw ethernet packet from",
+)
 def main(mac, destination, port, filename, raw, interface):
     send_packet = None
     arguments = set()
@@ -23,9 +24,12 @@ def main(mac, destination, port, filename, raw, interface):
         arguments = (destination, port, interface)
     else:
         send_packet = udp_magic_packet
-        arguments = (destination, port, )
+        arguments = (
+            destination,
+            port,
+        )
     for m in mac:
-        m = m.replace(":", '')
+        m = m.replace(":", "")
         send_packet(m, *arguments)
 
 
@@ -48,9 +52,9 @@ def create_raw_magic_packet_frame(mac, interface):
 
 
 def pack_payload(data):
-    packet = b''
+    packet = b""
     for i in range(0, len(data), 2):
-        packet += struct.pack(b'B', int(data[i: i + 2], 16))
+        packet += struct.pack(b"B", int(data[i : i + 2], 16))
     return packet
 
 

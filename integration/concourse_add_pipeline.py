@@ -19,16 +19,16 @@ def main():
     if len(sys.argv) > 1:
         relative_path = sys.argv[1]
         if not os.path.isdir(relative_path):
-            print("Invalid argument given."
-                  "Required path to metadata and pipeline configuration.",
-                  file=sys.stderr)
+            print(
+                "Invalid argument given."
+                "Required path to metadata and pipeline configuration.",
+                file=sys.stderr,
+            )
             sys.exit(1)
-        METADATA = os.path.normpath("{}/{}".format(
-            relative_path,
-            METADATA))
-        CONCOURSE_PIPELINE = os.path.normpath("{}/{}".format(
-            relative_path,
-            CONCOURSE_PIPELINE))
+        METADATA = os.path.normpath("{}/{}".format(relative_path, METADATA))
+        CONCOURSE_PIPELINE = os.path.normpath(
+            "{}/{}".format(relative_path, CONCOURSE_PIPELINE)
+        )
         argv_index = 2
     with open(METADATA) as f:
         config.read_file(f)
@@ -39,17 +39,16 @@ def main():
     concourse_fly = ["fly", "-t"]
     concourse_fly.append(target)
 
-    run(*concourse_fly,
+    run(
+        *concourse_fly,
         "set-pipeline",
         "-p",
         pipeline_name,
         "-c",
         CONCOURSE_PIPELINE,
-        *sys.argv[argv_index:])
-    run(*concourse_fly,
-        "unpause-pipeline",
-        "-p",
-        pipeline_name)
+        *sys.argv[argv_index:]
+    )
+    run(*concourse_fly, "unpause-pipeline", "-p", pipeline_name)
 
 
 def run(*args):

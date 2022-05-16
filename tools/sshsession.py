@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -25,6 +26,7 @@ from docopt import docopt
 #   Fri Apr 12 01:39:15 CEST 2019
 
 used_keys = []
+
 
 def main():
     # parse docopt
@@ -46,8 +48,10 @@ def main():
         logger.info("Failed sshsession.")
         sys.exit(1)
 
+
 def run_sshsession(custom_prompt=True):
     import tempfile
+
     global used_keys
 
     with tempfile.NamedTemporaryFile(delete=True) as f:
@@ -55,23 +59,27 @@ def run_sshsession(custom_prompt=True):
         if custom_prompt:
             COLOR = "\[\033[0;33m\]"
             COLOR_NONE = "\[\033[0m\]"
-            prompt= r"""
+            prompt = r"""
 PS1="({1}SSHSESSION{2} {0})
 $(__set_custom_bash_prompt $? "\u" '@\h#\W]$ ')"
-""".format(used_keys, COLOR, COLOR_NONE)
+""".format(
+                used_keys, COLOR, COLOR_NONE
+            )
         bash_cmd = r"""
 source ~/.bashrc
 {0}
-        """.format(prompt)
+        """.format(
+            prompt
+        )
         with open(f.name, "w") as fo:
             fo.write(bash_cmd)
 
         command = [
-                "/usr/bin/bash",
-                "--rcfile",
-                f.name,
-                ]
-        subprocess.call(command) 
+            "/usr/bin/bash",
+            "--rcfile",
+            f.name,
+        ]
+        subprocess.call(command)
 
 
 def run_non_interactive(path, ssh_keys):
@@ -86,6 +94,7 @@ def run_non_interactive(path, ssh_keys):
             added_once = True
     return added_once
 
+
 def run_interactive(path):
     global used_keys
     cwd = os.getcwd()
@@ -97,7 +106,7 @@ def run_interactive(path):
 
     ids = sorted(ids)
     menu = create_interactive_menu(ids)
-    choice=-1
+    choice = -1
 
     while True:
         print(menu)
@@ -114,6 +123,7 @@ def run_interactive(path):
             print(choice)
             logger.info("Invalid choice")
 
+
 def interactive_input(ids):
     try:
         choice = input("Your choice: ")
@@ -128,16 +138,18 @@ def interactive_input(ids):
     else:
         return None
 
+
 def get_ids(items):
     import subprocess
+
     ids = []
     found = False
     valid_keyfiletype = "PEM RSA private key"
     for item in items:
         command = ["file", item]
-        result = subprocess.Popen(command, 
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.PIPE)
+        result = subprocess.Popen(
+            command, stderr=subprocess.DEVNULL, stdout=subprocess.PIPE
+        )
         result = result.stdout.read().decode("UTF-8").split(":")
         f, filetype = result
         f = f.strip()
@@ -148,6 +160,7 @@ def get_ids(items):
 
     return ids
 
+
 def is_in_bounds(choice, items):
     length = len(items)
     if choice >= 0 and choice < length:
@@ -155,12 +168,14 @@ def is_in_bounds(choice, items):
     else:
         return False
 
+
 def create_interactive_menu(ids):
     output = "{:#^40}".format("Available ssh ids")
     output += "\nSelect an id:"
-    for nr,key in enumerate(ids,1):
-        output += "\n  {}\t{}".format(nr,key)
+    for nr, key in enumerate(ids, 1):
+        output += "\n  {}\t{}".format(nr, key)
     return output
+
 
 def add_ssh_key(key):
     # strip away .pub to get private key file
@@ -170,11 +185,13 @@ def add_ssh_key(key):
     key = remove_suffix(str(key), ".pub")
     return subprocess.run(["/usr/bin/ssh-add", key])
 
+
 def remove_suffix(string, suffix):
     if not string.endswith(suffix):
         return string
     position = string.find(suffix)
     return string[:position]
+
 
 if __name__ == "__main__":
     if os.name is not "posix":
@@ -187,7 +204,5 @@ if __name__ == "__main__":
         sys.exit(0)
 
 
-
 ################################################################################
 # Tests
-

@@ -11,64 +11,45 @@ import string
 @click.command()
 @click.argument("input_string", nargs=-1)
 @click.option(
-        "character_filter",
-        "-f",
-        "--filter",
-        help="Censor characters from the given string")
+    "character_filter", "-f", "--filter", help="Censor characters from the given string"
+)
 @click.option(
-        'random_censor',
-        '-r',
-        '--random',
-        is_flag=True,
-        help="Replace characters randomly from its set of characters")
+    "random_censor",
+    "-r",
+    "--random",
+    is_flag=True,
+    help="Replace characters randomly from its set of characters",
+)
+@click.option("-h", "--hidden", is_flag=True, help="Replace characters with '*'")
 @click.option(
-        '-h',
-        '--hidden',
-        is_flag=True,
-        help="Replace characters with '*'")
+    "-s",
+    "--substring",
+    is_flag=True,
+    help="Replace only characters within quotes ['\"]",
+)
 @click.option(
-        '-s',
-        '--substring',
-        is_flag=True,
-        help="Replace only characters within quotes ['\"]")
+    "-g",
+    "--graph",
+    "mode",
+    flag_value="graph",
+    default=True,
+    help="censor mode: [default] All printable characters except whitespace",
+)
 @click.option(
-        '-g',
-        '--graph',
-        'mode',
-        flag_value='graph',
-        default=True,
-        help="censor mode: [default] All printable characters except whitespace")
+    "-a", "--alnum", "mode", flag_value="alnum", help="censor mode: letters + digits"
+)
+@click.option("-d", "--digits", "mode", flag_value="digits", help="censor mode: digits")
 @click.option(
-        '-a',
-        '--alnum',
-        'mode',
-        flag_value='alnum',
-        help="censor mode: letters + digits")
+    "-p",
+    "--printable",
+    "mode",
+    flag_value="printable",
+    help="censor mode: All printable characters",
+)
 @click.option(
-        '-d',
-        '--digits',
-        'mode',
-        flag_value='digits',
-        help="censor mode: digits")
-@click.option(
-        '-p',
-        '--printable',
-        'mode',
-        flag_value='printable',
-        help="censor mode: All printable characters")
-@click.option(
-        '-l',
-        '--letters',
-        'mode',
-        flag_value='letters',
-        help="censor mode: letters")
-def main(
-        input_string,
-        character_filter,
-        random_censor,
-        hidden,
-        substring,
-        mode):
+    "-l", "--letters", "mode", flag_value="letters", help="censor mode: letters"
+)
+def main(input_string, character_filter, random_censor, hidden, substring, mode):
     set_alpha = set(string.ascii_letters)
     set_digits = set(string.digits)
     set_printable = set(string.printable)
@@ -102,26 +83,24 @@ def main(
         input_string = sys.stdin.readlines()
 
     if len(input_string) > 1:
-        endstring = '\n'
+        endstring = "\n"
     else:
-        endstring = ''
+        endstring = ""
 
     for line in input_string:
         print(pool.censor(line), end=endstring)
 
 
-class CensorPool():
+class CensorPool:
     quotes = {'"', "'"}
     printable = string.printable.replace(string.whitespace, "")
     digits = string.digits
     alnum = string.ascii_letters + string.digits
     printable = string.printable
 
-    def __init__(self,
-                 character_pool,
-                 random_censor=False,
-                 hidden=False,
-                 substring=False):
+    def __init__(
+        self, character_pool, random_censor=False, hidden=False, substring=False
+    ):
         self.character_pool = character_pool
         self.random_censor = random_censor
         self.hidden = hidden
@@ -171,16 +150,15 @@ class CensorPool():
                 index = self.__find_quoted_substring(stack, c)
                 if index == -1:
                     output.extend(
-                            "{}{}".format(
-                                c, self.__censor_string(reversed(stack))))
+                        "{}{}".format(c, self.__censor_string(reversed(stack)))
+                    )
                     break
                 # make sure to include quote
                 index += 1
 
                 # exclude the quote from substring
-                substring = stack[-index+1:]
-                substring = "{}{}{}".format(
-                        c, self.__censor_string(substring), c)
+                substring = stack[-index + 1 :]
+                substring = "{}{}{}".format(c, self.__censor_string(substring), c)
                 substring = reversed(substring)
                 output.extend(substring)
                 del stack[-index:]
@@ -209,13 +187,13 @@ class CensorPool():
 def test_censorpool():
     pool = CensorPool({"a", "A", "b", "B", "0", "1", "2"})
     data = [
-            ("AABB", "AAAA"),
-            ("B", "A"),
-            ("a", "A"),
-            ("a1", "A0"),
-            ("1", "0"),
-            ("aCc41", "ACc40"),
-            ]
+        ("AABB", "AAAA"),
+        ("B", "A"),
+        ("a", "A"),
+        ("a1", "A0"),
+        ("1", "0"),
+        ("aCc41", "ACc40"),
+    ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) == censored_string
 
@@ -223,13 +201,13 @@ def test_censorpool():
 def test_censorpool_random():
     pool = CensorPool(("a", "A", "b", "B", "0", "1", "2"), random_censor=True)
     data = [
-            ("AABB", "AAAA"),
-            ("B", "A"),
-            ("a", "A"),
-            ("a1", "A0"),
-            ("1", "0"),
-            ("aCc41", "ACc40"),
-            ]
+        ("AABB", "AAAA"),
+        ("B", "A"),
+        ("a", "A"),
+        ("a1", "A0"),
+        ("1", "0"),
+        ("aCc41", "ACc40"),
+    ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) != input_string
 
@@ -237,29 +215,29 @@ def test_censorpool_random():
 def test_censorpool_hidden():
     pool = CensorPool(("a", "A", "b", "B", "0", "1", "2"), hidden=True)
     data = [
-            ("AABB", "****"),
-            ("B", "*"),
-            ("a", "*"),
-            ("a1", "**"),
-            ("1", "*"),
-            ("aCc41", "*Cc4*"),
-            ]
+        ("AABB", "****"),
+        ("B", "*"),
+        ("a", "*"),
+        ("a1", "**"),
+        ("1", "*"),
+        ("aCc41", "*Cc4*"),
+    ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) != input_string
 
 
 def test_censorpool_substring():
     pool = CensorPool(
-            ("a", "A", "b", "B", "0", "1", "2", "\"", "'", ":"),
-            substring=True)
+        ("a", "A", "b", "B", "0", "1", "2", '"', "'", ":"), substring=True
+    )
     data = [
-            ("ok \"AB\" y", "ok \"AA\" y"),
-            ("ok 'AB' y", "ok 'AA' y"),
-            ("ok1 \"C3B1\" y", "ok1 \"C3A0\" y"),
-            (" \"test1a\": \"AB\" ", " \"test0A\": \"AA\" "),
-            ("ok '\"AB' y", "ok '*AA' y"),
-            ("ok '\"'AB' y", "ok '*'AB' y"),
-            ]
+        ('ok "AB" y', 'ok "AA" y'),
+        ("ok 'AB' y", "ok 'AA' y"),
+        ('ok1 "C3B1" y', 'ok1 "C3A0" y'),
+        (' "test1a": "AB" ', ' "test0A": "AA" '),
+        ("ok '\"AB' y", "ok '*AA' y"),
+        ("ok '\"'AB' y", "ok '*'AB' y"),
+    ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) == censored_string
 
@@ -268,9 +246,9 @@ def test_string_censor():
     character_pool = set(string.ascii_letters).union(set(string.digits))
     pool = CensorPool(character_pool)
     data = [
-            ("My name is", "AA AAAA AA"),
-            ("DE123182181293", "AA000000000000"),
-            ]
+        ("My name is", "AA AAAA AA"),
+        ("DE123182181293", "AA000000000000"),
+    ]
     for input_string, censored_string in data:
         assert pool.censor(input_string) == censored_string
 
