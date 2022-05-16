@@ -273,7 +273,7 @@ def users_repos(d, user, output_json, key):
 @repos_hook.command("list")
 @click.argument("owner", required=True)
 @click.argument("repo", required=True)
-@click.option("--json", "output_json", is_flag=True, help="json output")
+@click.option("--json", "output_json", is_flag=True, default=True, help="json output")
 @click.pass_obj
 def repos_hook_list(d, owner, repo, output_json):
     """
@@ -283,7 +283,32 @@ def repos_hook_list(d, owner, repo, output_json):
     if output_json:
         print(json.dumps(result))
         sys.exit(0)
-    return result
+    print(result)
+
+
+@repos_hook.command("delete")
+@click.argument("owner", required=True)
+@click.argument("repo", required=True)
+@click.argument("repo_id", required=True)
+@click.pass_obj
+def repos_hook_delete(d, owner, repo, repo_id):
+    """
+    Delete the hook with the id in a repository
+    """
+    url = "repos/{}/{}/hooks/{}".format(
+        owner,
+        repo,
+        repo_id)
+    headers = {
+            "accept": "application/json",
+    }
+    response = get_response(d, url, headers, requests.delete)
+
+    if response.status_code != 204:
+        print(response.text)
+        sys.exit(1)
+
+    print("hook {}/{}/{} deleted".format(owner, repo, repo_id), file=sys.stderr)
 
 
 @repos_hook.command("create")
@@ -408,17 +433,17 @@ main.add_command(user)
 main.add_command(users)
 
 
-def get_response(d, url, headers):
+def get_response(d, url, headers, requests_method=requests.get):
     url = "{}/{}".format(
         d["api"], url)
     if d["token"]:
         url = "{}?access_token={}".format(
             url, d["token"])
-        response = requests.get(
+        response = requests_method(
                 url,
                 headers=headers)
     else:
-        response = requests.get(
+        response = requests_method(
                 url,
                 headers=headers,
                 auth=(d["user"], d["password"]))
