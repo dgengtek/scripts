@@ -62,6 +62,7 @@ OPTIONS:
   --enable-batch-scan  enable scanning in batches until aborted
   --disable-canonize-filename  do not canonize output filename
   --disable-date-prefix  do not prefix date to output filename
+  --disable-uuid-prefix  do not prefix uuid to output filename
   --disable-image-preview  disable image preview before converting after scanning
   --disable-pdf-preview  disable pdf preview after conversion finished
   --delete-original-scan  do not keep the original scan image
@@ -80,6 +81,7 @@ main() {
   local -i disable_tagging=0
   local -i disable_canonize_filename=0
   local -i enable_date_prefix=1
+  local -i enable_uuid_prefix=1
   local -i delete_original_scan=0
   local -i batch_count=0
   local title=""
@@ -126,8 +128,10 @@ main() {
 ################################################################################
 
 run() {
+  local filename
   local -r volume_dir=$(mktemp -d "${VOLUME_TMP}/tmp.XXXXXXXXXX")
   local -a arr_date=(${input_date//-/ })
+  local -r uuid=$(uuidgen)
   local image_batch_name_prefix="input_image_batch-"
   trap "sigh_cleanup_scan $volume_dir" SIGINT SIGQUIT SIGTERM EXIT
 
@@ -214,37 +218,39 @@ run() {
     read -p "Continue moving results to current directory? Press RETURN or abort now"
   fi
 
-  if (($enable_date_prefix)); then
-    filename="${input_date}_${output_filename}"
-  else
-    filename="$output_filename"
+  filename="$output_filename"
+  if (($enable_uuid_prefix)); then
+    filename="${uuid}_${filename}"
   fi
+  if (($enable_date_prefix)); then
+    filename="${input_date}_${filename}"
+  fi
+
   if ! (($delete_original_scan)); then
+    local filename_original="./${filename}-original.${SCAN_FORMAT}"
     if (($batch_count)) || (($enable_batch_scan)); then
-      cp -v "${volume_dir}/${input_filename}" "./${filename}-original.pdf"
-      if ! (($disable_tagging)); then
-        tmsu tag "./${filename}-original.pdf" \
-          year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-          original scan image pdf ${SCAN_FORMAT} document unsorted "$@"
-      fi
-    else
-      cp -v "${volume_dir}/${input_filename}" "./${filename}-original.${SCAN_FORMAT}"
-      if ! (($disable_tagging)); then
-        tmsu tag "./${filename}-original.${SCAN_FORMAT}" \
-          year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-          original scan image ${SCAN_FORMAT} document unsorted "$@"
-      fi
+      filename_original="./${filename}-original.pdf"
+    fi
+    cp -v "${volume_dir}/${input_filename}" "$filename_original"
+    if ! (($disable_tagging)); then
+      tmsu tag "$filename_original" \
+        year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+        uuid=$uuid \
+        original scan image ${SCAN_FORMAT} document unsorted "$@"
     fi
   fi
+
   mv -v "${volume_dir}/${output_filename}.pdf" "./${filename}.pdf"
   mv -v "${volume_dir}/${output_filename}.txt" "./${filename}.txt"
   if ! (($disable_tagging)); then
-  tmsu tag "./${filename}.pdf" \
-    year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scan pdf ocr document unsorted "$@"
-  tmsu tag "./${filename}.txt" \
-    year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
-    scan txt ocr document unsorted "$@"
+    tmsu tag "./${filename}.pdf" \
+      year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+      uuid=$uuid \
+      scan pdf ocr document unsorted "$@"
+    tmsu tag "./${filename}.txt" \
+      year=${arr_date[0]} month=${arr_date[1]} day=${arr_date[2]} \
+      uuid=$uuid \
+      scan txt ocr document unsorted "$@"
   fi
 
   trap - SIGINT SIGQUIT SIGTERM EXIT
@@ -389,6 +395,9 @@ parse_options() {
         ;;
       --disable-date-prefix)
         enable_date_prefix=0
+        ;;
+      --disable-uuid-prefix)
+        enable_uuid_prefix=0
         ;;
       --)
         do_shift=3
