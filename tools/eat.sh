@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# experimental prompt
+
 readonly FIFO="/tmp/fifo$RANDOM"
 readonly FIFOLOCK="/tmp/lock$RANDOM"
 
