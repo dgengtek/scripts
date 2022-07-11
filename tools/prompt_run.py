@@ -20,7 +20,6 @@ def main():
     signal.signal(signal.SIGALRM, handler)
 
     args = parse_args()
-    print(args)
     enable_formatting = args.format
     args = args.args
     if not args:
@@ -163,7 +162,7 @@ def parse_args():
 
     parser.add_argument(
             "-f", "--format",
-            help="format the input string either with key=value key2=value or positional with space delimiter $1 $2 provided in the prompt",
+            help="Format the given args by prompting the user for either {k1} or {} format identifiers in the args string",
             action="store_true")
 
     return parser.parse_args()
