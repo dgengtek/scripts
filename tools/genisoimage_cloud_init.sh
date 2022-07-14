@@ -2,12 +2,12 @@
 # helper for rendering supplied variables for cloud init templates
 # and creating a cloud init image
 
-readonly cloud_init_template=${1:?Cloud init template file required}
-readonly environment_file=${2:?Environment file required}
-readonly template=$(realpath "$cloud_init_template")
+readonly cloud_init_template=$(realpath ${1:?Cloud init template file required})
+readonly cloud_init_image=${2:-seedci.iso}
+readonly environment_file=$3
 
 set -a
-source "$environment_file"
+test -f "$environment_file" && source "$environment_file"
 set +a
 
 readonly CWD=$PWD
@@ -20,8 +20,8 @@ trap cleanup SIGINT SIGQUIT SIGTERM EXIT
 
 pushd "$tmp_dir"
 touch meta-data
-cat "$template" | envsubst > user-data
-genisoimage -output "${CWD}/seedci.iso" -volid cidata -joliet -rock user-data meta-data
+cat "$cloud_init_template" | envsubst > user-data
+genisoimage -output "${CWD}/${cloud_init_image}" -volid cidata -joliet -rock user-data meta-data
 
 popd
 cleanup
