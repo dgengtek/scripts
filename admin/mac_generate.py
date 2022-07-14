@@ -121,7 +121,7 @@ def main(oui, gl, um, bits, separator, dryrun, verbose):
         mac = builder(separator, local, multicast)
     else:
         mac = builder(separator)
-    print(mac)
+    print(mac, end="")
 
 
 class MAC:
