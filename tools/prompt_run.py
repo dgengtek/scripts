@@ -33,12 +33,13 @@ def main():
             call_args = template.get_call_args()
         else:
             call_args = list(args)
-            user_input = simple_prompt(" ".join(args))
+            user_input = simple_prompt("# {}".format(" ".join(args)))
             if user_input is True:
                 continue
             call_args.extend(shlex.split(user_input))
 
         subprocess.call(call_args)
+        prerr("# ---")
 
 
 class TemplatePrompt():
@@ -62,7 +63,7 @@ class TemplatePrompt():
         raise NotImplementedError()
 
     def get_call_args(self):
-        prerr(self.template_string)
+        prerr("# {}".format(self.template_string))
         user_data = self.prompt()
         result = self.format(user_data)
         return shlex.split(result)
@@ -95,7 +96,7 @@ class TemplatePromptPos(TemplatePrompt):
         count = list(reversed(range(self.count)))
         while count:
             i = count.pop()
-            user_input = simple_prompt("Pos {}".format(i))
+            user_input = simple_prompt(">> Pos {}".format(i))
             if not user_input:
                 prerr("Input for {} is empty. Repeat".format(i))
                 count.append(i)
@@ -117,7 +118,7 @@ class TemplatePromptKeys(TemplatePrompt):
         count = list(reversed(self.result))
         while count:
             k = count.pop()
-            user_input = simple_prompt("Key {}".format(k))
+            user_input = simple_prompt(">> Key {}".format(k))
             if not user_input:
                 prerr("Input for {} is empty. Repeat".format(k))
                 count.append(k)
@@ -131,7 +132,8 @@ class TemplatePromptKeys(TemplatePrompt):
 
 def simple_prompt(prompt_prefix):
     try:
-        user_input = input("{} > ".format(prompt_prefix))
+        prerr(prompt_prefix)
+        user_input = input("> ")
     except EOFError:
         sys.exit(0)
     except KeyboardInterrupt:
