@@ -56,7 +56,6 @@ main() {
   sleep 1
   i3-msg 'workspace "1:shells"'
   systemctl --user start redshift dunst
-  pgrep aw-qt || i3-msg 'exec aw-qt'
 }
 
 session_exists() {
