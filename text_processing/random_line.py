@@ -18,7 +18,7 @@ def main():
 
     file_lines = args.filename.readlines()
     random_line = randint(0, len(file_lines))
-    print(file_lines[random_line])
+    print(file_lines[random_line].strip(), end="")
 
 
 def parse_args():
