@@ -15,13 +15,6 @@ import binascii
     "character_filter", "-f", "--filter", help="Filter characters from the given string"
 )
 @click.option("single_line", "--single-line", is_flag=True, help="print one per line")
-@click.option(
-    "separator",
-    "-s",
-    "--separator",
-    default="--",
-    help="Only added when printing single lines. Add a separator line between each line",
-)
 @click.option("-c", "--count", default=30, help="Password count")
 @click.option(
     "-i",
@@ -84,7 +77,6 @@ def main(
     length,
     character_filter,
     single_line,
-    separator,
     count,
     inverse,
     bits,
@@ -136,7 +128,7 @@ def main(
         passwords = [bit_mode(random.getrandbits(length)) for i in range(0, count)]
     else:
         passwords = [generate_password(character_pool, length) for i in range(0, count)]
-    print_passwords(passwords, separator, single_line)
+    print_passwords(passwords, single_line)
 
 
 def noop(i):
@@ -162,7 +154,7 @@ def b2qp(i):
     return binascii.b2a_qp(bigint_to_bytes(i)).decode("UTF-8").strip()
 
 
-def print_passwords(passwords, separator, single_line):
+def print_passwords(passwords, single_line):
     if len(passwords) == 1:
         password = passwords[0]
         print(password, end="")
@@ -171,7 +163,6 @@ def print_passwords(passwords, separator, single_line):
     for i, password in enumerate(passwords, 1):
         if single_line:
             print(password)
-            print(separator)
             continue
 
         print(password, end="\t")
