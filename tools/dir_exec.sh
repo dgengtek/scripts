@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib"}
+source "${PATH_USER_LIB}/libutils.sh"
+source "${PATH_USER_LIB}/libcolors.sh"
 
 usage() {
   cat >&2 << EOF
@@ -8,13 +11,6 @@ Expects input of directories separated by the character '\0'
 
 command
   Run a command in each directory
-
-OPTIONS:
-  -h  help
-  -v  verbose
-  -q  quiet
-  -d  debug
-  -p,--path <directory>  some directory
 EOF
 }
 
@@ -42,7 +38,8 @@ EOF
 
   while IFS= read -r -u 3 -d $'\n' directory; do
     if ! [[ -d "$directory" ]]; then
-      echo "{{${directory}}} is not a directory" >&2
+      printcbold $__CC_RED "{{${directory}}} is not a directory" >&2
+      command echo >&2
       continue
     fi
     let i+=1
@@ -50,10 +47,10 @@ EOF
     output=$(bash -c "$*" 2>&1)
     rc=$?
     if (($rc == 0)); then
-      echo -n "# $i - " >&2
-      echo "$directory"
-      [[ -n "$output" ]] && echo "$output" >&2
-      echo >&2
+      printcbold $__CC_MAGENTA "# $i - " >&2
+      command echo "$directory"
+      [[ -n "$output" ]] && command echo "$output" >&2
+      command echo >&2
     fi
     popd >& /dev/null
   done 

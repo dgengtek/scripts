@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib"}
+source "${PATH_USER_LIB}/libutils.sh"
+source "${PATH_USER_LIB}/libcolors.sh"
+
 
 usage() {
   cat >&2 << EOF
@@ -9,13 +13,6 @@ filename
 
 conditional command
   skips entering a shell for a directory if the command fails
-
-OPTIONS:
-  -h  help
-  -v  verbose
-  -q  quiet
-  -d  debug
-  -p,--path <directory>  some directory
 EOF
 }
 
@@ -26,7 +23,8 @@ main() {
   local file_input=$1
   shift
   if ! [[ -f "$file_input" ]]; then
-    echo "{{$file_input}} is not a file" >&2
+    printcbold $__CC_RED "{{$file_input}} is not a file" >&2
+    command echo >&2
     usage
     exit 1
   fi
@@ -37,37 +35,40 @@ main() {
 
   while IFS= read -r -d $'\n' directory; do
     if ! [[ -d "$directory" ]]; then
-      echo "{{$directory}} is not a directory" >&2
+      printcbold $__CC_RED "{{$directory}} is not a directory" >&2
+      command echo >&2
       continue
     fi
     directories+=("$directory")
   done < "$file_input"
 
   local -r count=${#directories[@]}
-  trap "trap - SIGTERM SIGQUIT; builtin cd $cwd; echo 'we are done with interactivity'>&2; exit" SIGTERM SIGQUIT SIGINT EXIT
-  cat << EOF
-running interactive subshells for $count directories.
+  trap "trap - SIGTERM SIGQUIT SIGINT EXIT; builtin cd $cwd; printcbold $__CC_GREEN "Done." >&2; exit" SIGTERM SIGQUIT SIGINT EXIT
+  printc $__CC_YELLOW "running interactive subshells for $count directories.
 $ byebye # to stop function
-EOF
+"
 
   for i in $(seq "$count"); do
     pushd "${directories[$i-1]}" >& /dev/null || continue
     if ! bash -c "$*"; then
-      echo "==> Condition failed: skipping subshell $i of $count - $PWD" >&2
+      printcbold $__CC_RED "==> Condition failed: skipping subshell $i of $count - $PWD" >&2
+      command echo >&2
       popd >& /dev/null
       continue
     fi
 
   bash --init-file <(cat << EOF
 source ~/.bashrc
+source "${PATH_USER_LIB}/libcolors.sh"
 byebye() { kill -SIGTERM \$\$; }
 trap "trap - SIGTERM SIGQUIT; kill -SIGTERM $CPID; exit" SIGTERM SIGQUIT
-echo -n "Enter subshell $i of $count - ">&2;pwd
+printcbold $__CC_MAGENTA "Enter subshell $i of $count - ">&2;pwd
 EOF
 )
     popd >& /dev/null
   done
   trap - SIGTERM SIGQUIT SIGINT EXIT
-  echo "Done." >&2
+  printcbold $__CC_GREEN "Done." >&2
+  command echo >&2
 }
 main "$@"
