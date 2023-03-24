@@ -385,7 +385,7 @@ cmd_intca_cat_json() {
   set +e
   jq -c -n \
 	--arg name "intca" \
-	--arg key "$(cat $cakey)" \
+	--arg key "$(cat $intermediate_key)" \
 	--arg root "$(cat "$cacert")" \
 	--arg cert "$(cat "$intermediate_cert")" \
 	'{ ($name): { "key": $key, "cert": $cert, "root": $root } }'
@@ -395,7 +395,7 @@ cmd_intca_cat_json() {
 cmd_intca_pem_bundle() {
   # print the intermediate ca as a pem bundle for feeding to the vault api
   set +e
-  cat "$cakey"
+  cat "$intermediate_key"
   cat "$intermediate_cert"
   cat "$cacert"
 }
