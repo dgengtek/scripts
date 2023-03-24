@@ -392,6 +392,15 @@ cmd_intca_cat_json() {
 }
 
 
+cmd_intca_pem_bundle() {
+  # print the intermediate ca as a pem bundle for feeding to the vault api
+  set +e
+  cat "$cakey"
+  cat "$intermediate_cert"
+  cat "$cacert"
+}
+
+
 cmd_print() {
   local -r key="$intermediate_path/private/${1}.key.pem"
   local -r csr="$intermediate_path/csr/${1}.csr.pem"
