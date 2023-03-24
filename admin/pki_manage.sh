@@ -395,7 +395,8 @@ cmd_intca_cat_json() {
 cmd_intca_pem_bundle() {
   # print the intermediate ca as a pem bundle for feeding to the vault api
   set +e
-  cat "$intermediate_key"
+  # bundle requires decrypted key
+  cat "$intermediate_key" | openssl rsa
   cat "$intermediate_cert"
   cat "$cacert"
 }
