@@ -14,6 +14,13 @@ import binascii
 @click.option(
     "character_filter", "-f", "--filter", help="Filter characters from the given string"
 )
+@click.option(
+    "character_pool",
+    "-s",
+    "--character-pool",
+    help="Select characters from the given string instead of using a mode",
+    default="",
+)
 @click.option("single_line", "--single-line", is_flag=True, help="print one per line")
 @click.option("-c", "--count", default=30, help="Password count")
 @click.option(
@@ -84,6 +91,7 @@ import binascii
 def main(
     length,
     character_filter,
+    character_pool,
     single_line,
     count,
     inverse,
@@ -96,9 +104,10 @@ def main(
     set_printable = set(string.printable)
     set_whitespace = set(string.whitespace)
 
-    character_pool = None
     bit_mode = noop
-    if mode == "graph":
+    if character_pool:
+        character_pool = set(character_pool)
+    elif mode == "graph":
         character_pool = set_printable - set_whitespace
     elif mode == "alnum":
         character_pool = set_alpha.union(set_digits)
