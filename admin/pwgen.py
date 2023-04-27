@@ -24,12 +24,6 @@ import binascii
 @click.option("single_line", "--single-line", is_flag=True, help="print one per line")
 @click.option("-c", "--count", default=30, help="Password count")
 @click.option(
-    "-i",
-    "--inverse",
-    is_flag=True,
-    help="Inverse filter. Only show characters from the given filter",
-)
-@click.option(
     "-b",
     "--bits",
     is_flag=True,
@@ -94,7 +88,6 @@ def main(
     character_pool,
     single_line,
     count,
-    inverse,
     bits,
     mode,
     representation,
