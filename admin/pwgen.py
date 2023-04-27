@@ -61,18 +61,26 @@ import binascii
     "representation",
     flag_value="hex",
     default=True,
-    help="repr: [default] display as hex",
+    help="only when using --bits: repr: [default] display as hex",
 )
 @click.option(
     "--print-binary",
     "representation",
     flag_value="binary",
-    help="repr: binary representation",
+    help="only when using --bits: repr: binary representation",
 )
 @click.option(
-    "--print-base64", "representation", flag_value="base64", help="repr: base64"
+    "--print-base64",
+    "representation",
+    flag_value="base64",
+    help="only when using --bits: repr: base64",
 )
-@click.option("--print-qp", "representation", flag_value="qp", help="repr: qp")
+@click.option(
+    "--print-qp",
+    "representation",
+    flag_value="qp",
+    help="only when using --bits: repr: qp",
+)
 def main(
     length,
     character_filter,
