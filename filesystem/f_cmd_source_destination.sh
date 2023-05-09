@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------------------
-# utility for selecting files to easily cp or mv
+# utility for selecting multiple files from a source directory
+#   and a directory from destination directory 
+#   and run the cmd in background for each file as src with the destination as args
+#
+# for example for manually sorting some files
+#
 # ------------------------------------------------------------------------------
 # 
 
 usage() {
   cat >&2 << EOF
-Usage: ${0##*/} <cmd> <destination> [<source path>] [-- [cmd args...]]
+Usage: ${0##*/} <cmd> <destination directory> [<source directory>] [-- [cmd args...]]
 
-Works only with commands which use SOURCE and DESTINATION as arguments, like cp, mv
+Works only with commands which accept SOURCE DESTINATION as arguments, like cp, mv
+
 
 Does not work with interactive commands since the command will run in the background.
 
 cmd  A command like cp, mv
-destination  destination path to move selections to
-source path  source path to get selections from[default: .]
+destination directory  destination path to move selections to
+source directory  source path to get selections from[default: CWD]
 cmd args  Arguments to pass to the cmd
 EOF
 }
@@ -78,10 +84,14 @@ EOF
 
 f_cmd_run() {
   local -i counts=0
+  local selected_once=0
   local destination=""
   while read -d $'\0' result; do
+    if ! (($selected_once)); then 
+      destination=$(find "$destination_path" -type d | fzf-tmux --height 50% --no-multi)
+      selected_once=1
+    fi
     let counts+=1
-    destination=$(find "$destination_path" -type d | fzf-tmux --height 50% --no-multi)
     echo "$CMD ${options[*]} $result $destination/" >&2
     ($CMD "${options[@]}" "$result" "$destination/" &)
   done < <(find "$source_path" -print0 2>/dev/null | fzf-tmux --height 50% --read0 --print0 --multi)
