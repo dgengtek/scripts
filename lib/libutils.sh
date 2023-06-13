@@ -5,8 +5,8 @@ chr() { printf \\$(printf '%03o' $1); }
 # quiet hash
 hashq() { hash "$@" >/dev/null 2>&1; }
 
-echo() ( 
-  IFS=" " 
+echo() (
+  IFS=" "
   printf '%s\n' "$*"
 )
 
@@ -34,7 +34,7 @@ msg2() { log "  ->" "$@"; }
 
 # generate a system logging function log_* for every level
 for level in emerg err warning info debug; do
-  printf -v functext -- 'log_%s() { logger -p user.%s -t %s -- "$@" ; }' "$level" "$level" "${0##*/}"
+  printf -v functext -- 'log_%s() { logger --stderr -p user.%s -t %s -- "$@" ; }' "$level" "$level" "${0##*/}"
   eval "$functext"
 done
 
