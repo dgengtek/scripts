@@ -18,13 +18,15 @@ def run_cmd(command, delimiter=" "):
 
 
 def main():
-    is_git_repo = run_cmd("git rev-parse --show-toplevel").returncode
+    git_repo_toplevel = run_cmd("git rev-parse --show-toplevel")
+    is_git_repo = git_repo_toplevel.returncode
     if bool(is_git_repo):
         print("Not a git repository.", file=sys.stderr)
         print("{}")
         sys.exit(is_git_repo)
 
     result = {}
+    result.update({"dir": git_repo_toplevel.stdout.read().decode("UTF-8").strip()})
 
     branches = run_cmd("git for-each-ref --format %(refname)").stdout.readlines()
 
