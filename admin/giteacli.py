@@ -26,10 +26,10 @@ def main(ctx, url, user, password, loglevel, token):
     if not url:
         url = os.environ.get("GITEA_URL", GITEA_URL)
     if not token:
-        print("GITEA_TOKEN, token or password required.", file=sys.stderr)
+        printe("GITEA_TOKEN, token or password required.")
         sys.exit(1)
     if not url:
-        print("GITEA_URL required.", file=sys.stderr)
+        printe("GITEA_URL required.")
         sys.exit(1)
 
     d["api"] = "{}/api/v1".format(url)
@@ -86,7 +86,7 @@ def repos_add_collaborator(d, owner, repo, collaborator, permission):
         )
 
     if response.status_code == 204:
-        print(
+        printe(
             (
                 "Added collaborator {}"
                 " to repo '{}'"
@@ -95,7 +95,7 @@ def repos_add_collaborator(d, owner, repo, collaborator, permission):
             ).format(collaborator, repo, owner, permission)
         )
     else:
-        print(response.text)
+        printe(response.text)
         sys.exit(1)
 
 
@@ -113,7 +113,7 @@ def repos_list(d, org):
     if response.status_code == 200:
         print(json.dumps(response.json()))
     else:
-        print(response.text)
+        printe(response.text)
         sys.exit(1)
 
 
@@ -142,17 +142,17 @@ def repos_edit(d, owner, repo, properties):
         )
 
     if response.status_code == 200:
-        print(
+        printe(
             ("Edited repo {}" " of owner '{}'" " with properties '{}'").format(
                 repo, owner, properties
             )
         )
     elif response.status_code == 403:
-        print("APIForbiddenError: {}".format(response.text))
+        printe("APIForbiddenError: {}".format(response.text))
     elif response.status_code == 422:
-        print("APIValidationError: {}".format(response.text))
+        printe("APIValidationError: {}".format(response.text))
     else:
-        print(response.status_code)
+        printe(response.status_code)
         print(response.text)
         sys.exit(1)
 
@@ -182,7 +182,7 @@ def user_repos(d, output_json, key):
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            print(response.status_code)
+            printe(response.status_code)
             sys.exit(1)
         result = response.json()
         if len(result) == 0:
@@ -218,7 +218,7 @@ def users_repos(d, user, output_json, key):
     response = get_response(d, url, headers)
 
     if response.status_code != 200:
-        print(response.text)
+        printe(response.text)
         sys.exit(1)
 
     result = response.json()
@@ -262,10 +262,10 @@ def repos_hook_delete(d, owner, repo, repo_id):
     response = get_response(d, url, headers, requests.delete)
 
     if response.status_code != 204:
-        print(response.text)
+        printe(response.text)
         sys.exit(1)
 
-    print("hook {}/{}/{} deleted".format(owner, repo, repo_id), file=sys.stderr)
+    printe("hook {}/{}/{} deleted".format(owner, repo, repo_id))
 
 
 @repos_hook.command("create")
@@ -360,7 +360,7 @@ def repos_hook_create(
     for hook in get_repo_hooks(d, owner, repo):
         hook_set = get_hook_set(hook)
         if hook_set == new_hook_set:
-            print("Hook {} already exists".format(new_hook_set), file=sys.stderr)
+            printe("Hook {} already exists".format(new_hook_set))
             if fail_nonunique:
                 sys.exit(1)
             if create_nonunique:
@@ -377,13 +377,13 @@ def repos_hook_create(
         )
 
     if response.status_code == 201:
-        print(
+        printe(
             (
                 "Added hook {}" " to repo '{}'" " of owner '{}'" " with events '{}'"
             ).format(target_url.split("?")[0], repo, owner, ", ".join(events))
         )
     else:
-        print("{} {}".format(response.status_code, response.text), file=sys.stderr)
+        printe("{} {}".format(response.status_code, response.text))
         sys.exit(1)
 
 
@@ -421,10 +421,39 @@ def get_repo_hooks(d, owner, repo):
     response = get_response(d, url, headers)
 
     if response.status_code != 200:
-        print(response.text)
+        printe(response.text)
         sys.exit(1)
 
     return response.json()
+
+
+def create_repository(d, url, data):
+    """
+    common code for repository creation
+    """
+    headers = {
+        "accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    if d["token"]:
+        url = "{}?access_token={}".format(url, d["token"])
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+    else:
+        response = requests.post(
+            url, headers=headers, data=json.dumps(data), auth=(d["user"], d["password"])
+        )
+
+    if response.status_code == 201:
+        printe("Created repository '{}'".format(data.get("name")))
+    else:
+        printe("{} {}".format(response.status_code, response.text))
+        sys.exit(1)
+    print(json.dumps(response.json()))
+
+
+def printe(string):
+    print(string, file=sys.stderr)
 
 
 if __name__ == "__main__":
