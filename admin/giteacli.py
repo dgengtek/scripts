@@ -51,6 +51,18 @@ def user(ctx, args=None):
     pass
 
 
+@click.group("admin")
+@click.pass_context
+def admin(ctx, args=None):
+    pass
+
+
+@admin.group("repos")
+@click.pass_context
+def admin_repos(ctx, args=None):
+    pass
+
+
 @click.group("users")
 @click.pass_context
 def users(ctx, args=None):
@@ -60,6 +72,12 @@ def users(ctx, args=None):
 @click.group("add")
 @click.pass_context
 def repos_add(ctx, args=None):
+    pass
+
+
+@user.group("repos")
+@click.pass_context
+def user_repos(ctx, args=None):
     pass
 
 
@@ -76,6 +94,9 @@ def repos_hook(ctx, args=None):
 @click.argument("permission", required=True)
 @click.pass_obj
 def repos_add_collaborator(d, owner, repo, collaborator, permission):
+    """
+    Add a collaborator to a repository
+    """
     url = "{}/repos/{}/{}/collaborators/{}".format(d["api"], owner, repo, collaborator)
     if d["token"]:
         url = "{}?access_token={}".format(url, d["token"])
@@ -103,6 +124,9 @@ def repos_add_collaborator(d, owner, repo, collaborator, permission):
 @click.argument("org", required=True)
 @click.pass_obj
 def repos_list(d, org):
+    """
+    List an organization's repos
+    """
     url = "{}/orgs/{}/repos".format(d["api"], org)
     if d["token"]:
         url = "{}?access_token={}".format(url, d["token"])
@@ -123,6 +147,9 @@ def repos_list(d, org):
 @click.argument("properties", required=True)
 @click.pass_obj
 def repos_edit(d, owner, repo, properties):
+    """
+    Edit a repository's properties. Only fields that are set will be changed.
+    """
     url = "{}/repos/{}/{}".format(d["api"], owner, repo)
     properties = json.loads(properties)
     headers = {
@@ -157,7 +184,74 @@ def repos_edit(d, owner, repo, properties):
         sys.exit(1)
 
 
-@user.command("repos")
+@admin_repos.command("create")
+@click.argument("username", required=True)
+@click.argument("name", required=True)
+@click.option(
+    "--private",
+    is_flag=True,
+    help="Whether the repository is private",
+)
+@click.option(
+    "--description",
+    default="",
+    help="Description of the repository to create",
+)
+@click.option(
+    "--default-branch",
+    default="",
+    help="Description of the repository to create",
+)
+@click.pass_obj
+def admin_repos_create(d, username, name, description, default_branch, private):
+    """
+    Create a repository on behalf of a user
+    """
+    url = "{}/admin/users/{}/repos".format(d["api"], username)
+
+    data = {
+        "name": name,
+        "default_branch": default_branch,
+        "private": private,
+        "description": description,
+    }
+    create_repository(d, url, data)
+
+
+@user_repos.command("create")
+@click.argument("name", required=True)
+@click.option(
+    "--private",
+    is_flag=True,
+    help="Whether the repository is private",
+)
+@click.option(
+    "--description",
+    default="",
+    help="Description of the repository to create",
+)
+@click.option(
+    "--default-branch",
+    default="",
+    help="Description of the repository to create",
+)
+@click.pass_obj
+def user_repos_create(d, name, description, default_branch, private):
+    """
+    Create a repository
+    """
+    url = "{}/user/repos".format(d["api"])
+
+    data = {
+        "name": name,
+        "default_branch": default_branch,
+        "private": private,
+        "description": description,
+    }
+    create_repository(d, url, data)
+
+
+@user_repos.command("list")
 @click.option("--json", "output_json", is_flag=True, help="json output")
 @click.option(
     "-k",
@@ -166,7 +260,7 @@ def repos_edit(d, owner, repo, properties):
     type=click.Choice(["full_name", "html_url", "ssh_url", "name"]),
 )
 @click.pass_obj
-def user_repos(d, output_json, key):
+def user_repos_list(d, output_json, key):
     """
     List all repositories an authenticated user has access to
     """
@@ -387,7 +481,11 @@ def repos_hook_create(
         sys.exit(1)
 
 
+admin.add_command(admin_repos)
+admin_repos.add_command(admin_repos_create)
 user.add_command(user_repos)
+user_repos.add_command(user_repos_create)
+user_repos.add_command(user_repos_list)
 users.add_command(users_repos)
 repos.add_command(repos_add)
 repos.add_command(repos_hook)
@@ -395,6 +493,7 @@ repos.add_command(repos_hook)
 main.add_command(repos)
 main.add_command(user)
 main.add_command(users)
+main.add_command(admin)
 
 
 def get_response(d, url, headers, requests_method=requests.get):
