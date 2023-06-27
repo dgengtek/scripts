@@ -20,8 +20,6 @@ main() {
   sleep 1
   session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"
   sleep 1
-  pgrep freeplane || i3-msg 'workspace "5:discover"; exec freeplane'
-  sleep 1
   pgrep firefox || i3-msg 'workspace "2:surf"; exec firefox'
   sleep 1
   session_exists private || i3-msg 'workspace "3:priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
