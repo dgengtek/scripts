@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 # scan and output an archive pdf via ocrmypdf
 # ------------------------------------------------------------------------------
-# 
+#
 set -u # error on unset variables or parameters
 set -e # exit on unchecked errors
 set -b # report status of background jobs
@@ -45,7 +45,7 @@ arguments
   <author>  document author
   <keywords>...  document keywords and tags to apply to file
 
-  
+
 OPTIONS:
   -h  help
   -v  verbose
@@ -91,7 +91,7 @@ main() {
   local input_date=$(date '+%F')
 
   check_dependencies
-  # parse input args 
+  # parse input args
   parse_options "$@"
   # set leftover options parsed local input args
   set -- "${args[@]}"
@@ -118,7 +118,7 @@ main() {
   prepare_env
   pre_run
   run "$@"
-  post_run 
+  post_run
   unset_signal_handlers
 }
 
@@ -173,7 +173,7 @@ run() {
         scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
           echo "scanned image: '${volume_dir}/${image_batch_name}'" >&2
-          gpicview "${volume_dir}/${image_batch_name}" 
+          gpicview "${volume_dir}/${image_batch_name}"
         fi
         batch_files+=("${volume_dir}/${image_batch_name}")
       done
@@ -186,7 +186,7 @@ run() {
       scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
       if (($enable_preview_image)); then
         echo "scanned image: '${volume_dir}/${input_filename}'" >&2
-        gpicview "${volume_dir}/${input_filename}" 
+        gpicview "${volume_dir}/${input_filename}"
       fi
 
     fi
@@ -208,7 +208,7 @@ run() {
       --author "$author" \
       --keywords "$*" \
       --image-dpi $SCAN_DPI \
-      --remove-background --deskew --clean \
+      --deskew --clean \
       --output-type "$OCRMYPDF_OUTPUT_TYPE" \
       -l "$OCRMYPDF_LANGUAGE" \
       "/output/${input_filename}" "/output/${output_filename}.pdf"
