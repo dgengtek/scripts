@@ -20,16 +20,16 @@ main() {
   sleep 1
   session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"
   sleep 1
-  pgrep firefox || i3-msg 'workspace "2:1+2:surf"; exec firefox'
+  pgrep firefox || i3-msg 'workspace "2:1+2 surf"; exec firefox'
   sleep 1
-  session_exists private || i3-msg 'workspace "3:1+3:priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
+  session_exists private || i3-msg 'workspace "3:1+3 priv"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/private.yaml"'
   sleep 1
   # run.sh -e -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
 
   # move all to container and scratchpad later
-  session_exists run || i3-msg 'workspace "1:1+7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/run.yaml"'
-  session_exists wiki || i3-msg 'workspace "1:1+7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/wiki.yaml"'
-  session_exists scratchpad || i3-msg 'workspace "1:1+7:0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/scratchpad.yaml"'
+  session_exists run || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/run.yaml"'
+  session_exists wiki || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/wiki.yaml"'
+  session_exists scratchpad || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/scratchpad.yaml"'
 
   # wait until tmux server is up and sessions are running
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
@@ -48,11 +48,11 @@ main() {
     sleep 1
   done
   # create scratchpad
-  pgrep mosh || i3-msg 'workspace "2:3+2:ssh"; exec alacritty -e mosh -p 60000 baha'
+  pgrep mosh || i3-msg 'workspace "2:3+2 ssh"; exec alacritty -e mosh -p 60000 baha'
 
   # finish
   sleep 1
-  i3-msg 'workspace "1:1+1:shells"'
+  i3-msg 'workspace "1:1+1 shells"'
   systemctl --user start redshift dunst
 }
 
