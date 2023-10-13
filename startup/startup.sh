@@ -28,7 +28,7 @@ main() {
 
   # move all to container and scratchpad later
   session_exists run || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/run.yaml"'
-  session_exists wiki || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/wiki.yaml"'
+  session_exists notizen || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/notizen.yaml"'
   session_exists scratchpad || i3-msg 'workspace "1:1+7 0"; exec alacritty -e bash -c "tmuxp load $HOME/.tmuxp/scratchpad.yaml"'
 
   # wait until tmux server is up and sessions are running
@@ -37,7 +37,7 @@ main() {
   while ! session_exists ci; do sleep 1; done
   while ! session_exists private; do sleep 1; done
   while ! session_exists admin; do sleep 1; done
-  while ! session_exists wiki; do sleep 1; done
+  while ! session_exists notizen; do sleep 1; done
   while ! session_exists scratchpad; do sleep 1; done
 
   # run.sh -e -- urxvt -e 'ssh baha'
