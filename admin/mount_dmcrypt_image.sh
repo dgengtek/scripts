@@ -13,29 +13,33 @@ main() {
 
   set -eu
   if ! test -f "$filename"; then
-    echo "$filename is not a file or does not exist" >&2 
+    echo "$filename is not a file or does not exist" >&2
     exit 1
   fi
   if ! test -d "$mount_path"; then
-    echo "$mount_path is not a directory or does not exist" >&2 
+    echo "$mount_path is not a directory or does not exist" >&2
     exit 1
   fi
 
   readonly loop_device=$(sudo losetup -f --show "${filename}")
 
   if ! sudo cryptsetup \
+          open \
+          --type plain \
           --cipher=aes-xts-plain64 \
           --offset=0 \
           --key-size=512 \
-          open --type plain "$loop_device" "$crypt_device_name"; then
-    
+          --hash RIPEMD160 \
+          "$loop_device" "$crypt_device_name"; then
+
     echo "Unable to decrypt $crypt_device_name. Cleaning up loop device." >&2
-    sudo losetup -d "$loop_device" 
+    sudo losetup -d "$loop_device"
     exit 1
   fi
   if ! sudo mount "/dev/mapper/$crypt_device_name" "$mount_path"; then
     sudo cryptsetup close "$crypt_device_name"
-    sudo losetup -d "$loop_device" 
+    sudo losetup -d "$loop_device"
+    exit 1
   fi
 
   # prepare mountpoint dependencies for shutdown cleanup
