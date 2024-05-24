@@ -3,6 +3,7 @@
 run the input args as a prefix command in a prompt which uses the user input as
 args for the prefix command for execution
 """
+
 import logging
 import sys
 import argparse
@@ -12,6 +13,7 @@ import subprocess
 import os
 import shlex
 import re
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,16 +35,16 @@ def main():
             call_args = template.get_call_args()
         else:
             call_args = list(args)
-            user_input = simple_prompt("# {}".format(" ".join(args)))
+            user_input = simple_prompt("==> {}".format(" ".join(args)))
             if user_input is True:
                 continue
             call_args.extend(shlex.split(user_input))
 
         subprocess.call(call_args)
-        prerr("# ---")
+        prerr("")
 
 
-class TemplatePrompt():
+class TemplatePrompt:
     def __init__(self, pattern, template_strings):
         self.pattern = pattern
         self.template_strings = list(template_strings)
@@ -76,7 +78,11 @@ class TemplatePrompt():
         pos_valid = template_pos.is_valid()
         keys_valid = template_keys.is_valid()
         if (pos_valid and keys_valid) or (not pos_valid and not keys_valid):
-            raise FormatException("Unable to proceed with given template string. Keys: {}, Pos: {}".format(template_keys.count, template_pos.count))
+            raise FormatException(
+                "Unable to proceed with given template string. Keys: {}, Pos: {}".format(
+                    template_keys.count, template_pos.count
+                )
+            )
 
         template = template_pos
         if template.is_valid():
@@ -132,8 +138,7 @@ class TemplatePromptKeys(TemplatePrompt):
 
 def simple_prompt(prompt_prefix):
     try:
-        prerr(prompt_prefix)
-        user_input = input("> ")
+        user_input = input(f"{prompt_prefix} ")
     except EOFError:
         sys.exit(0)
     except KeyboardInterrupt:
@@ -153,19 +158,17 @@ def parse_args():
     parse arguments and return result
     """
     parser = argparse.ArgumentParser(
-            description="Program description.",
-            epilog="Epilog of program.",
-            add_help=True
-            )
+        description="Program description.", epilog="Epilog of program.", add_help=True
+    )
+
+    parser.add_argument("args", nargs=argparse.REMAINDER)
 
     parser.add_argument(
-        'args',
-        nargs=argparse.REMAINDER)
-
-    parser.add_argument(
-            "-f", "--format",
-            help="Format the given args by prompting the user for either {k1} or {} format identifiers in the args string",
-            action="store_true")
+        "-f",
+        "--format",
+        help="Format the given args by prompting the user for either {k1} or {} format identifiers in the args string",
+        action="store_true",
+    )
 
     return parser.parse_args()
 
@@ -176,7 +179,7 @@ def cleanup(description):
 
 
 def handler(signum, frame):
-    print('Signal handler called with signal', signum, file=sys.stderr)
+    print("Signal handler called with signal", signum, file=sys.stderr)
 
 
 def prerr(msg):
