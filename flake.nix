@@ -10,7 +10,7 @@
       lib = pkgs.callPackage ./lib.nix { inherit poetry2nix; };
     in
     {
-      packages.${system}.default = lib.scripts;
+      packages.${system}.default = lib.build;
       inherit lib;
     };
 }

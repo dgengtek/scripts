@@ -6,3 +6,4 @@ commit.txt
 .cache
 .pytest_cache
 ciparams.yml
+result
