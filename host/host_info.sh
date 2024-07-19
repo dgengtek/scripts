@@ -19,6 +19,7 @@ main() {
 	echo
 	sensors | grep Core | head -1 | awk '{ printf "%s %s %s\n", $1, $2, $3 }'
 	sensors | grep Core | tail -1 | awk '{ printf "%s %s %s\n", $1, $2, $3 }'
+	[ -d /sys/firmware/efi/efivars ] && echo "UEFI" || echo "Legacy"
 	#cputemp | awk '{ printf "%s %s", $1 $2 }'
 	# system_info
 	w
