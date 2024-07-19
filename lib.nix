@@ -27,7 +27,7 @@ rec
     stdenv.mkDerivation {
       name = "scripts";
       src = ./.;
-      buildInputs = [ python_deps pkgs.findutils pkgs.fd pkgs.jq pkgs.stow ];
+      buildInputs = [ python_deps pkgs.findutils pkgs.fd pkgs.jq ];
       installPhase = ''
         mkdir -p $out/bin
         fd -t f -e py -e sh -E install.sh --print0 | xargs --verbose -0 -I {} cp -v {} $out/bin/

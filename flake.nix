@@ -11,6 +11,12 @@
     in
     {
       packages.${system}.default = lib.build;
+      devShells.${system}.default = pkgs.mkShell {
+        packages = [
+          pkgs.stow
+          pkgs.python3
+        ];
+      };
       inherit lib;
     };
 }
