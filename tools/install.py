@@ -3,6 +3,7 @@
 used to parse configuration for deployment of directory structure
 
 """
+
 from configparser import ConfigParser
 import os
 import sys
@@ -83,7 +84,8 @@ def main():
         path = Path(values.get("path"))
         values.update({"path": path})
         args = build_args(values, **input_args)
-        run(_cmd, args)
+        print(args)
+        # run(_cmd, args)
     logger.debug("Done")
 
 
@@ -206,7 +208,7 @@ def build_args(values, filter_pkgs=filter_packages, **kwargs):
         # only stow directories
         if not os.path.isdir(p):
             continue
-        args.extend(["-p", p])
+        args.append(p)
     return args
 
 
