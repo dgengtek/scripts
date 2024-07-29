@@ -84,8 +84,9 @@ def main():
         path = Path(values.get("path"))
         values.update({"path": path})
         args = build_args(values, **input_args)
-        print(args)
-        # run(_cmd, args)
+        if input_args.get("debug"):
+            args.insert(0, "--no")
+        run(_cmd, args)
     logger.debug("Done")
 
 
