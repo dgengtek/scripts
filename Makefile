@@ -2,7 +2,7 @@
 .DEFAULT_GOAL: install
 
 install:
-	pip3 install --user -r requirements.txt
+	uv sync
 	bash install.sh
 
 ci: install
