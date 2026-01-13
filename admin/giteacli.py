@@ -109,10 +109,7 @@ def repos_add_collaborator(d, owner, repo, collaborator, permission):
     if response.status_code == 204:
         printe(
             (
-                "Added collaborator {}"
-                " to repo '{}'"
-                " of owner '{}'"
-                " with permission '{}'"
+                "Added collaborator {} to repo '{}' of owner '{}' with permission '{}'"
             ).format(collaborator, repo, owner, permission)
         )
     else:
@@ -170,7 +167,7 @@ def repos_edit(d, owner, repo, properties):
 
     if response.status_code == 200:
         printe(
-            ("Edited repo {}" " of owner '{}'" " with properties '{}'").format(
+            ("Edited repo {} of owner '{}' with properties '{}'").format(
                 repo, owner, properties
             )
         )
@@ -449,12 +446,17 @@ def repos_hook_create(
         "accept": "application/json",
         "Content-Type": "application/json",
     }
+    sanitized_url = target_url.replace(
+        "?webhook_token={}".format(os.environ["WEBHOOK_TOKEN"]),
+        "?webhook_token=<censored token>",
+    )
 
     new_hook_set = get_hook_set(data)
     for hook in get_repo_hooks(d, owner, repo):
         hook_set = get_hook_set(hook)
         if hook_set == new_hook_set:
-            printe("Hook {} already exists".format(new_hook_set))
+            logged = (data["type"], sanitized_url, set(data["events"]))
+            printe("Hook {} already exists".format(logged))
             if fail_nonunique:
                 sys.exit(1)
             if create_nonunique:
@@ -472,9 +474,9 @@ def repos_hook_create(
 
     if response.status_code == 201:
         printe(
-            (
-                "Added hook {}" " to repo '{}'" " of owner '{}'" " with events '{}'"
-            ).format(target_url.split("?")[0], repo, owner, ", ".join(events))
+            ("Added hook {} to repo '{}' of owner '{}' with events '{}'").format(
+                target_url.split("?")[0], repo, owner, ", ".join(events)
+            )
         )
     else:
         printe("{} {}".format(response.status_code, response.text))
