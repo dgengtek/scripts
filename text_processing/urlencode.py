@@ -9,4 +9,4 @@ else:
     data_input = sys.argv[1:]
 
 data = " ".join(data_input)
-print(urllib.parse.quote(data), end="")
+print(urllib.parse.quote(data.strip()), end="")
