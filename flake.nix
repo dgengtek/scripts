@@ -1,7 +1,7 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";
 
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
@@ -25,7 +25,7 @@
   };
   outputs =
     { nixpkgs
-    , nixpkgs-unstable
+    , nixpkgs-stable
     , uv2nix
     , pyproject-nix
     , pyproject-build-systems
@@ -34,6 +34,7 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { config = { }; overlays = [ ]; inherit system; };
+      pkgs-stable = import nixpkgs-stable { config = { }; overlays = [ ]; inherit system; };
       inherit (nixpkgs) lib;
 
       mylib = pkgs.callPackage ./lib.nix { inherit python_env; };

@@ -11,6 +11,7 @@ dependencies = [
     "click",
     "PyYAML",
     "requests",
+    "docopt",
 ]
 
 [build-system]
