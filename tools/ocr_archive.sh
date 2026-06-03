@@ -21,16 +21,14 @@ declare -i ENABLE_DEBUG=0
 declare -ir SCAN_DPI=${SCAN_DPI:-300}
 readonly SCAN_MODE="color"
 readonly SCAN_FORMAT="tiff"
-readonly VOLUME_TMP="/tmp"  # where temporary volume directory will be created
+readonly VOLUME_TMP="/tmp" # where temporary volume directory will be created
 readonly OCRMYPDF_LANGUAGE="deu"
 readonly OCRMYPDF_OUTPUT_TYPE="pdfa"
-readonly DOCKER_IMAGE_NAME="ocrmypdf"
-readonly DOCKER_CONTAINER_NAME="ocr"
 
 readonly __SCRIPT_NAME="${BASH_SOURCE[0]##*/}"
 
 usage() {
-  cat >&2 << EOF
+  cat >&2 <<EOF
 Usage: ${0##*/} [OPTIONS] <output filename> [<keywords>...] [-- [EXTRA]]
 Usage with scan: ${0##*/} [OPTIONS] <input filename> <output filename> [<keywords>...] [-- [EXTRA]]
 
@@ -55,6 +53,7 @@ OPTIONS:
   --title <title>  required
   --subject <subject>  required
   --author <author>  required
+  --date  date prefixed and tagged for the archive
 
   --batch-count <count>  how many batches to scan and convert to pdf
   --disable-scan  disable scanning an image beforehand
@@ -66,10 +65,8 @@ OPTIONS:
   --disable-image-preview  disable image preview before converting after scanning
   --disable-pdf-preview  disable pdf preview after conversion finished
   --delete-original-scan  do not keep the original scan image
-  --date  date prefixed and tagged for the archive
 EOF
 }
-
 
 main() {
   local -a options
@@ -122,7 +119,6 @@ main() {
   unset_signal_handlers
 }
 
-
 ################################################################################
 # script internal execution functions
 ################################################################################
@@ -137,7 +133,6 @@ run() {
 
   if (($enable_scan)); then
     input_filename="input_image.${SCAN_FORMAT}"
-    sudo -v
     if (($enable_batch_scan)); then
       input_filename="input_image.pdf"
       local -a batch_files
@@ -148,7 +143,7 @@ run() {
         if [[ "$read_input" =~ ^(n|no|nein)$ ]]; then
           break
         fi
-        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
+        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE >"${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
           echo "scanned image: '${volume_dir}/${image_batch_name}'" >&2
           gpicview "${volume_dir}/${image_batch_name}"
@@ -161,7 +156,7 @@ run() {
         let counter+=1
       done
       log_info "Converting batched images to pdf"
-      convert "${batch_files[@]}" "${volume_dir}/${input_filename}"
+      magick "${batch_files[@]}" "${volume_dir}/${input_filename}"
       log_info "Done with batch scanning"
 
     elif (($batch_count > 0)); then
@@ -170,7 +165,7 @@ run() {
       for i in $(seq $batch_count); do
         image_batch_name="${image_batch_name_prefix}${i}.${SCAN_FORMAT}"
         read -p "Scanning in batches - $i of $batch_count. Press RETURN or abort now"
-        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${image_batch_name}"
+        scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE >"${volume_dir}/${image_batch_name}"
         if (($enable_preview_image)); then
           echo "scanned image: '${volume_dir}/${image_batch_name}'" >&2
           gpicview "${volume_dir}/${image_batch_name}"
@@ -178,12 +173,12 @@ run() {
         batch_files+=("${volume_dir}/${image_batch_name}")
       done
       log_info "Converting batched images to pdf"
-      convert "${batch_files[@]}" "${volume_dir}/${input_filename}"
+      magick "${batch_files[@]}" "${volume_dir}/${input_filename}"
       log_info "Done with batch scanning"
 
     else
       read -p "Scanning once now. Press RETURN or abort now"
-      scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE > "${volume_dir}/${input_filename}"
+      scanimage -p --resolution $SCAN_DPI --format=$SCAN_FORMAT --mode $SCAN_MODE >"${volume_dir}/${input_filename}"
       if (($enable_preview_image)); then
         echo "scanned image: '${volume_dir}/${input_filename}'" >&2
         gpicview "${volume_dir}/${input_filename}"
@@ -199,19 +194,17 @@ run() {
     cp "$path_input_file" "${volume_dir}/"
   fi
 
-  sudo docker run \
-    --rm -v $volume_dir:/output \
-    --name "$DOCKER_CONTAINER_NAME" "$DOCKER_IMAGE_NAME" \
-      --sidecar "/output/${output_filename}.txt" \
-      --title "$title" \
-      --subject "$subject" \
-      --author "$author" \
-      --keywords "$*" \
-      --image-dpi $SCAN_DPI \
-      --deskew --clean \
-      --output-type "$OCRMYPDF_OUTPUT_TYPE" \
-      -l "$OCRMYPDF_LANGUAGE" \
-      "/output/${input_filename}" "/output/${output_filename}.pdf"
+  ocrmypdf \
+    --sidecar "${volume_dir}/${output_filename}.txt" \
+    --title "$title" \
+    --subject "$subject" \
+    --author "$author" \
+    --keywords "$*" \
+    --image-dpi $SCAN_DPI \
+    --deskew --clean \
+    --output-type "$OCRMYPDF_OUTPUT_TYPE" \
+    -l "$OCRMYPDF_LANGUAGE" \
+    "${volume_dir}/${input_filename}" "${volume_dir}/${output_filename}.pdf"
 
   if (($enable_preview_pdf)); then
     zathura "${volume_dir}/${output_filename}.pdf"
@@ -257,15 +250,13 @@ run() {
   rm -vrf "$volume_dir"
 }
 
-
 check_dependencies() {
   hash scanimage
-  hash docker
-  hash tmsu  # tagging
-  hash convert  # ImageMagick
+  hash ocrmypdf
+  hash tmsu   # tagging
+  hash magick # ImageMagick
   hash filename_canonize.py
 }
-
 
 check_input_args() {
   local -i exit_usage=0
@@ -289,23 +280,19 @@ check_input_args() {
 
 }
 
-
 prepare_env() {
   set_descriptors
 }
-
 
 prepare() {
   export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
   set_descriptors
 }
 
-
 source_libs() {
   source "${PATH_USER_LIB}libutils.sh"
   source "${PATH_USER_LIB}libcolors.sh"
 }
-
 
 set_descriptors() {
   if (($ENABLE_VERBOSE)); then
@@ -321,16 +308,13 @@ set_descriptors() {
   fi
 }
 
-
 pre_run() {
   :
 }
 
-
 post_run() {
   :
 }
-
 
 parse_options() {
   # exit if no options left
@@ -339,79 +323,79 @@ parse_options() {
 
   local do_shift=0
   case $1 in
-      -d|--debug)
-        ENABLE_DEBUG=1
-        ;;
-      -v|--verbose)
-	ENABLE_VERBOSE=1
-	;;
-      -q|--quiet)
-        ENABLE_QUIET=1
-        ;;
-      -h|--help)
-        usage
-        exit 0
-        ;;
-      --disable-image-preview)
-        enable_preview_image=0
-        ;;
-      --disable-pdf-preview)
-        enable_preview_pdf=0
-        ;;
-      --title)
-        title=$2
-        do_shift=2
-        ;;
-      --subject)
-        subject=$2
-        do_shift=2
-        ;;
-      --author)
-        author=$2
-        do_shift=2
-        ;;
-      --disable-tagging)
-        disable_tagging=1
-        ;;
-      --disable-canonize-filename)
-        disable_canonize_filename=1
-        ;;
-      --enable-batch-scan)
-        enable_batch_scan=1
-        ;;
-      --batch-count)
-        batch_count=$2
-        do_shift=2
-        ;;
-      --disable-scan)
-        enable_scan=0
-        ;;
-      --delete-original-scan)
-        delete_original_scan=1
-        ;;
-      --date)
-        input_date=$2
-        do_shift=2
-        ;;
-      --disable-date-prefix)
-        enable_date_prefix=0
-        ;;
-      --disable-uuid-prefix)
-        enable_uuid_prefix=0
-        ;;
-      --)
-        do_shift=3
-        ;;
-      *)
-        do_shift=1
-	;;
+    -d | --debug)
+      ENABLE_DEBUG=1
+      ;;
+    -v | --verbose)
+      ENABLE_VERBOSE=1
+      ;;
+    -q | --quiet)
+      ENABLE_QUIET=1
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --disable-image-preview)
+      enable_preview_image=0
+      ;;
+    --disable-pdf-preview)
+      enable_preview_pdf=0
+      ;;
+    --title)
+      title=$2
+      do_shift=2
+      ;;
+    --subject)
+      subject=$2
+      do_shift=2
+      ;;
+    --author)
+      author=$2
+      do_shift=2
+      ;;
+    --disable-tagging)
+      disable_tagging=1
+      ;;
+    --disable-canonize-filename)
+      disable_canonize_filename=1
+      ;;
+    --enable-batch-scan)
+      enable_batch_scan=1
+      ;;
+    --batch-count)
+      batch_count=$2
+      do_shift=2
+      ;;
+    --disable-scan)
+      enable_scan=0
+      ;;
+    --delete-original-scan)
+      delete_original_scan=1
+      ;;
+    --date)
+      input_date=$2
+      do_shift=2
+      ;;
+    --disable-date-prefix)
+      enable_date_prefix=0
+      ;;
+    --disable-uuid-prefix)
+      enable_uuid_prefix=0
+      ;;
+    --)
+      do_shift=3
+      ;;
+    *)
+      do_shift=1
+      ;;
   esac
-  if (($do_shift == 1)) ; then
+  if (($do_shift == 1)); then
     args+=("$1")
-  elif (($do_shift == 2)) ; then
+  elif (($do_shift == 2)); then
     # got option with argument
     shift
-  elif (($do_shift == 3)) ; then
+  elif (($do_shift == 3)); then
     # got --, use all arguments left as options for other commands
     shift
     options+=("$@")
@@ -421,11 +405,9 @@ parse_options() {
   parse_options "$@"
 }
 
-
 ################################################################################
 # signal handlers
 #-------------------------------------------------------------------------------
-
 
 set_signal_handlers() {
   trap sigh_abort SIGABRT
@@ -437,7 +419,6 @@ set_signal_handlers() {
   trap sigh_cleanup SIGINT SIGQUIT SIGTERM EXIT
 }
 
-
 unset_signal_handlers() {
   trap - SIGABRT
   trap - SIGALRM
@@ -448,37 +429,29 @@ unset_signal_handlers() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
 }
 
-
-
 sigh_abort() {
   trap - SIGABRT
 }
-
 
 sigh_alarm() {
   trap - SIGALRM
 }
 
-
 sigh_hup() {
   trap - SIGHUP
 }
-
 
 sigh_cont() {
   trap - SIGCONT
 }
 
-
 sigh_usr1() {
   trap - SIGUSR1
 }
 
-
 sigh_usr2() {
   trap - SIGUSR2
 }
-
 
 sigh_cleanup() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
@@ -490,7 +463,6 @@ sigh_cleanup() {
     fi
   done
 }
-
 
 sigh_cleanup_scan() {
   trap - SIGINT SIGQUIT SIGTERM EXIT
@@ -505,7 +477,6 @@ sigh_cleanup_scan() {
   exit 130
 }
 
-
 log() {
   logger -s -t "$__SCRIPT_NAME" "$@"
 }
@@ -514,7 +485,6 @@ for level in emerg err warning info debug; do
   printf -v functext -- 'log_%s() { log -p user.%s -- "$@" ; }' "$level" "$level"
   eval "$functext"
 done
-
 
 ################################################################################
 # custom functions
@@ -527,11 +497,9 @@ _example_command() {
   :
 }
 
-
 #-------------------------------------------------------------------------------
 # end custom functions
 ################################################################################
-
 
 prepare
 main "$@"
