@@ -57,7 +57,7 @@ check_input_args() {
 }
 
 prepare() {
-  [[ -f ${PATH_USER_LIB}libutils.sh ]] && source "${PATH_USER_LIB}libutils.sh"
+  [[ -f ${PATH_USER_SCRIPTS}/libutils.sh ]] && source "${PATH_USER_SCRIPTS}/libutils.sh"
 }
 
 setup() {

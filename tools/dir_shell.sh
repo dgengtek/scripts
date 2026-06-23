@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib"}
-source "${PATH_USER_LIB}/libutils.sh"
-source "${PATH_USER_LIB}/libcolors.sh"
-
+source "${PATH_USER_SCRIPTS}/libutils.sh"
+source "${PATH_USER_SCRIPTS}/libcolors.sh"
 
 usage() {
-  cat >&2 << EOF
+  cat >&2 <<EOF
 Usage: ${0##*/} [OPTIONS] <filename> [<conditional command> ...]
 
 filename
@@ -40,7 +38,7 @@ main() {
       continue
     fi
     directories+=("$directory")
-  done < "$file_input"
+  done <"$file_input"
 
   local -r count=${#directories[@]}
   trap "trap - SIGTERM SIGQUIT SIGINT EXIT; builtin cd $cwd; printcbold $__CC_GREEN "Done." >&2; exit" SIGTERM SIGQUIT SIGINT EXIT
@@ -49,23 +47,24 @@ $ byebye # to stop function
 "
 
   for i in $(seq "$count"); do
-    pushd "${directories[$i-1]}" >& /dev/null || continue
+    pushd "${directories[$i - 1]}" >&/dev/null || continue
     if ! bash -c "$*"; then
       printcbold $__CC_RED "==> Condition failed: skipping subshell $i of $count - $PWD" >&2
       command echo >&2
-      popd >& /dev/null
+      popd >&/dev/null
       continue
     fi
 
-  bash --init-file <(cat << EOF
+    bash --init-file <(
+      cat <<EOF
 source ~/.bashrc
-source "${PATH_USER_LIB}/libcolors.sh"
+source "${PATH_USER_SCRIPTS}//libcolors.sh"
 byebye() { kill -SIGTERM \$\$; }
 trap "trap - SIGTERM SIGQUIT; kill -SIGTERM $CPID; exit" SIGTERM SIGQUIT
 printcbold $__CC_MAGENTA "Enter subshell $i of $count - ">&2;pwd
 EOF
-)
-    popd >& /dev/null
+    )
+    popd >&/dev/null
   done
   trap - SIGTERM SIGQUIT SIGINT EXIT
   printcbold $__CC_GREEN "Done." >&2
