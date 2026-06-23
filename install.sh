@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Install scripts
 export PATH="$PATH:$HOME/.local/bin/:$HOME/.bin/"
-export PATH_USER_LIB="$HOME/.local/lib/"
 
 usage() {
 	cat >&2 <<EOF
@@ -75,7 +74,6 @@ prepare_env() {
 }
 
 prepare() {
-	export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
 	local parent_path=$(
 		cd "$(dirname "${BASH_SOURCE[0]}")"
 		pwd -P

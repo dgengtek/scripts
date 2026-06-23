@@ -117,7 +117,6 @@ prepare_env() {
 }
 
 prepare() {
-  export PATH_USER_LIB=${PATH_USER_LIB:-"$HOME/.local/lib/"}
 
   set -e
   source_libs

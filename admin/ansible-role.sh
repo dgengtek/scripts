@@ -82,7 +82,6 @@ prepare_env() {
 }
 
 prepare() {
-  #export PATH_USER_LIB="$HOME/.local/lib/"
   source_libs
   set_descriptors
 }

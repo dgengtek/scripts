@@ -164,7 +164,6 @@ prepare_env() {
 }
 
 prepare() {
-  export PATH_USER_LIB="$HOME/.local/lib/"
   source "${PATH_USER_LIB}libutils.sh"
   source "${PATH_USER_LIB}libcolors.sh"
   set_descriptors

@@ -57,7 +57,6 @@ check_input_args() {
 }
 
 prepare() {
-  export PATH_USER_LIB="$HOME/.local/lib/"
   [[ -f ${PATH_USER_LIB}libutils.sh ]] && source "${PATH_USER_LIB}libutils.sh"
 }
 
