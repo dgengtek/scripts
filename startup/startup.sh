@@ -2,9 +2,6 @@
 # exec 2>&1
 # exec 1>/dev/null
 
-# lock created from mail session during startup
-readonly STARTUP_GPG_LOCK="/tmp/startup_gpg2_lock"
-
 set -x
 main() {
   if ! hash run.sh; then
@@ -23,9 +20,10 @@ main() {
   # run.sh -e -- alacritty -e 'tmuxp load ~/.tmuxp/irc.yaml'
 
   # move all to container and scratchpad later
-  session_exists run || swaymsg 'workspace "7:1+7 0"; exec alacritty -e bash -c "tmuxp load run"'
-  session_exists notizen || swaymsg 'workspace "7:1+7 0"; exec alacritty -e bash -c "tmuxp load notizen"'
-  session_exists medien || swaymsg 'workspace "7:1+7 0"; exec alacritty -e bash -c "tmuxp load medien"'
+  swaymsg 'workspace "7:1+7 0"'
+  session_exists run || swaymsg 'exec alacritty -e bash -c "tmuxp load run"'
+  session_exists notizen || swaymsg 'exec alacritty -e bash -c "tmuxp load notizen"'
+  session_exists medien || swaymsg 'exec alacritty -e bash -c "tmuxp load medien"'
 
   # wait until tmux server is up and sessions are running
   while ! tmux has-session >/dev/null 2>&1; do sleep 1; done
@@ -35,7 +33,7 @@ main() {
   while ! session_exists admin; do sleep 1; done
   while ! session_exists notizen; do sleep 1; done
   while ! session_exists medien; do sleep 1; done
-  swaymsg "workspace 7:1+7 0; focus parent; move scratchpad"
+  swaymsg "focus parent; move scratchpad"
   swaymsg 'workspace "1:1+1 shells"; scratchpad show; focus parent; resize grow height 50 px; resize grow width 200 px; move position center; focus child'
 }
 
