@@ -11,7 +11,7 @@ main() {
 
   session_exists admin || run.sh -e -- alacritty -e tmux new -s admin
   sleep 1
-  session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load $HOME/.tmuxp/ci.yaml"
+  session_exists ci || run.sh -e -- alacritty -e bash -c "tmuxp load ci"
   sleep 1
   pgrep firefox || swaymsg 'workspace "2:1+2 surf"; exec firefox'
   sleep 1
